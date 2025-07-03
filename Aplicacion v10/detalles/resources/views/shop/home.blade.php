@@ -10,10 +10,10 @@
 
             <div class="lg:text-center">
                 <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-                    Todo lo que necesitas para comenzar
+                    ¿Buscas una detalle para una persona especial?
                 </p>
                 <p class="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
-                    Una solución completa para tus proyectos web modernos.
+                    Te ofrecemos los más lindos detalles con entrega rápida en toda la ciudad.
                 </p>
             </div>
 
@@ -21,48 +21,48 @@
                 <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
                     <!-- Feature 1 -->
                     <div class="bg-gray-50 rounded-lg p-6">
-                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-amber-500 text-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    d="M10 21v-9m3-4H7.5a2.5 2.5 0 1 1 0-5c1.5 0 2.875 1.25 3.875 2.5M14 21v-9m-9 0h14v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8ZM4 8h16a1 1 0 0 1 1 1v3H3V9a1 1 0 0 1 1-1Zm12.155-5c-3 0-5.5 5-5.5 5h5.5a2.5 2.5 0 0 0 0-5Z" />
                             </svg>
                         </div>
                         <div class="mt-5">
-                            <h3 class="text-lg font-medium text-gray-900">Rendimiento rápido</h3>
+                            <h3 class="text-lg font-medium text-gray-900">Detalles originales</h3>
                             <p class="mt-2 text-base text-gray-500">
-                                Optimizado para ofrecer el mejor rendimiento con carga rápida y eficiente.
+                                Te ofrecemos detalles con muchas opciones de personalización, para que sea único y especial.
                             </p>
                         </div>
                     </div>
 
                     <!-- Feature 2 -->
                     <div class="bg-gray-50 rounded-lg p-6">
-                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-emerald-500 text-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                                    d="m4 12 8-8 8 8M6 10.5V19a1 1 0 0 0 1 1h3v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h3a1 1 0 0 0 1-1v-8.5" />
                             </svg>
                         </div>
                         <div class="mt-5">
-                            <h3 class="text-lg font-medium text-gray-900">Diseño responsive</h3>
+                            <h3 class="text-lg font-medium text-gray-900">Entrega a domicilio</h3>
                             <p class="mt-2 text-base text-gray-500">
-                                Se adapta perfectamente a cualquier dispositivo, desde móviles hasta escritorios.
+                                Ofrecemos detalles a domicilio en Loja, con entregas el mismo día o programadas según tu necesidad.
                             </p>
                         </div>
                     </div>
 
                     <!-- Feature 3 -->
                     <div class="bg-gray-50 rounded-lg p-6">
-                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-indigo-500 text-white">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-md bg-red-500 text-white">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    d="M15 9h3m-3 3h3m-3 3h3m-6 1c-.306-.613-.933-1-1.618-1H7.618c-.685 0-1.312.387-1.618 1M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm7 5a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z" />
                             </svg>
                         </div>
                         <div class="mt-5">
-                            <h3 class="text-lg font-medium text-gray-900">Seguridad robusta</h3>
+                            <h3 class="text-lg font-medium text-gray-900">Pagos seguros</h3>
                             <p class="mt-2 text-base text-gray-500">
-                                Protección integrada contra vulnerabilidades comunes.
+                                Paga de forma segura, aceptamos pagos con tarjeta de crédito, PayPal y transferencia bancaria.
                             </p>
                         </div>
                     </div>
@@ -89,51 +89,63 @@
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
                     <img class="h-auto max-w-full rounded-lg"
-                        src="https://flowbite.s3.amazonaws.com/docs/gallery/square/image.jpg" alt="">
+                        src="{{ asset('assets/images/producto_001.jpg') }}" alt="">
                 </div>
                 <div>
                     <img class="h-auto max-w-full rounded-lg"
-                        src="https://flowbite.s3.amazonaws.com/docs/gallery/square/image-1.jpg" alt="">
+                        src="{{ asset('assets/images/producto_002.webp') }}" alt="">
                 </div>
                 <div>
                     <img class="h-auto max-w-full rounded-lg"
-                        src="https://flowbite.s3.amazonaws.com/docs/gallery/square/image-2.jpg" alt="">
+                        src="{{ asset('assets/images/producto_003.webp') }}" alt="">
                 </div>
                 <div>
                     <img class="h-auto max-w-full rounded-lg"
-                        src="https://flowbite.s3.amazonaws.com/docs/gallery/square/image-3.jpg" alt="">
+                        src="{{ asset('assets/images/producto_004.jpg') }}" alt="">
                 </div>
                 <div>
                     <img class="h-auto max-w-full rounded-lg"
-                        src="https://flowbite.s3.amazonaws.com/docs/gallery/square/image-4.jpg" alt="">
+                        src="{{ asset('assets/images/producto_005.webp') }}" alt="">
                 </div>
                 <div>
                     <img class="h-auto max-w-full rounded-lg"
-                        src="https://flowbite.s3.amazonaws.com/docs/gallery/square/image-5.jpg" alt="">
+                        src="{{ asset('assets/images/producto_006.jpg') }}" alt="">
                 </div>
                 <div>
                     <img class="h-auto max-w-full rounded-lg"
-                        src="https://flowbite.s3.amazonaws.com/docs/gallery/square/image-6.jpg" alt="">
+                        src="{{ asset('assets/images/producto_007.webp') }}" alt="">
                 </div>
                 <div>
                     <img class="h-auto max-w-full rounded-lg"
-                        src="https://flowbite.s3.amazonaws.com/docs/gallery/square/image-7.jpg" alt="">
+                        src="{{ asset('assets/images/producto_008.jpg') }}" alt="">
                 </div>
                 <div>
                     <img class="h-auto max-w-full rounded-lg"
-                        src="https://flowbite.s3.amazonaws.com/docs/gallery/square/image-8.jpg" alt="">
+                        src="{{ asset('assets/images/producto_009.webp') }}" alt="">
                 </div>
                 <div>
                     <img class="h-auto max-w-full rounded-lg"
-                        src="https://flowbite.s3.amazonaws.com/docs/gallery/square/image-9.jpg" alt="">
+                        src="{{ asset('assets/images/producto_010.jpg') }}" alt="">
                 </div>
                 <div>
                     <img class="h-auto max-w-full rounded-lg"
-                        src="https://flowbite.s3.amazonaws.com/docs/gallery/square/image-10.jpg" alt="">
+                        src="{{ asset('assets/images/producto_011.webp') }}" alt="">
                 </div>
                 <div>
                     <img class="h-auto max-w-full rounded-lg"
-                        src="https://flowbite.s3.amazonaws.com/docs/gallery/square/image-11.jpg" alt="">
+                        src="{{ asset('assets/images/producto_012.jpg') }}" alt="">
+                </div>
+                <div>
+                    <img class="h-auto max-w-full rounded-lg"
+                        src="{{ asset('assets/images/producto_013.webp') }}" alt="">
+                </div>
+                <div>
+                    <img class="h-auto max-w-full rounded-lg"
+                        src="{{ asset('assets/images/producto_014.jpg') }}" alt="">
+                </div>
+                <div>
+                    <img class="h-auto max-w-full rounded-lg"
+                        src="{{ asset('assets/images/producto_015.webp') }}" alt="">
                 </div>
             </div>
         </div>
