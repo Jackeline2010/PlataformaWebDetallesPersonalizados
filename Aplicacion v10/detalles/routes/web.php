@@ -7,8 +7,8 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/admin', function () {
-    return view('/admin/dashboard');
-});
+    return view('admin.dashboard');
+})->name('admin');
 
 Route::get('/about', function () {
     return view('/shop/pages/about');

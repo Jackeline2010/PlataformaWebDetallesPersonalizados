@@ -1,1 +1,2 @@
-<h1>Panel de Administracion</h1>
+<x-admin-layout>
+</x-admin-layout>
