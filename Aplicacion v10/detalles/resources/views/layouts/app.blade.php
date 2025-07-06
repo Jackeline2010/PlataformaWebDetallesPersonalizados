@@ -12,10 +12,10 @@
 <body class="bg-gray-100">
 
     <!-- Header -->
-    @include('partials.header')
+    @include('partials.app.header')
 
     <!-- Menu -->
-    @include('partials.menu')
+    @include('partials.app.menu')
 
     <!-- Main Content -->
     <main class="container mx-auto py-6">
@@ -24,6 +24,6 @@
     </main>
 
     <!-- Footer -->
-    @include('partials.footer')
+    @include('partials.app.footer')
 </body>
 </html>
