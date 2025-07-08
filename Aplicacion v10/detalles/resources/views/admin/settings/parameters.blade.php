@@ -1,1 +1,1 @@
-<h1>Parametros Gewerales</h1>
+<h1>Parametros Generales</h1>
