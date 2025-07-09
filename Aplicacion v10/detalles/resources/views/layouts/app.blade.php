@@ -19,6 +19,9 @@
     <!-- Main Content -->
     <main class="container mx-auto py-6">
         @yield('content')
+        <div>
+            <br>
+        </div>
         <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
     </main>
 

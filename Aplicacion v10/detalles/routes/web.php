@@ -26,6 +26,10 @@ Route::get('/cart', function () {
     return view('shop.checkout.cart');
 })->name('cart');
 
+Route::get('/order', function () {
+    return view('shop.checkout.order');
+})->name('order');
+
 Route::get('/admin', function () {
     return view('admin.dashboard');
 })->name('admin');
