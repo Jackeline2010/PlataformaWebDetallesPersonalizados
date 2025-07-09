@@ -10,7 +10,6 @@
     <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet"/>
 </head>
 <body class="bg-gray-100">
-
     <!-- Header -->
     @include('partials.app.header')
 

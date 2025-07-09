@@ -170,16 +170,16 @@
                 </button>
                 <ul id="dropdown-config" class="hidden py-2 space-y-2">
                     <li>
-                        <a href="{{ route('admin.parameterssettings') }}"
-                            class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Parámetros</a>
+                        <a href="{{ route('admin.userssettings') }}"
+                            class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Usuarios</a>
                     </li>
                     <li>
                         <a href="{{ route('admin.rolesssettings') }}"
                             class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Roles</a>
                     </li>
                     <li>
-                        <a href="{{ route('admin.userssettings') }}"
-                            class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Usuarios</a>
+                        <a href="{{ route('admin.parameterssettings') }}"
+                            class="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">Parámetros</a>
                     </li>
                 </ul>
             </li>
