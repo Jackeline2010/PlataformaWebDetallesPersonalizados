@@ -22,6 +22,10 @@ Route::get('/products', function () {
     return view('shop.products.products');
 })->name('products');
 
+Route::get('/gallery', function () {
+    return view('shop.pages.gallery');
+})->name('gallery');
+
 Route::get('/cart', function () {
     return view('shop.checkout.cart');
 })->name('cart');
@@ -29,6 +33,10 @@ Route::get('/cart', function () {
 Route::get('/order', function () {
     return view('shop.checkout.order');
 })->name('order');
+
+Route::get('/profile', function () {
+    return view('shop.pages.profile');
+})->name('profile');
 
 Route::get('/admin', function () {
     return view('admin.dashboard');

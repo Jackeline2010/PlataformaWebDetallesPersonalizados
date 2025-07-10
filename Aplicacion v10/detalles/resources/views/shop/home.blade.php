@@ -4,7 +4,115 @@
 
 @section('content')
     <!-- Features Section -->
-
+    <section class="bg-white py-8 antialiased dark:bg-gray-900 md:py-16">
+        <div class="mx-auto grid max-w-screen-xl px-4 pb-8 md:grid-cols-12 lg:gap-12 lg:pb-16 xl:gap-0">
+            <div class="content-center justify-self-start md:col-span-7 md:text-start">
+                <h1
+                    class="mb-4 text-4xl text-indigo-700 font-extrabold leading-none tracking-tight dark:text-white md:max-w-2xl md:text-5xl xl:text-6xl">
+                    Detalles especiales<br />para toda ocasión!</h1>
+                <p class="mb-4 max-w-2xl text-gray-700 dark:text-gray-400 md:mb-12 md:text-lg mb-3 lg:mb-5 lg:text-xl">No
+                    esperes para compartir un regalo con esa persona especial!</p>
+                <a href="{{ route('products') }}"
+                    class="inline-block rounded-lg bg-pink-600 px-6 py-3.5 text-center font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-pink-600 dark:hover:bg-indigo-700 dark:focus:ring-primary-800">Comprar
+                    ahora</a>
+            </div>
+            <div class="hidden md:col-span-5 md:mt-0 md:flex">
+                <img src="{{ asset('assets/images/portada.svg') }}" alt="shopping illustration" />
+            </div>
+        </div>
+        <div
+            class="mx-auto grid max-w-screen-xl grid-cols-2 gap-8 text-gray-500 dark:text-gray-400 sm:grid-cols-3 sm:gap-12 lg:grid-cols-5 px-4">
+            <a href="{{ route('products') }}" class="flex items-center md:justify-center"
+                data-tooltip-target="tooltip-arreglo">
+                <img src="{{ asset('assets/images/arreglo.svg') }}" alt="shopping illustration" />
+            </a>
+            <a href="{{ route('products') }}" class="flex items-center md:justify-center"
+                data-tooltip-target="tooltip-peluche">
+                <img src="{{ asset('assets/images/peluche.svg') }}" alt="shopping illustration" />
+            </a>
+            <a href="{{ route('products') }}" class="flex items-center md:justify-center"
+                data-tooltip-target="tooltip-chocolates">
+                <img src="{{ asset('assets/images/chocolates.svg') }}" alt="shopping illustration" />
+            </a>
+            <a href="{{ route('products') }}" class="flex items-center md:justify-center"
+                data-tooltip-target="tooltip-taza">
+                <img src="{{ asset('assets/images/taza.svg') }}" alt="shopping illustration" />
+            </a>
+            <a href="{{ route('products') }}" class="flex items-center md:justify-center"
+                data-tooltip-target="tooltip-caja">
+                <img src="{{ asset('assets/images/cajaSorpresa.svg') }}" alt="shopping illustration" />
+            </a>
+            <div id="tooltip-arreglo" role="tooltip"
+                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip dark:bg-gray-700">
+                Arreglos y Globos
+                <div class="tooltip-arrow" data-popper-arrow></div>
+            </div>
+            <div id="tooltip-peluche" role="tooltip"
+                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip dark:bg-gray-700">
+                Peluches
+                <div class="tooltip-arrow" data-popper-arrow></div>
+            </div>
+            <div id="tooltip-chocolates" role="tooltip"
+                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip dark:bg-gray-700">
+                Chocolates y Dulces
+                <div class="tooltip-arrow" data-popper-arrow></div>
+            </div>
+            <div id="tooltip-taza" role="tooltip"
+                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip dark:bg-gray-700">
+                Artículos Personalizados
+                <div class="tooltip-arrow" data-popper-arrow></div>
+            </div>
+            <div id="tooltip-caja" role="tooltip"
+                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip dark:bg-gray-700">
+                Cajas Sorpresa
+                <div class="tooltip-arrow" data-popper-arrow></div>
+            </div>
+        </div>
+    </section>
+    <br>
+    <div class="py-8 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-center py-4 md:py-8 flex-wrap">
+                <button type="button"
+                    class="text-blue-700 hover:text-white border border-blue-600 bg-white hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:bg-gray-900 dark:focus:ring-blue-800">Todas
+                    las categorías</button>
+                <button type="button"
+                    class="text-gray-900 border border-white hover:border-gray-200 dark:border-gray-900 dark:bg-gray-900 dark:hover:border-gray-700 bg-white focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:text-white dark:focus:ring-gray-800">Arreglos</button>
+                <button type="button"
+                    class="text-gray-900 border border-white hover:border-gray-200 dark:border-gray-900 dark:bg-gray-900 dark:hover:border-gray-700 bg-white focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:text-white dark:focus:ring-gray-800">Desayunos</button>
+                <button type="button"
+                    class="text-gray-900 border border-white hover:border-gray-200 dark:border-gray-900 dark:bg-gray-900 dark:hover:border-gray-700 bg-white focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:text-white dark:focus:ring-gray-800">Detalles</button>
+                <button type="button"
+                    class="text-gray-900 border border-white hover:border-gray-200 dark:border-gray-900 dark:bg-gray-900 dark:hover:border-gray-700 bg-white focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:text-white dark:focus:ring-gray-800">Peluches</button>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                    <img class="h-auto max-w-full rounded-lg" src="{{ asset('assets/images/producto_001.jpg') }}"
+                        alt="">
+                </div>
+                <div>
+                    <img class="h-auto max-w-full rounded-lg" src="{{ asset('assets/images/producto_002.webp') }}"
+                        alt="">
+                </div>
+                <div>
+                    <img class="h-auto max-w-full rounded-lg" src="{{ asset('assets/images/producto_003.webp') }}"
+                        alt="">
+                </div>
+                <div>
+                    <img class="h-auto max-w-full rounded-lg" src="{{ asset('assets/images/producto_004.jpg') }}"
+                        alt="">
+                </div>
+                <div>
+                    <img class="h-auto max-w-full rounded-lg" src="{{ asset('assets/images/producto_005.webp') }}"
+                        alt="">
+                </div>
+                <div>
+                    <img class="h-auto max-w-full rounded-lg" src="{{ asset('assets/images/producto_006.jpg') }}"
+                        alt="">
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="py-12 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -46,7 +154,8 @@
                         <div class="mt-5">
                             <h3 class="text-lg font-medium text-gray-900">Entrega a domicilio</h3>
                             <p class="mt-2 text-base text-gray-500">
-                                Ofrecemos detalles a domicilio en Loja, con entregas el mismo día o programadas según tu necesidad.
+                                Ofrecemos detalles a domicilio en Loja, con entregas el mismo día o programadas según tu
+                                necesidad.
                             </p>
                         </div>
                     </div>
@@ -62,7 +171,8 @@
                         <div class="mt-5">
                             <h3 class="text-lg font-medium text-gray-900">Pagos seguros</h3>
                             <p class="mt-2 text-base text-gray-500">
-                                Paga de forma segura, aceptamos pagos con tarjeta de crédito, PayPal y transferencia bancaria.
+                                Paga de forma segura, aceptamos pagos con tarjeta de crédito, PayPal y transferencia
+                                bancaria.
                             </p>
                         </div>
                     </div>
@@ -70,104 +180,23 @@
             </div>
         </div>
     </div>
-
-    <div class="py-8 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-center py-4 md:py-8 flex-wrap">
-                <button type="button"
-                    class="text-blue-700 hover:text-white border border-blue-600 bg-white hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:bg-gray-900 dark:focus:ring-blue-800">Todas
-                    las categorías</button>
-                <button type="button"
-                    class="text-gray-900 border border-white hover:border-gray-200 dark:border-gray-900 dark:bg-gray-900 dark:hover:border-gray-700 bg-white focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:text-white dark:focus:ring-gray-800">Arreglos</button>
-                <button type="button"
-                    class="text-gray-900 border border-white hover:border-gray-200 dark:border-gray-900 dark:bg-gray-900 dark:hover:border-gray-700 bg-white focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:text-white dark:focus:ring-gray-800">Desayunos</button>
-                <button type="button"
-                    class="text-gray-900 border border-white hover:border-gray-200 dark:border-gray-900 dark:bg-gray-900 dark:hover:border-gray-700 bg-white focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:text-white dark:focus:ring-gray-800">Detalles</button>
-                <button type="button"
-                    class="text-gray-900 border border-white hover:border-gray-200 dark:border-gray-900 dark:bg-gray-900 dark:hover:border-gray-700 bg-white focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:text-white dark:focus:ring-gray-800">Peluches</button>
-            </div>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div>
-                    <img class="h-auto max-w-full rounded-lg"
-                        src="{{ asset('assets/images/producto_001.jpg') }}" alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg"
-                        src="{{ asset('assets/images/producto_002.webp') }}" alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg"
-                        src="{{ asset('assets/images/producto_003.webp') }}" alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg"
-                        src="{{ asset('assets/images/producto_004.jpg') }}" alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg"
-                        src="{{ asset('assets/images/producto_005.webp') }}" alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg"
-                        src="{{ asset('assets/images/producto_006.jpg') }}" alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg"
-                        src="{{ asset('assets/images/producto_007.webp') }}" alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg"
-                        src="{{ asset('assets/images/producto_008.jpg') }}" alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg"
-                        src="{{ asset('assets/images/producto_009.webp') }}" alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg"
-                        src="{{ asset('assets/images/producto_010.jpg') }}" alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg"
-                        src="{{ asset('assets/images/producto_011.webp') }}" alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg"
-                        src="{{ asset('assets/images/producto_012.jpg') }}" alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg"
-                        src="{{ asset('assets/images/producto_013.webp') }}" alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg"
-                        src="{{ asset('assets/images/producto_014.jpg') }}" alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg"
-                        src="{{ asset('assets/images/producto_015.webp') }}" alt="">
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <br>
     <!-- CTA Section -->
     <div class="bg-pink-600">
         <div class="max-w-2xl mx-auto text-center py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-extrabold text-white sm:text-4xl">
-                <span class="block">¿Listo para comenzar?</span>
-                <span class="block">Crea algo increíble hoy.</span>
+                <span class="block">Mira el testimonio de nuestros clientes.</span>
             </h2>
-            <p class="mt-4 text-lg leading-6 text-indigo-200">
-                Laravel y Tailwind CSS te proporcionan todas las herramientas necesarias para construir aplicaciones web
-                modernas.
+            <p class="mt-4 text-xl leading-6 text-indigo-100">
+                Nuestros detalles han sido entregados en muchos lugares de la provincia y tenemos cientos de clientes
+                satisfechos.
             </p>
-            <a href="#"
+            <a href="{{ route('gallery') }}"
                 class="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50 sm:w-auto">
-                Comenzar ahora
+                Galería de Fotos
             </a>
         </div>
     </div>
-
-    
+    <br>
+    <br>
 @endsection
