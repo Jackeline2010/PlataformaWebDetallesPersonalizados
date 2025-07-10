@@ -1,0 +1,41 @@
+#**************************************************************************
+#COMANDOS PARA BASE DE DATOS
+#**************************************************************************
+
+#Crear Base de Datos
+CREATE DATABASE  'sistema_detalles';
+
+# Crear usuario
+CREATE USER 'detalles'@'localhost' IDENTIFIED BY 'Jackeline2025*';
+GRANT ALL PRIVILEGES ON * . * TO 'detalles'@'localhost';
+FLUSH PRIVILEGES;
+
+
+
+
+
+
+
+
+
+
+
+
+#**************************************************************************
+#COMANDOS APLICACION
+#**************************************************************************
+
+#Instalar dependencias
+npm install
+composer install
+
+#Migraciones BD
+php artisan migrate
+hp artisan db:seed
+
+#Ejecutar (en Laragon)
+npm run dev
+
+#Ejecutar (en Linux solo con PHP instalado)
+npm run dev
+php artisan serve

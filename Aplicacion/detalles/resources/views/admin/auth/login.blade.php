@@ -1,1 +1,0 @@
-<h1>Ingreso al Panel de Administracion</h1>

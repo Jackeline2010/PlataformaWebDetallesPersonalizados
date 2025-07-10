@@ -1,4 +1,0 @@
-CREATE DATABASE  'sistema_detalles';
-CREATE USER 'detalles'@'localhost' IDENTIFIED BY 'Jackeline2025*';
-GRANT ALL PRIVILEGES ON * . * TO 'detalles'@'localhost';
-FLUSH PRIVILEGES;
