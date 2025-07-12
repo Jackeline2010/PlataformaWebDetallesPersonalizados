@@ -31,7 +31,7 @@ composer install
 
 #Migraciones BD
 php artisan migrate
-hp artisan db:seed
+php artisan db:seed
 
 #Ejecutar (en Laragon)
 npm run dev
