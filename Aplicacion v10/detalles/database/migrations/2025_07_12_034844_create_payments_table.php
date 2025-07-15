@@ -13,6 +13,15 @@ return new class extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
+            $table->string('nombre', 50);
+            $table->string('codigo', 20)->unique();
+            $table->text('descripcion')->nullable();
+            $table->boolean('activo')->default(true);
+            $table->boolean('requiere_verificacion')->default(false);
+            $table->integer('dias_procesamiento')->default(0);
+            $table->decimal('comision_porcentaje', 5, 2)->default(0);
+            $table->decimal('comision_fija', 8, 2)->default(0);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

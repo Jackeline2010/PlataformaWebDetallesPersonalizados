@@ -50,6 +50,10 @@
                             </div>
                         </div>
                         <dl class="">
+                            <dt class="font-semibold text-gray-900 dark:text-white">Género</dt>
+                            <dd class="text-gray-500 dark:text-gray-400">Masculino</dd>
+                        </dl>
+                        <dl class="">
                             <dt class="font-semibold text-gray-900 dark:text-white">Dirección de Correo</dt>
                             <dd class="text-gray-500 dark:text-gray-400">{{ auth()->user()->email }}</dd>
                         </dl>
@@ -68,6 +72,14 @@
                         </dl>
                     </div>
                     <div class="space-y-4">
+                        <dl>
+                            <dt class="font-semibold text-gray-900 dark:text-white">Identificación</dt>
+                            <dd class="text-gray-500 dark:text-gray-400">0104257910</dd>
+                        </dl>
+                        <dl>
+                            <dt class="font-semibold text-gray-900 dark:text-white">Fecha de Nacimiento</dt>
+                            <dd class="text-gray-500 dark:text-gray-400">15/05/1981</dd>
+                        </dl>
                         <dl>
                             <dt class="font-semibold text-gray-900 dark:text-white">Teléfono Celular</dt>
                             <dd class="text-gray-500 dark:text-gray-400">098 733 7086</dd>
@@ -98,8 +110,8 @@
                 <button type="button" data-modal-target="accountInformationModal2"
                     data-modal-toggle="accountInformationModal2"
                     class="inline-flex w-full items-center justify-center rounded-lg bg-pink-600 px-5 py-2.5 text-lg font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 sm:w-auto">
-                    <svg class="-ms-0.5 me-1.5 h-4 w-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                        width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <svg class="-ms-0.5 me-1.5 h-4 w-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                        height="24" fill="none" viewBox="0 0 24 24">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z">
                         </path>
@@ -109,8 +121,7 @@
             </div>
             <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800 md:p-8">
                 <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Ultimas órdenes</h3>
-                <div
-                    class="flex flex-wrap items-center gap-y-4 border-b border-gray-200 pb-4 dark:border-gray-700 md:pb-5">
+                <div class="flex flex-wrap items-center gap-y-4 border-b border-gray-200 pb-4 dark:border-gray-700 md:pb-5">
                     <dl class="w-1/2 sm:w-48">
                         <dt class="text-base font-medium text-gray-500 dark:text-gray-400">Orden:</dt>
                         <dd class="mt-1.5 text-base font-semibold text-gray-900 dark:text-white">
@@ -475,7 +486,18 @@
                     <!-- Modal body -->
                     <form class="p-4 md:p-5">
                         <div class="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div class="col-span-2">
+                            <div class="col-span-2 sm:col-span-1">
+                                <label for="pick-up-point-input"
+                                    class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"> Identificación
+                                </label>
+                                <input type="text" id="pick-up-point-input"
+                                    class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
+                                    placeholder="Ingrese su identificación" required />
+                            </div>
+                            <div class="col-span-2 sm:col-span-1">
+
+                            </div>
+                            <div class="col-span-2 sm:col-span-1">
                                 <label for="pick-up-point-input"
                                     class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"> Nombres
                                 </label>
@@ -486,14 +508,13 @@
 
                             <div class="col-span-2 sm:col-span-1">
                                 <label for="full_name_info_modal"
-                                    class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"> Apellido
+                                    class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"> Apellidos
                                 </label>
                                 <input type="text" id="full_name_info_modal"
                                     class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
-                                    placeholder="Ingrese su apellido" required />
-                            </div>
-
-                            <div class="col-span-2 sm:col-span-1">
+                                    placeholder="Ingrese sus apellidos" required />
+                            </div> 
+                            <div class="col-span-2">
                                 <label for="email_info_modal"
                                     class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Correo
                                 </label>
@@ -501,7 +522,22 @@
                                     class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
                                     placeholder="Ingrese su email" required />
                             </div>
-
+                            <div class="col-span-2 sm:col-span-1">
+                                <label for="full_name_info_modal"
+                                    class="mb-2 block text-sm font-medium text-gray-900 dark:text-white"> Fecha de Nacimiento
+                                </label>
+                                <input type="text" id="full_name_info_modal"
+                                    class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
+                                    placeholder="Ingrese su apellido" required />
+                            </div>
+                            <div class="col-span-2 sm:col-span-1">
+                                <label for="email_info_modal"
+                                    class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Género
+                                </label>
+                                <input type="text" id="email_info_modal"
+                                    class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
+                                    placeholder="Ingrese su email" required />
+                            </div>
                             <div class="col-span-2">
                                 <label for="phone-input_billing_modal"
                                     class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Número de Celular
@@ -606,7 +642,8 @@
                         <span class="sr-only">Danger icon</span>
                     </div>
                     <p class="mb-3.5 text-gray-900 dark:text-white">¿<a href="#"
-                            class="font-medium text-primary-700 hover:underline dark:text-primary-500">{{ Auth::user()->name }}</a>, está seguro(a) que desea cancelar esta orden?</p>
+                            class="font-medium text-primary-700 hover:underline dark:text-primary-500">{{ Auth::user()->name }}</a>,
+                        está seguro(a) que desea cancelar esta orden?</p>
                     <p class="mb-4 text-gray-500 dark:text-gray-300">Esta acción no puede ser reversada.</p>
                     <div class="flex items-center justify-center space-x-4">
                         <button data-modal-toggle="deleteOrderModal" type="button"
