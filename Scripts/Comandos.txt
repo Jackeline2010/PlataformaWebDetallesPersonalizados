@@ -3,22 +3,30 @@
 #**************************************************************************
 
 #Crear Base de Datos
-CREATE DATABASE  'sistema_detalles';
+CREATE DATABASE sistema_detalles;
 
 # Crear usuario
 CREATE USER 'detalles'@'localhost' IDENTIFIED BY 'Jackeline2025*';
 GRANT ALL PRIVILEGES ON * . * TO 'detalles'@'localhost';
 FLUSH PRIVILEGES;
 
-
-
-
-
-
-
-
-
-
+#Borrado migraciones Laravel
+drop TABLE cart;
+drop TABLE transactions;
+drop TABLE order_products;
+drop TABLE categories_products;
+drop TABLE categories;
+drop TABLE addresses;
+drop TABLE orders;
+drop TABLE payments;
+drop TABLE clients;
+drop TABLE products;
+drop TABLE personal_access_tokens;
+drop TABLE failed_jobs;
+drop TABLE password_resets;
+drop TABLE password_reset_tokens;
+drop TABLE users;
+drop TABLE migrations;
 
 
 #**************************************************************************
