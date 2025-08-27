@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('client_id')->constrained('clients')->onDelete('restrict');
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('forma_pago_id')->constrained('payments')->onDelete('restrict');
             $table->string('numero_orden', 20)->unique();
             $table->date('fpedido');
@@ -23,7 +25,6 @@ return new class extends Migration
             $table->decimal('descuento', 12, 2)->default(0);
             $table->decimal('total', 12, 2);
             
-
             $table->string('direccion_entrega')->nullable();
             $table->string('contacto_entrega')->nullable();
             $table->string('telefono_contacto', 20)->nullable();
@@ -34,7 +35,7 @@ return new class extends Migration
 
         Schema::create('order_products', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('order_products_id')->constrained('orders')->onDelete('cascade');
+            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
             $table->foreignId('product_id')->constrained('products')->onDelete('restrict');
             $table->integer('cantidad')->default(0);
             $table->decimal('precio_unitario', 12, 2);

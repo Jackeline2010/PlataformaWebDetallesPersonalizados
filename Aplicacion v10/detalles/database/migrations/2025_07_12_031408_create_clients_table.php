@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('clients', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('identificacion', 20)->unique();
             $table->string('nombres',100);
             $table->string('apellidos',100);
