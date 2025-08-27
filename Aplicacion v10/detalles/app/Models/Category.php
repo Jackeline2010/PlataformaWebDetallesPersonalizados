@@ -36,10 +36,9 @@ class Category extends Model
 
     /**
      * Get the products for the category.
-     * Note: Product model will be created later
      */
-    // public function products()
-    // {
-    //     return $this->belongsToMany(Product::class, 'categories_products');
-    // }
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'categories_products');
+    }
 }

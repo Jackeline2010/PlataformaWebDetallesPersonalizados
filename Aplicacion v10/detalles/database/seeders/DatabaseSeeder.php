@@ -14,6 +14,9 @@ class DatabaseSeeder extends Seeder
         // Seed categories first
         $this->call(CategoriesSeeder::class);
 
+        // Seed products after categories
+        $this->call(ProductsSeeder::class);
+
         // Create admin user
         \App\Models\User::factory()->create([
             'name' => 'Administrador',
