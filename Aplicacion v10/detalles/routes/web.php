@@ -23,7 +23,9 @@ Route::get('/products', function () {
 })->name('products');
 
 Route::get('/gallery', function () {
-    return view('shop.pages.gallery');
+    $galleries = \App\Models\Gallery::activeOrdered()->get();
+    $histories = \App\Models\History::latest()->take(10)->get();
+    return view('shop.pages.gallery', compact('galleries', 'histories'));
 })->name('gallery');
 
 Route::get('/cart', function () {
