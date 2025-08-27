@@ -37,10 +37,10 @@
                 <img class="h-96 max-w-full rounded-lg" src="{{ asset('assets/photos/photo_10.jpg') }}" alt="">
             </div>
             <div>
-                <img class="h-96 max-w-full rounded-lg" src="{{ asset('assets/photos/photo_05.jpg') }}" alt="">
+                <img class="h-96 max-w-full rounded-lg" src="{{ asset('assets/photos/photo_11.jpg') }}" alt="">
             </div>
             <div>
-                <img class="h-96 max-w-full rounded-lg" src="{{ asset('assets/photos/photo_06.jpg') }}" alt="">
+                <img class="h-96 max-w-full rounded-lg" src="{{ asset('assets/photos/photo_12.jpg') }}" alt="">
             </div>
         </div>
     </div>

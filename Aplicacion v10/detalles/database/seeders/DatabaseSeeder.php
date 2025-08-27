@@ -17,6 +17,12 @@ class DatabaseSeeder extends Seeder
         // Seed products after categories
         $this->call(ProductsSeeder::class);
 
+        // Seed histories (testimonials/reviews)
+        $this->call(HistoriesSeeder::class);
+
+        // Seed gallery photos
+        $this->call(GallerySeeder::class);
+
         // Create admin user
         \App\Models\User::factory()->create([
             'name' => 'Administrador',

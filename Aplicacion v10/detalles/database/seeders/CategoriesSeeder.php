@@ -15,27 +15,43 @@ class CategoriesSeeder extends Seeder
     {
         $categories = [
             [
-                'nombre' => 'Arreglos',
+                'nombre' => 'Arreglos y Globos',
                 'descripcion' => 'Hermosos arreglos florales para toda ocasión',
+                'imagen' => '',
+                'icono' => 'assets/images/arreglo.svg',
                 'orden' => 1,
-                'activo' => true,
-            ],
-            [
-                'nombre' => 'Desayunos',
-                'descripcion' => 'Deliciosos desayunos sorpresa para consentir',
-                'orden' => 2,
-                'activo' => true,
-            ],
-            [
-                'nombre' => 'Detalles',
-                'descripcion' => 'Pequeños detalles que hacen la diferencia',
-                'orden' => 3,
                 'activo' => true,
             ],
             [
                 'nombre' => 'Peluches',
                 'descripcion' => 'Tiernos peluches para regalar amor',
+                'imagen' => '',
+                'icono' => 'assets/images/peluche.svg',
+                'orden' => 2,
+                'activo' => true,
+            ],
+            [
+                'nombre' => 'Chocolates y Dulces',
+                'descripcion' => 'Deliciosos chocolates y dulces para endulzar el día',
+                'imagen' => '',
+                'icono' => 'assets/images/chocolates.svg',
+                'orden' => 3,
+                'activo' => true,
+            ],
+            [
+                'nombre' => 'Artículos personalizados',
+                'descripcion' => 'Articulos con el toque especial para esa persona especial',
+                'imagen' => '',
+                'icono' => 'assets/images/taza.svg',
                 'orden' => 4,
+                'activo' => true,
+            ],
+            [
+                'nombre' => 'Cajas sorpresas',
+                'descripcion' => 'Cajas llenas de sorpresas para la persona que amas',
+                'imagen' => '',
+                'icono' => 'assets/images/cajaSorpresa.svg',
+                'orden' => 5,
                 'activo' => true,
             ],
         ];
