@@ -3,7 +3,17 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('shop.home');
+    $categories = \App\Models\Category::where('activo', true)
+                                    ->orderBy('orden')
+                                    ->get();
+    
+    $products = \App\Models\Product::with('categories')
+                                  ->where('activo', true)
+                                  ->orderBy('orden')
+                                  ->orderBy('created_at', 'desc')
+                                  ->get();
+    
+    return view('shop.home', compact('categories', 'products'));
 })->name('home');
 
 Route::get('/about', function () {

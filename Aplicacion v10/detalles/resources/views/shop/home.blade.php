@@ -72,44 +72,34 @@
     <br>
     <div class="py-8 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-center py-4 md:py-8 flex-wrap">
-                <button type="button"
-                    class="text-blue-700 hover:text-white border border-blue-600 bg-white hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:bg-gray-900 dark:focus:ring-blue-800">Todas
+            <div class="flex items-center justify-center py-4 md:py-8 flex-wrap" id="categoriesList">
+                <button type="button" data-category="all"
+                    class="category-btn active text-blue-700 hover:text-white border border-blue-600 bg-white hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:bg-gray-900 dark:focus:ring-blue-800">Todas
                     las categorías</button>
-                <button type="button"
-                    class="text-gray-900 border border-white hover:border-gray-200 dark:border-gray-900 dark:bg-gray-900 dark:hover:border-gray-700 bg-white focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:text-white dark:focus:ring-gray-800">Arreglos</button>
-                <button type="button"
-                    class="text-gray-900 border border-white hover:border-gray-200 dark:border-gray-900 dark:bg-gray-900 dark:hover:border-gray-700 bg-white focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:text-white dark:focus:ring-gray-800">Desayunos</button>
-                <button type="button"
-                    class="text-gray-900 border border-white hover:border-gray-200 dark:border-gray-900 dark:bg-gray-900 dark:hover:border-gray-700 bg-white focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:text-white dark:focus:ring-gray-800">Detalles</button>
-                <button type="button"
-                    class="text-gray-900 border border-white hover:border-gray-200 dark:border-gray-900 dark:bg-gray-900 dark:hover:border-gray-700 bg-white focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:text-white dark:focus:ring-gray-800">Peluches</button>
+                @foreach($categories as $category)
+                <button type="button" data-category="{{ $category->id }}"
+                    class="category-btn text-gray-900 border border-white hover:border-gray-200 dark:border-gray-900 dark:bg-gray-900 dark:hover:border-gray-700 bg-white focus:ring-4 focus:outline-none focus:ring-gray-300 rounded-full text-base font-medium px-5 py-2.5 text-center me-3 mb-3 dark:text-white dark:focus:ring-gray-800">{{ $category->nombre }}</button>
+                @endforeach
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div>
-                    <img class="h-auto max-w-full rounded-lg" src="{{ asset('assets/images/producto_001.jpg') }}"
-                        alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg" src="{{ asset('assets/images/producto_002.webp') }}"
-                        alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg" src="{{ asset('assets/images/producto_003.webp') }}"
-                        alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg" src="{{ asset('assets/images/producto_004.jpg') }}"
-                        alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg" src="{{ asset('assets/images/producto_005.webp') }}"
-                        alt="">
-                </div>
-                <div>
-                    <img class="h-auto max-w-full rounded-lg" src="{{ asset('assets/images/producto_006.jpg') }}"
-                        alt="">
-                </div>
+            <div id="productGallery" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                @forelse($products as $product)
+                    <div class="product-item" data-categories="{{ $product->categories->pluck('id')->implode(',') }}">
+                        <img class="h-auto max-w-full rounded-lg hover:scale-105 transition-transform duration-300" 
+                             src="{{ $product->imagen_principal ? asset($product->imagen_principal) : asset('assets/images/producto_001.jpg') }}"
+                             alt="{{ $product->nombre }}"
+                             title="{{ $product->nombre }}">
+                        <div class="mt-2 text-center">
+                            <h3 class="text-sm font-medium text-gray-900 dark:text-white">{{ $product->nombre }}</h3>
+                            @if($product->precio)
+                                <p class="text-lg font-bold text-pink-600">${{ number_format($product->precio, 2) }}</p>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div class="col-span-full text-center py-8">
+                        <p class="text-gray-500 dark:text-gray-400">No hay productos disponibles en este momento.</p>
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
@@ -199,4 +189,42 @@
     </div>
     <br>
     <br>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const categoryButtons = document.querySelectorAll('.category-btn');
+            const productItems = document.querySelectorAll('.product-item');
+
+            categoryButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const selectedCategory = this.getAttribute('data-category');
+                    
+                    // Remove active class from all buttons
+                    categoryButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                        btn.classList.remove('text-blue-700', 'border-blue-600');
+                        btn.classList.add('text-gray-900', 'border-white');
+                    });
+                    
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    this.classList.remove('text-gray-900', 'border-white');
+                    this.classList.add('text-blue-700', 'border-blue-600');
+                    
+                    // Filter products
+                    productItems.forEach(item => {
+                        const productCategories = item.getAttribute('data-categories').split(',');
+                        
+                        if (selectedCategory === 'all' || productCategories.includes(selectedCategory)) {
+                            item.style.display = 'block';
+                            item.classList.remove('hidden');
+                        } else {
+                            item.style.display = 'none';
+                            item.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
 @endsection
