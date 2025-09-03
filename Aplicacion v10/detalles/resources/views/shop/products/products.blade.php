@@ -18,7 +18,7 @@
             </div>
             <div class="mb-4 items-end justify-between space-y-4 sm:flex sm:space-y-0 md:mb-8">
                 <div>
-                    <h2 class="mt-3 text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">Todos los Productos
+                    <h2 id="productSubtitle" class="mt-3 text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">Todos los Productos
                     </h2>
                 </div>
                 <div class="flex items-center space-x-4">
@@ -171,10 +171,19 @@
         document.addEventListener('DOMContentLoaded', function() {
             const categoryButtons = document.querySelectorAll('.category-btn');
             const productItems = document.querySelectorAll('.product-item');
+            const productSubtitle = document.getElementById('productSubtitle');
 
             categoryButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const selectedCategory = this.getAttribute('data-category');
+                    const categoryName = this.textContent.trim();
+                    
+                    // Update subtitle based on selected category
+                    if (selectedCategory === 'all') {
+                        productSubtitle.textContent = 'Todos los Productos';
+                    } else {
+                        productSubtitle.textContent = categoryName;
+                    }
                     
                     // Remove active class from all buttons
                     categoryButtons.forEach(btn => {
