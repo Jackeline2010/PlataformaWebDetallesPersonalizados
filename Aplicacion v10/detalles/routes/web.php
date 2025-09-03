@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     $categories = \App\Models\Category::where('activo', true)
@@ -48,9 +49,14 @@ Route::get('/gallery', function () {
     return view('shop.pages.gallery', compact('galleries', 'histories'));
 })->name('gallery');
 
-Route::get('/cart', function () {
-    return view('shop.checkout.cart');
-})->name('cart');
+Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name('cart');
+
+// Cart management routes
+Route::post('/cart/add', [App\Http\Controllers\CartController::class, 'add'])->name('cart.add');
+Route::patch('/cart/update/{id}', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
+Route::delete('/cart/remove/{id}', [App\Http\Controllers\CartController::class, 'remove'])->name('cart.remove');
+Route::delete('/cart/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
+Route::get('/cart/count', [App\Http\Controllers\CartController::class, 'count'])->name('cart.count');
 
 Route::get('/order', function () {
     return view('shop.checkout.order');
