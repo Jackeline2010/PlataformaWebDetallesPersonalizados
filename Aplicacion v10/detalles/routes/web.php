@@ -29,7 +29,17 @@ Route::get('/terms', function () {
 })->name('terms');
 
 Route::get('/products', function () {
-    return view('shop.products.products');
+    $categories = \App\Models\Category::where('activo', true)
+                                    ->orderBy('orden')
+                                    ->get();
+    
+    $products = \App\Models\Product::with('categories')
+                                  ->where('activo', true)
+                                  ->orderBy('orden')
+                                  ->orderBy('created_at', 'desc')
+                                  ->get();
+    
+    return view('shop.products.products', compact('categories', 'products'));
 })->name('products');
 
 Route::get('/gallery', function () {
