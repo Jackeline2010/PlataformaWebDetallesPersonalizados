@@ -42,23 +42,13 @@
                         <ul class="p-2 text-left text-sm font-medium text-gray-500 dark:text-gray-400"
                             aria-labelledby="sortDropdownButton">
                             <li>
-                                <a href="#"
-                                    class="group inline-flex w-full items-center rounded-md px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white">
-                                    Más populares </a>
-                            </li>
-                            <li>
-                                <a href="#"
-                                    class="group inline-flex w-full items-center rounded-md px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white">
-                                    Lo más nuevo </a>
-                            </li>
-                            <li>
-                                <a href="#"
-                                    class="group inline-flex w-full items-center rounded-md px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white">
+                                <a href="#" data-sort="price-high"
+                                    class="sort-option group inline-flex w-full items-center rounded-md px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white">
                                     Precio mayor </a>
                             </li>
                             <li>
-                                <a href="#"
-                                    class="group inline-flex w-full items-center rounded-md px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white">
+                                <a href="#" data-sort="price-low"
+                                    class="sort-option group inline-flex w-full items-center rounded-md px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white">
                                     Precio menor </a>
                             </li>
                         </ul>
@@ -172,7 +162,10 @@
             const categoryButtons = document.querySelectorAll('.category-btn');
             const productItems = document.querySelectorAll('.product-item');
             const productSubtitle = document.getElementById('productSubtitle');
+            const sortOptions = document.querySelectorAll('.sort-option');
+            const productGallery = document.getElementById('productGallery');
 
+            // Category filtering functionality
             categoryButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const selectedCategory = this.getAttribute('data-category');
@@ -211,6 +204,70 @@
                     });
                 });
             });
+
+            // Sorting functionality
+            sortOptions.forEach(option => {
+                option.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const sortType = this.getAttribute('data-sort');
+                    
+                    // Get all visible products
+                    const visibleProducts = Array.from(productItems).filter(item => 
+                        item.style.display !== 'none' && !item.classList.contains('hidden')
+                    );
+                    
+                    // Sort products by price
+                    visibleProducts.sort((a, b) => {
+                        const priceA = extractPrice(a);
+                        const priceB = extractPrice(b);
+                        
+                        if (sortType === 'price-high') {
+                            return priceB - priceA; // Descending order (highest first)
+                        } else if (sortType === 'price-low') {
+                            return priceA - priceB; // Ascending order (lowest first)
+                        }
+                        return 0;
+                    });
+                    
+                    // Reorder products in the DOM
+                    visibleProducts.forEach(product => {
+                        productGallery.appendChild(product);
+                    });
+                    
+                    // Close dropdown (if using Flowbite or similar)
+                    const dropdown = document.getElementById('dropdownSort1');
+                    if (dropdown) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+            });
+
+            // Function to extract price from product element
+            function extractPrice(productElement) {
+                const priceElement = productElement.querySelector('.text-2xl.font-extrabold');
+                if (priceElement) {
+                    const priceText = priceElement.textContent.replace(/[^0-9.]/g, '');
+                    return parseFloat(priceText) || 0;
+                }
+                return 0;
+            }
+
+            // Toggle dropdown functionality
+            const sortButton = document.getElementById('sortDropdownButton1');
+            const dropdown = document.getElementById('dropdownSort1');
+            
+            if (sortButton && dropdown) {
+                sortButton.addEventListener('click', function() {
+                    dropdown.classList.toggle('hidden');
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!sortButton.contains(e.target) && !dropdown.contains(e.target)) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+            }
         });
     </script>
 @endsection
