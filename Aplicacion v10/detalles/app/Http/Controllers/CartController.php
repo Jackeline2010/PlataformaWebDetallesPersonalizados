@@ -55,18 +55,25 @@ class CartController extends Controller
             $cartItem->cantidad += $request->cantidad;
             $cartItem->updateTotal();
         } else {
+            // Calculate total before creating cart item
+            $precio_unitario = $product->precio;
+            $descuento = $product->descuento ?? 0;
+            $subtotal = $precio_unitario * $request->cantidad;
+            $discount_amount = $subtotal * ($descuento / 100);
+            $total = $subtotal - $discount_amount;
+            
             // Create new cart item
             $cartItem = Cart::create([
                 'user_id' => $userId,
                 'session_id' => $userId ? null : $sessionId,
                 'product_id' => $request->product_id,
                 'cantidad' => $request->cantidad,
-                'precio_unitario' => $product->precio,
-                'descuento' => $product->descuento ?? 0,
+                'precio_unitario' => $precio_unitario,
+                'descuento' => $descuento,
+                'total' => $total,
                 'personalizacion' => $request->personalizacion,
                 'fecha_agregado' => now(),
             ]);
-            $cartItem->updateTotal();
         }
 
         return response()->json([

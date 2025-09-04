@@ -3,6 +3,9 @@
 @section('title', 'SandyDecor - Productos')
 
 @section('content')
+    <!-- CSRF Token for AJAX requests -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
     <!-- Features Section -->
     <section class="bg-gray-50 py-8 antialiased dark:bg-gray-900 md:py-12">
         <div class="mx-auto max-w-screen-xl px-4 2xl:px-0">
@@ -121,15 +124,19 @@
                                 @endif
                                 
                                 @if($product->stock > 0)
-                                    <button type="button"
-                                        class="inline-flex items-center rounded-lg bg-pink-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-pink-700 focus:outline-none focus:ring-4 focus:ring-pink-300 dark:bg-pink-600 dark:hover:bg-pink-700 dark:focus:ring-pink-800">
+                                    <button type="button" 
+                                        class="buyButton inline-flex items-center rounded-lg bg-pink-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-pink-700 focus:outline-none focus:ring-4 focus:ring-pink-300 dark:bg-pink-600 dark:hover:bg-pink-700 dark:focus:ring-pink-800"
+                                        data-product-id="{{ $product->id }}"
+                                        data-product-name="{{ $product->nombre }}"
+                                        data-product-price="{{ $product->precio }}"
+                                        data-product-stock="{{ $product->stock }}">
                                         <svg class="-ms-2 me-2 h-5 w-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                                             width="24" height="24" fill="none" viewBox="0 0 24 24">
                                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                                                 stroke-width="2"
                                                 d="M4 4h1.5L8 16m0 0h8m-8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm.75-3H7.5M11 7H6.312M17 4v6m-3-3h6" />
                                         </svg>
-                                        Comprar
+                                        <span class="button-text">Comprar</span>
                                     </button>
                                 @else
                                     <button type="button" disabled
@@ -266,6 +273,99 @@
                     if (!sortButton.contains(e.target) && !dropdown.contains(e.target)) {
                         dropdown.classList.add('hidden');
                     }
+                });
+            }
+
+            // Buy Button Functionality
+            const buyButtons = document.querySelectorAll('.buyButton');
+            
+            // Set up CSRF token for AJAX requests
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            buyButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const productId = this.getAttribute('data-product-id');
+                    const productName = this.getAttribute('data-product-name');
+                    const productPrice = this.getAttribute('data-product-price');
+                    const productStock = parseInt(this.getAttribute('data-product-stock'));
+                    
+                    // Check if product is in stock
+                    if (productStock <= 0) {
+                        showMessage('Este producto está agotado', 'error');
+                        return;
+                    }
+                    
+                    // Disable button and show loading state
+                    const originalText = this.querySelector('.button-text').textContent;
+                    this.disabled = true;
+                    this.querySelector('.button-text').textContent = 'Agregando...';
+                    this.classList.add('opacity-75', 'cursor-not-allowed');
+                    
+                    // Prepare data for cart addition
+                    const cartData = {
+                        product_id: productId,
+                        cantidad: 1, // Default quantity is 1
+                        _token: csrfToken
+                    };
+                    
+                    // Send AJAX request to add product to cart
+                    fetch('/cart/add', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(cartData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showMessage(`${productName} agregado al carrito exitosamente`, 'success');
+                            // Update cart count if there's a cart counter in the UI
+                            updateCartCount(data.cart_count);
+                        } else {
+                            showMessage(data.message || 'Error al agregar el producto al carrito', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showMessage('Error al agregar el producto al carrito', 'error');
+                    })
+                    .finally(() => {
+                        // Restore button state
+                        this.disabled = false;
+                        this.querySelector('.button-text').textContent = originalText;
+                        this.classList.remove('opacity-75', 'cursor-not-allowed');
+                    });
+                });
+            });
+            
+            // Function to show messages to user
+            function showMessage(message, type = 'info') {
+                // Create message element
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
+                    type === 'success' ? 'bg-green-500 text-white' : 
+                    type === 'error' ? 'bg-red-500 text-white' : 
+                    'bg-blue-500 text-white'
+                }`;
+                messageDiv.textContent = message;
+                
+                // Add to page
+                document.body.appendChild(messageDiv);
+                
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    messageDiv.remove();
+                }, 3000);
+            }
+            
+            // Function to update cart count in UI (if cart counter exists)
+            function updateCartCount(count) {
+                const cartCountElements = document.querySelectorAll('.cart-count');
+                cartCountElements.forEach(element => {
+                    element.textContent = count;
                 });
             }
         });

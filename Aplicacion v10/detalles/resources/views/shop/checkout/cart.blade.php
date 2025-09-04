@@ -18,7 +18,7 @@
                                         <a href="#" class="shrink-0 md:order-1">
                                             @if($item->product->imagen_principal)
                                                 <img class="h-20 w-20 object-cover rounded" 
-                                                     src="{{ asset('assets/products/' . $item->product->imagen_principal) }}"
+                                                     src="{{ asset('' . $item->product->imagen_principal) }}"
                                                      alt="{{ $item->product->nombre }}" />
                                             @else
                                                 <div class="h-20 w-20 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
