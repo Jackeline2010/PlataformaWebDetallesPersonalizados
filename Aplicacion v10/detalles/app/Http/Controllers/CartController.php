@@ -76,11 +76,17 @@ class CartController extends Controller
             ]);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Producto agregado al carrito',
-            'cart_count' => Cart::getCartItems($userId, $sessionId)->count()
-        ]);
+        // Check if it's an AJAX request
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Producto agregado al carrito',
+                'cart_count' => Cart::getCartItems($userId, $sessionId)->count()
+            ]);
+        } else {
+            // Regular form submission - redirect to cart with success message
+            return redirect()->route('cart')->with('success', 'Producto agregado al carrito exitosamente');
+        }
     }
 
     /**

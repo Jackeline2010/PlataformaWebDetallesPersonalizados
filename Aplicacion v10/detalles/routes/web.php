@@ -58,9 +58,9 @@ Route::delete('/cart/remove/{id}', [App\Http\Controllers\CartController::class, 
 Route::delete('/cart/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
 Route::get('/cart/count', [App\Http\Controllers\CartController::class, 'count'])->name('cart.count');
 
-Route::get('/order', function () {
-    return view('shop.checkout.order');
-})->name('order');
+Route::get('/order', [App\Http\Controllers\OrderController::class, 'index'])->name('order');
+Route::post('/order/confirm', [App\Http\Controllers\OrderController::class, 'confirm'])->name('order.confirm');
+Route::post('/order/update-billing', [App\Http\Controllers\OrderController::class, 'updateBilling'])->name('order.updateBilling');
 
 Route::get('/profile', function () {
     return view('shop.pages.profile');
