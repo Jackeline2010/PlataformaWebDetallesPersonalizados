@@ -21,9 +21,8 @@ Route::get('/about', function () {
     return view('shop.pages.about');
 })->name('about');
 
-Route::get('/contact', function () {
-    return view('shop.pages.contact');
-})->name('contact');
+Route::get('/contact', [App\Http\Controllers\ContactController::class, 'index'])->name('contact');
+Route::post('/contact/send', [App\Http\Controllers\ContactController::class, 'send'])->name('contact.send');
 
 Route::get('/terms', function () {
     return view('shop.pages.terms');
