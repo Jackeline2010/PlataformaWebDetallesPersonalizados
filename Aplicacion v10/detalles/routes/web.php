@@ -3,132 +3,151 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\ProductController;
+/*
+|--------------------------------------------------------------------------
+| PÁGINAS PÚBLICAS
+|--------------------------------------------------------------------------
+*/
 Route::get('/', function () {
     $categories = \App\Models\Category::where('activo', true)
-                                    ->orderBy('orden')
-                                    ->get();
-    
+        ->orderBy('orden')
+        ->get();
+
     $products = \App\Models\Product::with('categories')
-                                  ->where('activo', true)
-                                  ->orderBy('orden')
-                                  ->orderBy('created_at', 'desc')
-                                  ->get();
-    
+        ->where('activo', true)
+        ->orderBy('orden')
+        ->orderBy('created_at', 'desc')
+        ->get();
+
     return view('shop.home', compact('categories', 'products'));
 })->name('home');
 
-Route::get('/about', function () {
-    return view('shop.pages.about');
-})->name('about');
-
-Route::get('/contact', [App\Http\Controllers\ContactController::class, 'index'])->name('contact');
-Route::post('/contact/send', [App\Http\Controllers\ContactController::class, 'send'])->name('contact.send');
-
-Route::get('/terms', function () {
-    return view('shop.pages.terms');
-})->name('terms');
+Route::get('/about', fn () => view('shop.pages.about'))->name('about');
+Route::get('/terms', fn () => view('shop.pages.terms'))->name('terms');
 
 Route::get('/products', function () {
     $categories = \App\Models\Category::where('activo', true)
-                                    ->orderBy('orden')
-                                    ->get();
-    
+        ->orderBy('orden')
+        ->get();
+
     $products = \App\Models\Product::with('categories')
-                                  ->where('activo', true)
-                                  ->orderBy('orden')
-                                  ->orderBy('created_at', 'desc')
-                                  ->get();
-    
+        ->where('activo', true)
+        ->orderBy('orden')
+        ->orderBy('created_at', 'desc')
+        ->get();
+
     return view('shop.products.products', compact('categories', 'products'));
 })->name('products');
 
 Route::get('/gallery', function () {
     $galleries = \App\Models\Gallery::activeOrdered()->get();
     $histories = \App\Models\History::latest()->take(10)->get();
+
     return view('shop.pages.gallery', compact('galleries', 'histories'));
 })->name('gallery');
 
-Route::get('/cart', [App\Http\Controllers\CartController::class, 'index'])->name('cart');
+/*
+|--------------------------------------------------------------------------
+| CARRITO
+|--------------------------------------------------------------------------
+*/
+Route::get('/cart', [CartController::class, 'index'])->name('cart');
+Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 
-// Cart management routes
-Route::post('/cart/add', [App\Http\Controllers\CartController::class, 'add'])->name('cart.add');
-Route::patch('/cart/update/{id}', [App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
-Route::delete('/cart/remove/{id}', [App\Http\Controllers\CartController::class, 'remove'])->name('cart.remove');
-Route::delete('/cart/clear', [App\Http\Controllers\CartController::class, 'clear'])->name('cart.clear');
-Route::get('/cart/count', [App\Http\Controllers\CartController::class, 'count'])->name('cart.count');
+/*
+|--------------------------------------------------------------------------
+| CLIENTE (AUTENTICADO)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth'])
+    ->prefix('cliente')
+    ->name('client.')
+    ->group(function () {
 
-Route::get('/order', [App\Http\Controllers\OrderController::class, 'index'])->name('order');
-Route::post('/order/confirm', [App\Http\Controllers\OrderController::class, 'confirm'])->name('order.confirm');
-Route::post('/order/update-billing', [App\Http\Controllers\OrderController::class, 'updateBilling'])->name('order.updateBilling');
+        Route::get('/dashboard', function () {
+            $orders = \App\Models\Order::where('user_id', auth()->id())
+                ->latest()
+                ->take(5)
+                ->get();
 
-Route::get('/profile', function () {
-    return view('shop.pages.profile');
-})->name('profile');
+            return view('client.dashboard', compact('orders'));
+        })->name('dashboard');
 
-Route::get('/admin', function () {
-    return view('admin.dashboard');
-})->name('admin');
+        Route::get('/orders', fn () => view('client.orders'))->name('orders');
+        Route::get('/profile', fn () => view('client.profile'))->name('profile');
+    });
 
-Route::get('/admin/invoices', function () {
-    return view('admin.sales.invoices');
-})->name('admin.invoices');
+/*
+|--------------------------------------------------------------------------
+| ADMIN
+|--------------------------------------------------------------------------
+*/
+         Route::middleware(['auth', 'admin'])
+        ->prefix('admin')
+        ->name('admin.')
+        ->group(function () {
 
-Route::get('/admin/orders', function () {
-    return view('admin.sales.orders');
-})->name('admin.orders');
+        /* DASHBOARD */
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])
+            ->name('dashboard');
 
-Route::get('/admin/shipments', function () {
-    return view('admin.sales.shipments');
-})->name('admin.shipments');
+        /* PERFIL */
+        Route::get('/profile', [ProfileController::class, 'perfil'])
+            ->name('profile');
 
-Route::get('/admin/transactions', function () {
-    return view('admin.sales.transactions');
-})->name('admin.transactions');
+        Route::post('/profile/update', [ProfileController::class, 'actualizar'])
+            ->name('profile.update');
 
-Route::get('/admin/products', function () {
-    return view('admin.catalog.products');
-})->name('admin.products');
+        /* CATÁLOGO */
+        Route::resource('products', ProductController::class)
+    ->names('products');
 
-Route::get('/admin/categories', function () {
-    return view('admin.catalog.categories');
-})->name('admin.categories');
+        Route::get('/categories', [CategoryController::class, 'index'])
+            ->name('categories');
 
-Route::get('/admin/inventory', function () {
-    return view('admin.catalog.inventory');
-})->name('admin.inventory');
+        Route::get('/inventory', [InventoryController::class, 'index'])
+            ->name('inventory');
 
-Route::get('/admin/customers', function () {
-    return view('admin.customers.customers');
-})->name('admin.customers');
+        /* PEDIDOS Y VENTAS */
+        Route::get('/orders', fn () => view('admin.orders.index'))
+            ->name('orders');
 
-Route::get('/admin/reviews', function () {
-    return view('admin.customers.reviews');
-})->name('admin.reviews');
+        Route::get('/invoices', fn () => view('admin.invoices.index'))
+            ->name('invoices');
 
-Route::get('/admin/customersreport', function () {
-    return view('admin.reporting.customers');
-})->name('admin.customersreport');
+        Route::get('/transactions', fn () => view('admin.transactions.index'))
+            ->name('transactions');
 
-Route::get('/admin/salesreport', function () {
-    return view('admin.reporting.sales');
-})->name('admin.salesreport');
+        Route::get('/shipments', fn () => view('admin.shipments.index'))
+            ->name('shipments');
 
-Route::get('/admin/productsreport', function () {
-    return view('admin.reporting.products');
-})->name('admin.productsreport');
+        /* USUARIOS */
+        Route::get('/customers', fn () => view('admin.customers.index'))
+            ->name('customers');
 
-Route::get('/admin/parameterssettings', function () {
-    return view('admin.settings.parameters');
-})->name('admin.parameterssettings');
+        Route::get('/reviews', fn () => view('admin.reviews.index'))
+            ->name('reviews');
 
-Route::get('/admin/rolesssettings', function () {
-    return view('admin.settings.roles');
-})->name('admin.rolesssettings');
+        /* REPORTES */
+        Route::get('/reports/sales', fn () => view('admin.reports.sales'))
+            ->name('reports.sales');
 
-Route::get('/admin/userssettings', function () {
-    return view('admin.settings.users');
-})->name('admin.userssettings');
+        Route::get('/reports/products', fn () => view('admin.reports.products'))
+            ->name('reports.products');
 
+        Route::get('/reports/customers', fn () => view('admin.reports.customers'))
+            ->name('reports.customers');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| AUTH
+|--------------------------------------------------------------------------
+*/
 Auth::routes();
-
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

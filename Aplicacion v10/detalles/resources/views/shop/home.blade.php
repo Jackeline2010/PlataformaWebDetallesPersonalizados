@@ -84,7 +84,7 @@
             <div id="productGallery" class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 @forelse($products as $product)
                     <div class="product-item" data-categories="{{ $product->categories->pluck('id')->implode(',') }}">
-                        <img class="h-auto max-w-full rounded-lg hover:scale-105 transition-transform duration-300" 
+                        <img class="h-auto max-w-full rounded-lg hover:scale-105 transition-transform duration-300"
                              src="{{ $product->imagen_principal ? asset($product->imagen_principal) : asset('assets/images/producto_001.jpg') }}"
                              alt="{{ $product->nombre }}"
                              title="{{ $product->nombre }}">
@@ -161,7 +161,7 @@
                         <div class="mt-5">
                             <h3 class="text-lg font-medium text-gray-900">Pagos seguros</h3>
                             <p class="mt-2 text-base text-gray-500">
-                                Paga de forma segura, aceptamos pagos con tarjeta de crédito, PayPal y transferencia
+                                Paga de forma segura, aceptamos pagos con tarjeta de crédito, y transferencia
                                 bancaria.
                             </p>
                         </div>
@@ -198,23 +198,23 @@
             categoryButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const selectedCategory = this.getAttribute('data-category');
-                    
+
                     // Remove active class from all buttons
                     categoryButtons.forEach(btn => {
                         btn.classList.remove('active');
                         btn.classList.remove('text-blue-700', 'border-blue-600');
                         btn.classList.add('text-gray-900', 'border-white');
                     });
-                    
+
                     // Add active class to clicked button
                     this.classList.add('active');
                     this.classList.remove('text-gray-900', 'border-white');
                     this.classList.add('text-blue-700', 'border-blue-600');
-                    
+
                     // Filter products
                     productItems.forEach(item => {
                         const productCategories = item.getAttribute('data-categories').split(',');
-                        
+
                         if (selectedCategory === 'all' || productCategories.includes(selectedCategory)) {
                             item.style.display = 'block';
                             item.classList.remove('hidden');
