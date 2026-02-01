@@ -1,113 +1,162 @@
 @extends('layouts.admin')
 
-@section('title', 'Dashboard Admin')
+@section('title','Panel de Administración')
 
 @section('content')
-<div class="flex min-h-screen bg-[#FFF0F5]">
 
-    <!-- Sidebar / Menú vertical rosa pastel -->
-    <aside class="w-64 bg-[#FBD4D2] p-6 space-y-6 flex-shrink-0">
-        <!-- Logo o título del sidebar -->
-        <h2 class="text-2xl font-bold text-gray-800 mb-8 text-center">
+<div class="p-6">
 
-        </h2>
+    <h1 class="text-4xl font-bold text-pink-400 mb-8 text-center">
+        Panel de Administración
+    </h1>
 
-        <!-- Menú -->
-        <nav class="space-y-4">
-            <a href="#" class="block py-2 px-4 rounded-xl text-gray-800 font-medium hover:bg-[#F18C86] hover:text-white transition">Dashboard</a>
-            <a href="#" class="block py-2 px-4 rounded-xl text-gray-800 font-medium hover:bg-[#F18C86] hover:text-white transition">Pedidos</a>
-            <a href="#" class="block py-2 px-4 rounded-xl text-gray-800 font-medium hover:bg-[#F18C86] hover:text-white transition">Clientes</a>
-            <a href="#" class="block py-2 px-4 rounded-xl text-gray-800 font-medium hover:bg-[#F18C86] hover:text-white transition">Productos</a>
-        </nav>
-    </aside>
+    {{-- CARDS SUPERIORES --}}
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
 
-    <!-- Contenido principal -->
-    <div class="flex-1 p-6">
-
-        <!-- Cabecera con título -->
-        <header class="mb-12">
-            <h1 class="text-5xl md:text-6xl font-extrabold text-center bg-clip-text text-transparent"
-                style="background-image: linear-gradient(90deg, #FF7EB9, #FFB3C6); font-family: 'Inter', sans-serif;">
-                Panel de Administración
-            </h1>
-        </header>
-
-        <!-- Cards métricas -->
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
-            <!-- Pedidos -->
-            <div class="bg-white rounded-xl shadow-lg p-6 border-l-8 border-[#007BFF] flex items-center space-x-4 hover:scale-105 transition-transform duration-300">
-                <div class="text-[#007BFF] text-4xl">
-                    <i class="fas fa-shopping-cart"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-500">Pedidos</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ $totalOrders ?? 0 }}</p>
-                </div>
-            </div>
-
-            <!-- Ventas Totales -->
-            <div class="bg-white rounded-xl shadow-lg p-6 border-l-8 border-[#28A745] flex items-center space-x-4 hover:scale-105 transition-transform duration-300">
-                <div class="text-[#28A745] text-4xl">
-                    <i class="fas fa-dollar-sign"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-500">Ventas Totales</p>
-                    <p class="text-3xl font-bold text-gray-800">
-                        $ {{ number_format($totalSales ?? 0, 2) }}
-                    </p>
-                </div>
-            </div>
-
-            <!-- Clientes -->
-            <div class="bg-white rounded-xl shadow-lg p-6 border-l-8 border-[#6F42C1] flex items-center space-x-4 hover:scale-105 transition-transform duration-300">
-                <div class="text-[#6F42C1] text-4xl">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-500">Clientes</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ $customers ?? 0 }}</p>
-                </div>
-            </div>
-
-            <!-- Productos Activos -->
-            <div class="bg-white rounded-xl shadow-lg p-6 border-l-8 border-[#FD7E14] flex items-center space-x-4 hover:scale-105 transition-transform duration-300">
-                <div class="text-[#FD7E14] text-4xl">
-                    <i class="fas fa-box-open"></i>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-500">Productos Activos</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ $products ?? 0 }}</p>
-                </div>
-            </div>
+        <div class="bg-white rounded-xl shadow p-5 border-l-4 border-blue-500">
+            <p class="text-gray-500">Pedidos</p>
+            <h2 class="text-3xl font-bold"><span class="counter" data-target="{{ $totalOrders }}">0</span>
+            </h2>
         </div>
 
-        <!-- Sección inferior: Actividad y Estado -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Actividad reciente -->
-            <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center space-x-2">
-                    <i class="fas fa-chart-line text-blue-500"></i>
-                    <span>Actividad reciente</span>
-                </h2>
-                <p class="text-gray-500 text-sm">
-                    Próximamente podrás ver pedidos recientes, ventas y movimientos.
-                </p>
-            </div>
+        <div class="bg-white rounded-xl shadow p-5 border-l-4 border-green-500">
+            <p class="text-gray-500">Ventas Totales</p>
+        <h2 class="text-3xl font-bold">$ <span class="counter-money" data-target="{{ $totalSales ?? 0 }}">0.00</span>
+        </h2>
+        </div>
 
-            <!-- Estado del sistema -->
-            <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center space-x-2">
-                    <i class="fas fa-cogs text-purple-500"></i>
-                    <span>Estado del sistema</span>
-                </h2>
-                <ul class="space-y-2 text-sm text-gray-600">
-                    <li>✅ Sistema operativo</li>
-                    <li>✅ Base de datos conectada</li>
-                    <li>✅ Usuario administrador activo</li>
-                </ul>
-            </div>
+        <div class="bg-white rounded-xl shadow p-5 border-l-4 border-purple-500">
+            <p class="text-gray-500">Clientes</p>
+            <h2 class="text-3xl font-bold"><span class="counter" data-target="{{ $customers }}">0</span>
+            </h2>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-5 border-l-4 border-orange-500">
+            <p class="text-gray-500">Productos Activos</p>
+            <h2 class="text-3xl font-bold"><span class="counter" data-target="{{ $products }}">0</span>
+            </h2>
         </div>
 
     </div>
+
+    {{-- BLOQUES INFERIORES --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        {{-- ACTIVIDAD --}}
+        <div class="bg-white rounded-xl shadow p-6">
+        <h3 class="text-lg font-semibold mb-3">Actividad reciente</h3>
+
+     @if($recentOrders->count() == 0)
+        <p class="text-gray-500">
+            Aún no hay pedidos registrados.
+        </p>
+    @else
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b text-gray-500">
+                    <th class="text-left py-2">Pedido</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach($recentOrders as $order)
+                <tr class="border-b">
+
+                    <td class="py-2 font-semibold">
+                        {{ $order->numero_orden }}
+                    </td>
+
+                    <td class="text-center">
+                        $ {{ number_format($order->total,2) }}
+                    </td>
+
+                    <td class="text-center">
+                        <span class="px-2 py-1 rounded text-white text-xs
+                            @if($order->estado=='ING') bg-yellow-500
+                            @elseif($order->estado=='PEN') bg-blue-500
+                            @else bg-green-500
+                            @endif">
+                            {{ $order->estado }}
+                        </span>
+                    </td>
+
+                    <td class="text-center">
+                        {{ $order->created_at->format('d/m/Y') }}
+                    </td>
+
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
 </div>
+
+
+        {{-- ESTADO --}}
+        <div class="bg-white rounded-xl shadow p-6">
+            <h3 class="text-lg font-semibold mb-3">Estado del sistema</h3>
+
+            <ul class="space-y-2 text-sm">
+
+                <li class="flex items-center gap-2">
+                    ✅ Sistema operativo
+                </li>
+
+                <li class="flex items-center gap-2">
+                    ✅ Base de datos conectada
+                </li>
+
+                <li class="flex items-center gap-2">
+                    ✅ Usuario administrador activo
+                </li>
+
+            </ul>
+        </div>
+
+    </div>
+
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Contadores enteros (Pedidos, Clientes, Productos)
+  document.querySelectorAll('.counter').forEach(el => {
+    const target = parseInt(el.dataset.target || "0", 10);
+    const duration = 900; // ms
+    const start = 0;
+    const startTime = performance.now();
+
+    const step = (now) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const value = Math.floor(start + (target - start) * progress);
+      el.textContent = value.toLocaleString('es-EC');
+      if (progress < 1) requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
+  });
+
+  // Contador dinero (Ventas)
+  document.querySelectorAll('.counter-money').forEach(el => {
+    const target = parseFloat(el.dataset.target || "0");
+    const duration = 1000; // ms
+    const start = 0;
+    const startTime = performance.now();
+
+    const step = (now) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const value = start + (target - start) * progress;
+      el.textContent = value.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (progress < 1) requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
+  });
+
+});
+</script>
+
 @endsection
