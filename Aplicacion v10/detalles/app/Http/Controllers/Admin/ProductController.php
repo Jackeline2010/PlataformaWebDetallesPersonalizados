@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
@@ -17,29 +18,51 @@ class ProductController extends Controller
 
     public function create()
     {
-        $categories = Category::where('activo', true)->get();
-        return view('admin.products.create', compact('categories'));
+        $categories = Category::where('activo', true)
+        ->orderBy('nombre')
+        ->get()
+        ->unique('nombre')
+        ->values();
+
+    return view('admin.products.create', compact('categories'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'nombre' => 'required|string|max:255',
-            'precio' => 'required|numeric',
-            'stock' => 'required|integer',
+        $data = $request->validate([
+            'nombre'            => 'required|string|max:255',
+            'descripcion_corta' => 'nullable|string|max:255',
+            'precio'            => 'required|numeric|min:0',
+            'stock'             => 'required|integer|min:0',
+            'activo'            => 'nullable|boolean',
+            'categories'        => 'nullable|array',
+            'categories.*'      => 'integer|exists:categories,id',
         ]);
 
-        $product = Product::create([
-            'nombre' => $request->nombre,
-            'descripcion_corta' => $request->descripcion_corta,
-            'precio' => $request->precio,
-            'stock' => $request->stock,
-            'activo' => true,
-        ]);
+        // checkbox producto activo
+        $data['activo'] = $request->boolean('activo');
 
-        if ($request->has('categories')) {
-            $product->categories()->sync($request->categories);
+        // fingreso obligatorio (si en BD es DATE)
+        $data['fingreso'] = now()->toDateString();
+
+        // SLUG ÚNICO
+        $baseSlug = Str::slug($data['nombre']);
+        $slug = $baseSlug;
+        $i = 2;
+
+        while (Product::withTrashed()->where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $i;
+            $i++;
         }
+
+        $data['slug'] = $slug;
+
+        // categorías
+        $categories = $data['categories'] ?? [];
+        unset($data['categories']);
+
+        $product = Product::create($data);
+        $product->categories()->sync($categories);
 
         return redirect()
             ->route('admin.products.index')
@@ -48,29 +71,56 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
-        $categories = Category::where('activo', true)->get();
-        return view('admin.products.edit', compact('product', 'categories'));
+        $categories = Category::where('activo', true)
+        ->orderBy('nombre')
+        ->get()
+        ->unique('nombre')
+        ->values();
+
+    $selectedCategories = $product->categories()->pluck('categories.id')->toArray();
+
+    return view('admin.products.edit', compact('product', 'categories', 'selectedCategories'));
     }
 
     public function update(Request $request, Product $product)
     {
-        $request->validate([
-            'nombre' => 'required|string|max:255',
-            'precio' => 'required|numeric',
-            'stock' => 'required|integer',
+        $data = $request->validate([
+            'nombre'            => 'required|string|max:255',
+            'descripcion_corta' => 'nullable|string|max:255',
+            'precio'            => 'required|numeric|min:0',
+            'stock'             => 'required|integer|min:0',
+            'activo'            => 'nullable|boolean',
+            'categories'        => 'nullable|array',
+            'categories.*'      => 'integer|exists:categories,id',
         ]);
 
-        $product->update($request->only([
-            'nombre',
-            'descripcion_corta',
-            'precio',
-            'stock',
-            'activo'
-        ]));
+        $data['activo'] = $request->boolean('activo');
 
-        if ($request->has('categories')) {
-            $product->categories()->sync($request->categories);
+        // Si cambió el nombre, recalcular slug único
+        if ($product->nombre !== $data['nombre']) {
+            $baseSlug = Str::slug($data['nombre']);
+            $slug = $baseSlug;
+            $i = 2;
+
+           while (
+      Product::withTrashed()
+        ->where('slug', $slug)
+        ->where('id', '!=', $product->id)
+        ->exists()
+)
+                {
+                $slug = $baseSlug . '-' . $i;
+                $i++;
+            }
+
+            $data['slug'] = $slug;
         }
+
+        $categories = $data['categories'] ?? [];
+        unset($data['categories']);
+
+        $product->update($data);
+        $product->categories()->sync($categories);
 
         return redirect()
             ->route('admin.products.index')
@@ -80,7 +130,6 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         $product->delete();
-
         return back()->with('success', 'Producto eliminado');
     }
 }

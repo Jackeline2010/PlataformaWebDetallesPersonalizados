@@ -46,16 +46,29 @@ class Product extends Model
 
     protected static function boot()
     {
-        parent::boot();
+         parent::boot();
 
-        static::creating(function ($product) {
-            if (empty($product->slug)) {
-                $product->slug = Str::slug($product->nombre);
+    static::creating(function ($product) {
+
+        //Slug único
+        if (empty($product->slug)) {
+            $baseSlug = Str::slug($product->nombre);
+            $slug = $baseSlug;
+            $i = 2;
+
+            while (static::withTrashed()->where('slug', $slug)->exists()) {
+                $slug = $baseSlug . '-' . $i;
+                $i++;
             }
-            if (empty($product->sku)) {
-                $product->sku = 'PROD-' . strtoupper(Str::random(8));
-            }
-        });
+
+            $product->slug = $slug;
+        }
+
+        // SKU
+        if (empty($product->sku)) {
+            $product->sku = 'PROD-' . strtoupper(Str::random(8));
+        }
+    });
     }
 
     /**

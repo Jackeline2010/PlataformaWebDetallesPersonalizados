@@ -93,6 +93,8 @@ Route::middleware(['auth'])
         ->name('admin.')
         ->group(function () {
 
+        Route::resource('products', ProductController::class);
+
         /* DASHBOARD */
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])
             ->name('dashboard');
