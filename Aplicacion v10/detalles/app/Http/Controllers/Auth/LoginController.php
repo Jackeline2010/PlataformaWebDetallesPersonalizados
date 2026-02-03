@@ -10,6 +10,29 @@ class LoginController extends Controller
 {
     use AuthenticatesUsers;
 
+
+    protected function credentials(\Illuminate\Http\Request $request)
+{
+    return [
+        'email' => $request->email,
+        'password' => $request->password,
+        'activo' => 1,
+    ];
+}
+protected function sendFailedLoginResponse(\Illuminate\Http\Request $request)
+{
+    $user = \App\Models\User::where('email', $request->email)->first();
+
+    if ($user && !$user->activo) {
+        return back()
+            ->withInput($request->only($this->username(), 'remember'))
+            ->withErrors([
+                $this->username() => 'Tu cuenta está inactiva. Contacta al administrador.'
+            ]);
+    }
+    return parent::sendFailedLoginResponse($request);
+}
+
     /**
      * Create a new controller instance.
      */

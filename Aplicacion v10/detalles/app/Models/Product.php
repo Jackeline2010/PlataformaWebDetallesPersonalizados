@@ -12,6 +12,7 @@ class Product extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'category_id', // ✅ categoría principal
         'nombre',
         'slug',
         'descripcion',
@@ -46,33 +47,49 @@ class Product extends Model
 
     protected static function boot()
     {
-         parent::boot();
+        parent::boot();
 
-    static::creating(function ($product) {
+        static::creating(function ($product) {
 
-        //Slug único
-        if (empty($product->slug)) {
-            $baseSlug = Str::slug($product->nombre);
-            $slug = $baseSlug;
-            $i = 2;
+            // Slug único (incluye soft-deletes)
+            if (empty($product->slug)) {
+                $baseSlug = Str::slug($product->nombre);
+                $slug = $baseSlug;
+                $i = 2;
 
-            while (static::withTrashed()->where('slug', $slug)->exists()) {
-                $slug = $baseSlug . '-' . $i;
-                $i++;
+                while (static::withTrashed()->where('slug', $slug)->exists()) {
+                    $slug = $baseSlug . '-' . $i;
+                    $i++;
+                }
+
+                $product->slug = $slug;
             }
 
-            $product->slug = $slug;
-        }
+            // SKU automático
+            if (empty($product->sku)) {
+                $product->sku = 'PROD-' . strtoupper(Str::random(8));
+            }
+        });
 
-        // SKU
-        if (empty($product->sku)) {
-            $product->sku = 'PROD-' . strtoupper(Str::random(8));
-        }
-    });
+        static::updating(function ($product) {
+
+            // si cambió el nombre y el slug está vacío o igual al viejo nombre,
+            // puedes recalcular aquí si quieres (opcional).
+            // Por ahora NO lo recalculo para no cambiar slugs existentes automáticamente.
+        });
     }
 
     /**
-     * Relationship with categories (many-to-many)
+     * Categoría principal (1 producto = 1 categoría principal)
+     * Usa products.category_id
+     */
+    public function principalCategory()
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    /**
+     *Categorías adicionales (many-to-many)
      */
     public function categories()
     {
@@ -100,7 +117,8 @@ class Product extends Model
      */
     public function getPriceWithDiscountAttribute()
     {
-        return $this->precio - ($this->precio * $this->descuento / 100);
+        $descuento = $this->descuento ?? 0;
+        return $this->precio - ($this->precio * $descuento / 100);
     }
 
     /**
@@ -108,7 +126,7 @@ class Product extends Model
      */
     public function isInStock()
     {
-        return $this->stock > 0;
+        return ($this->stock ?? 0) > 0;
     }
 
     /**
@@ -116,6 +134,6 @@ class Product extends Model
      */
     public function needsRestocking()
     {
-        return $this->stock <= $this->stock_minimo;
+        return ($this->stock ?? 0) <= ($this->stock_minimo ?? 0);
     }
 }

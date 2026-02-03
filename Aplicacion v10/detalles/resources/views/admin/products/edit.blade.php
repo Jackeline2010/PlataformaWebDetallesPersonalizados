@@ -23,6 +23,11 @@
             </div>
         @endif
 
+        @php
+            // Tomamos la categoría actual del producto (como 1 sola "principal")
+            $currentCategoryId = old('category_id', optional($product->categories->first())->id);
+        @endphp
+
         <form method="POST" action="{{ route('admin.products.update', $product) }}" class="space-y-6">
             @csrf
             @method('PUT')
@@ -68,7 +73,7 @@
                     @enderror
                 </div>
 
-
+                {{-- STOCK --}}
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Stock</label>
                     <input
@@ -99,38 +104,25 @@
                     @enderror
                 </div>
 
-                {{-- CATEGORÍAS (checkbox) --}}
+                {{-- 1 CATEGORÍA PRINCIPAL --}}
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Categorías</label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Categoría principal *</label>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        @forelse($categories as $cat)
-                            @php
-                                $checked = in_array(
-                                    $cat->id,
-                                    old('categories', $selectedCategories ?? [])
-                                );
-                            @endphp
+                    <select
+                        name="category_id"
+                        class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3
+                               focus:outline-none focus:ring-2 focus:ring-pink-300"
+                        required
+                    >
+                        <option value="">-- Selecciona una categoría --</option>
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat->id }}" {{ (string)$currentCategoryId === (string)$cat->id ? 'selected' : '' }}>
+                                {{ $cat->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
 
-                            <label class="flex items-center gap-2 p-3 rounded-xl border border-pink-100 bg-pink-50/40 hover:bg-pink-50 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    name="categories[]"
-                                    value="{{ $cat->id }}"
-                                    class="rounded border-pink-300 text-pink-500 focus:ring-pink-300"
-                                    {{ $checked ? 'checked' : '' }}
-                                >
-                                <span class="text-sm text-gray-700">{{ $cat->nombre }}</span>
-                            </label>
-                        @empty
-                            <p class="text-sm text-gray-500">No hay categorías activas.</p>
-                        @endforelse
-                    </div>
-
-                    @error('categories')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
-                    @error('categories.*')
+                    @error('category_id')
                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
@@ -144,7 +136,7 @@
 
                     <label class="inline-flex items-center cursor-pointer">
                         <input type="checkbox" name="activo" value="1" class="sr-only peer"
-                               {{ old('activo', (int) $product->activo) ? 'checked' : '' }}>
+                               {{ old('activo', (int)($product->activo ?? 1)) ? 'checked' : '' }}>
                         <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-pink-500 relative transition">
                             <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition
                                         peer-checked:translate-x-5"></div>
@@ -169,7 +161,6 @@
             </div>
 
         </form>
-
     </div>
 </div>
 @endsection
