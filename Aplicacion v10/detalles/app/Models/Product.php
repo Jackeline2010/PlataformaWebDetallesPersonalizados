@@ -11,8 +11,10 @@ class Product extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'products';
+
     protected $fillable = [
-        'category_id', // ✅ categoría principal
+        'category_id', // categoría principal (solo tipo_producto)
         'nombre',
         'slug',
         'descripcion',
@@ -22,8 +24,6 @@ class Product extends Model
         'stock_minimo',
         'fingreso',
         'descuento',
-        'imagen_principal',
-        'imagenes_adicionales',
         'peso',
         'sku',
         'activo',
@@ -41,99 +41,133 @@ class Product extends Model
         'activo' => 'boolean',
         'destacado' => 'boolean',
         'personalizable' => 'boolean',
-        'imagenes_adicionales' => 'array',
         'opciones_personalizacion' => 'array',
+        'orden' => 'integer',
+        'stock' => 'integer',
+        'stock_minimo' => 'integer',
     ];
 
-    protected static function boot()
-    {
-        parent::boot();
+   protected static function booted()
+{
+    static::creating(function (Product $product) {
 
-        static::creating(function ($product) {
+        // Slug único (incluye soft-deletes)
+        if (empty($product->slug) && !empty($product->nombre)) {
+            $baseSlug = Str::slug($product->nombre);
+            $slug = $baseSlug;
+            $i = 2;
 
-            // Slug único (incluye soft-deletes)
-            if (empty($product->slug)) {
-                $baseSlug = Str::slug($product->nombre);
-                $slug = $baseSlug;
-                $i = 2;
-
-                while (static::withTrashed()->where('slug', $slug)->exists()) {
-                    $slug = $baseSlug . '-' . $i;
-                    $i++;
-                }
-
-                $product->slug = $slug;
+            while (static::withTrashed()->where('slug', $slug)->exists()) {
+                $slug = $baseSlug . '-' . $i;
+                $i++;
             }
 
-            // SKU automático
-            if (empty($product->sku)) {
-                $product->sku = 'PROD-' . strtoupper(Str::random(8));
-            }
-        });
+            $product->slug = $slug;
+        }
 
-        static::updating(function ($product) {
+        // SKU automático + ÚNICO (incluye soft-deletes)
+        if (empty($product->sku)) {
+            do {
+                $sku = 'SD-' . Str::upper(Str::random(8));
+            } while (static::withTrashed()->where('sku', $sku)->exists());
 
-            // si cambió el nombre y el slug está vacío o igual al viejo nombre,
-            // puedes recalcular aquí si quieres (opcional).
-            // Por ahora NO lo recalculo para no cambiar slugs existentes automáticamente.
-        });
-    }
+            $product->sku = $sku;
+        }
+
+        // Defaults útiles
+        if ($product->activo === null) $product->activo = true;
+        if ($product->personalizable === null) $product->personalizable = false;
+        if ($product->stock === null) $product->stock = 0;
+        if (empty($product->fingreso)) $product->fingreso = now()->toDateString();
+    });
+}
 
     /**
-     * Categoría principal (1 producto = 1 categoría principal)
-     * Usa products.category_id
+     * Genera un SKU único (incluye soft deletes).
      */
+    public static function generateUniqueSku(): string
+    {
+        do {
+            // Mantengo tu estilo pero con tu prefijo de marca
+            $sku = 'SD-' . Str::upper(Str::random(8));
+        } while (static::withTrashed()->where('sku', $sku)->exists());
+
+        return $sku;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | RELACIONES
+    |--------------------------------------------------------------------------
+    */
+
+    // Categoría principal (products.category_id -> categories.id)
     public function principalCategory()
     {
         return $this->belongsTo(Category::class, 'category_id');
     }
 
-    /**
-     *Categorías adicionales (many-to-many)
-     */
-    public function categories()
+    // Alias útil
+    public function category()
     {
-        return $this->belongsToMany(Category::class, 'categories_products');
+        return $this->principalCategory();
     }
 
     /**
-     * Scope for active products
+     * Categorías/Filtros (many-to-many)
+     *
+     * ⚠️ MUY IMPORTANTE:
+     * Confirma el nombre REAL de tu tabla pivote.
+     * Si tu tabla se llama "categories_products" déjalo así.
+     * Si se llama "categorias_products" cambia el nombre abajo.
      */
+    public function categories()
+    {
+        return $this->belongsToMany(
+            Category::class,
+            'categories_products', // <-- cambia a 'categorias_products' si tu tabla se llama así
+            'product_id',
+            'category_id'
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SCOPES
+    |--------------------------------------------------------------------------
+    */
+
     public function scopeActive($query)
     {
         return $query->where('activo', true);
     }
 
-    /**
-     * Scope for featured products
-     */
     public function scopeFeatured($query)
     {
         return $query->where('destacado', true);
     }
 
-    /**
-     * Get the price with discount applied
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | ACCESSORS / HELPERS
+    |--------------------------------------------------------------------------
+    */
+
     public function getPriceWithDiscountAttribute()
     {
-        $descuento = $this->descuento ?? 0;
-        return $this->precio - ($this->precio * $descuento / 100);
+        $descuento = (float) ($this->descuento ?? 0);
+        $precio = (float) ($this->precio ?? 0);
+
+        return $precio - ($precio * $descuento / 100);
     }
 
-    /**
-     * Check if product is in stock
-     */
-    public function isInStock()
+    public function isInStock(): bool
     {
-        return ($this->stock ?? 0) > 0;
+        return (int) ($this->stock ?? 0) > 0;
     }
 
-    /**
-     * Check if product needs restocking
-     */
-    public function needsRestocking()
+    public function needsRestocking(): bool
     {
-        return ($this->stock ?? 0) <= ($this->stock_minimo ?? 0);
+        return (int) ($this->stock ?? 0) <= (int) ($this->stock_minimo ?? 0);
     }
 }

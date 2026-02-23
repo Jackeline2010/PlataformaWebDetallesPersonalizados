@@ -9,117 +9,167 @@
 
         {{-- LOGO --}}
         <div class="flex items-center mb-8">
-            <span class="text-2xl font-bold text-white tracking-wide sidebar-text">
+            <span class="text-2xl font-bold text-pink-900 tracking-wide sidebar-text">
                 SandyDecor
             </span>
-            <span class="text-2xl font-bold text-white tracking-wide hidden sidebar-mini">
+            <span class="text-2xl font-bold text-pink-900 tracking-wide hidden sidebar-mini">
                 SD
             </span>
         </div>
 
         @if(auth()->check() && auth()->user()->role === 'admin')
 
-        <nav class="space-y-2">
+            <nav class="space-y-2">
 
-            <a href="{{ route('admin.dashboard') }}"
-               class="sidebar-link text-white">
-                <span class="sidebar-icon">🏠</span>
-                <span class="sidebar-text">Dashboard</span>
-            </a>
+                {{-- DASHBOARD --}}
+                <a href="{{ route('admin.dashboard') }}"
+                   class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/30 transition text-pink-900">
+                    <span class="text-lg">🏠</span>
+                    <span class="sidebar-text font-semibold">Dashboard</span>
+                </a>
 
-            <div class="group">
-                <button type="button"
-                        onclick="toggleSubmenu('catalogo')"
-                        class="sidebar-link text-white w-full">
-                    <span class="sidebar-icon">📦</span>
-                    <span class="sidebar-text">Catálogo</span>
-                </button>
+                {{-- CATÁLOGO --}}
+                <div class="mt-5">
 
-                <div id="submenu-catalogo" class="submenu">
-                    <a href="{{ route('admin.products.index') }}">Productos</a>
-                    <a href="{{ route('admin.categories') }}">Categorías</a>
-                    <a href="{{ route('admin.inventory') }}">Inventario</a>
+                    <div class="text-xs uppercase tracking-wider text-pink-900/70 px-2 mb-2 sidebar-text">
+                        CATÁLOGO
+                    </div>
+
+                    {{-- PRODUCTOS --}}
+                    <a href="{{ route('admin.products.index') }}"
+                       class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/30 transition text-pink-900">
+                        <span class="text-lg">🎁</span>
+                        <span class="sidebar-text font-semibold">Productos</span>
+                    </a>
+
+                    {{-- CATEGORÍAS --}}
+                    <div class="mt-1">
+
+                        <button type="button"
+                                data-submenu="categorias"
+                                class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-white/30 transition text-pink-900">
+                            <span class="text-lg">🧩</span>
+                            <span class="sidebar-text font-semibold">Categorías</span>
+                            <span class="sidebar-text ml-auto">▾</span>
+                        </button>
+
+                        <div id="submenu-categorias"
+                             class="ml-4 mt-1 space-y-1 hidden">
+
+                            <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
+                               href="{{ route('admin.categories.index', ['type' => 'tipo_producto']) }}">
+                                Tipo de producto
+                            </a>
+
+                            <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
+                               href="{{ route('admin.categories.index', ['type' => 'ocasion']) }}">
+                                Ocasión especial
+                            </a>
+
+                            <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
+                               href="{{ route('admin.categories.index', ['type' => 'personalizacion']) }}">
+                                Tipo de personalización
+                            </a>
+
+                        </div>
+                    </div>
+
+                    {{-- INVENTARIO --}}
+                    <a href="{{ route('admin.inventory.index') }}"
+                       class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/30 transition text-pink-900 mt-1">
+                        <span class="text-lg">📦</span>
+                        <span class="sidebar-text font-semibold">Inventario</span>
+                    </a>
+
                 </div>
-            </div>
 
-            <div class="group">
-                <button type="button"
-                        onclick="toggleSubmenu('ventas')"
-                        class="sidebar-link text-white w-full">
-                    <span class="sidebar-icon">🛒</span>
-                    <span class="sidebar-text">Pedidos y Ventas</span>
-                </button>
+                {{-- PEDIDOS Y VENTAS --}}
+                <div class="mt-3">
 
-                <div id="submenu-ventas" class="submenu">
-                    <a href="{{ route('admin.orders') }}">Pedidos</a>
-                    <a href="{{ route('admin.invoices') }}">Facturas</a>
-                    <a href="{{ route('admin.transactions') }}">Pagos</a>
-                    <a href="{{ route('admin.shipments') }}">Envíos</a>
+                    <button type="button"
+                            data-submenu="ventas"
+                            class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-white/30 transition text-pink-900">
+                        <span class="text-lg">🛒</span>
+                        <span class="sidebar-text font-semibold">Pedidos y Ventas</span>
+                        <span class="sidebar-text ml-auto">▾</span>
+                    </button>
+
+                    <div id="submenu-ventas" class="ml-4 mt-1 space-y-1 hidden">
+                        <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
+                           href="{{ route('admin.orders.index') }}">
+                            Pedidos
+                        </a>
+                        <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
+                           href="{{ route('admin.invoices.index') }}">
+                            Facturas
+                        </a>
+                        <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
+                           href="{{ route('admin.transactions.index') }}">
+                            Pagos
+                        </a>
+                        <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
+                           href="{{ route('admin.shipments.index') }}">
+                            Envíos
+                        </a>
+                    </div>
+
                 </div>
-            </div>
 
-            <div class="group">
-                <button type="button"
-                        onclick="toggleSubmenu('usuarios')"
-                        class="sidebar-link text-white w-full">
-                    <span class="sidebar-icon">👥</span>
-                    <span class="sidebar-text">Gestión de Usuarios</span>
-                </button>
+                {{-- USUARIOS --}}
+                <div class="mt-1">
 
-                <div id="submenu-usuarios" class="submenu">
-                    <a href="{{ route('admin.customers') }}">Clientes</a>
-                    <a href="{{ route('admin.reviews') }}">Reseñas</a>
+                    <button type="button"
+                            data-submenu="usuarios"
+                            class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-white/30 transition text-pink-900">
+                        <span class="text-lg">👥</span>
+                        <span class="sidebar-text font-semibold">Gestión de Usuarios</span>
+                        <span class="sidebar-text ml-auto">▾</span>
+                    </button>
+
+                    <div id="submenu-usuarios" class="ml-4 mt-1 space-y-1 hidden">
+                        <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
+                           href="{{ route('admin.customers.index') }}">
+                            Clientes
+                        </a>
+                        <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
+                           href="{{ route('admin.reviews.index') }}">
+                            Reseñas
+                        </a>
+                    </div>
+
                 </div>
-            </div>
 
-            <div class="group">
-                <button type="button"
-                        onclick="toggleSubmenu('reportes')"
-                        class="sidebar-link text-white w-full">
-                    <span class="sidebar-icon">📊</span>
-                    <span class="sidebar-text">Reportes</span>
-                </button>
+                {{-- REPORTES --}}
+                <div class="mt-1">
 
-                <div id="submenu-reportes" class="submenu">
-                    <a href="{{ route('admin.reports.sales') }}">Ventas</a>
-                    <a href="{{ route('admin.reports.products') }}">Productos</a>
+                    <button type="button"
+                            data-submenu="reportes"
+                            class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-white/30 transition text-pink-900">
+                        <span class="text-lg">📊</span>
+                        <span class="sidebar-text font-semibold">Reportes</span>
+                        <span class="sidebar-text ml-auto">▾</span>
+                    </button>
+
+                    <div id="submenu-reportes" class="ml-4 mt-1 space-y-1 hidden">
+                        <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
+                           href="{{ route('admin.reports.sales') }}">
+                            Ventas
+                        </a>
+                        <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
+                           href="{{ route('admin.reports.products') }}">
+                            Productos
+                        </a>
+                        <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
+                           href="{{ route('admin.reports.customers') }}">
+                            Clientes
+                        </a>
+                    </div>
+
                 </div>
-            </div>
 
-        </nav>
-
-        @else
-
-        <nav class="space-y-2">
-            <a href="{{ route('home') }}" class="sidebar-link text-white">
-                <span class="sidebar-icon">🏠</span>
-                <span class="sidebar-text">Inicio</span>
-            </a>
-
-            <a href="{{ route('products') }}" class="sidebar-link text-white">
-                <span class="sidebar-icon">🛍️</span>
-                <span class="sidebar-text">Tienda</span>
-            </a>
-
-            <a href="{{ route('order') }}" class="sidebar-link text-white">
-                <span class="sidebar-icon">📦</span>
-                <span class="sidebar-text">Mis pedidos</span>
-            </a>
-
-            <a href="{{ route('profile') }}" class="sidebar-link text-white">
-                <span class="sidebar-icon">👤</span>
-                <span class="sidebar-text">Mi perfil</span>
-            </a>
-        </nav>
+            </nav>
 
         @endif
+
     </div>
 </aside>
-
-<script>
-    function toggleSubmenu(name) {
-        const el = document.getElementById('submenu-' + name);
-        if (!el) return;
-        el.classList.toggle('submenu-open');
-    }
-</script>

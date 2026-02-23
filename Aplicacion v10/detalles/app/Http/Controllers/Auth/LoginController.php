@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Lang;
 class LoginController extends Controller
 {
     use AuthenticatesUsers;
@@ -23,6 +24,7 @@ protected function sendFailedLoginResponse(\Illuminate\Http\Request $request)
 {
     $user = \App\Models\User::where('email', $request->email)->first();
 
+    // Si existe pero está inactivo
     if ($user && !$user->activo) {
         return back()
             ->withInput($request->only($this->username(), 'remember'))
@@ -30,7 +32,11 @@ protected function sendFailedLoginResponse(\Illuminate\Http\Request $request)
                 $this->username() => 'Tu cuenta está inactiva. Contacta al administrador.'
             ]);
     }
-    return parent::sendFailedLoginResponse($request);
+
+    // Caso normal: credenciales incorrectas
+    throw ValidationException::withMessages([
+        $this->username() => [Lang::get('auth.failed')],
+    ]);
 }
 
     /**

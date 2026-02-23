@@ -10,13 +10,11 @@ class Category extends Model
 {
     use HasFactory, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    protected $table = 'categories';
+
     protected $fillable = [
         'nombre',
+        'grupo',        // tipo_producto | ocasion | personalizacion
         'descripcion',
         'imagen',
         'icono',
@@ -24,21 +22,53 @@ class Category extends Model
         'activo',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'activo' => 'boolean',
-        'orden' => 'integer',
+        'orden'  => 'integer',
     ];
 
+    /*
+    |--------------------------------------------------------------------------
+    | RELACIONES
+    |--------------------------------------------------------------------------
+    */
+
     /**
-     * Get the products for the category.
+     * Productos donde esta categoría es FILTRO
+     * (ocasión o personalización)
      */
     public function products()
     {
-        return $this->belongsToMany(Product::class, 'categories_products');
+        return $this->belongsToMany(
+            Product::class,
+            'categories_products',
+            'category_id',
+            'product_id'
+        );
+    }
+
+    /**
+     * Productos donde esta categoría es CATEGORÍA PRINCIPAL
+     * (solo grupo = tipo_producto)
+     */
+    public function mainProducts()
+    {
+        return $this->hasMany(Product::class, 'category_id');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SCOPES ÚTILES
+    |--------------------------------------------------------------------------
+    */
+
+    public function scopeActivas($query)
+    {
+        return $query->where('activo', true);
+    }
+
+    public function scopePorGrupo($query, $grupo)
+    {
+        return $query->where('grupo', $grupo);
     }
 }
