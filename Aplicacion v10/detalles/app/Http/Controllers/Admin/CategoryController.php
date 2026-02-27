@@ -24,16 +24,13 @@ class CategoryController extends Controller
 
         $search = $request->get('search');
         $dir    = $request->get('dir', 'asc');
-        $dir    = in_array($dir, ['asc', 'desc']) ? $dir : 'asc';
+        $dir    = in_array($dir, ['asc', 'desc'], true) ? $dir : 'asc';
 
         $categories = Category::query()
             ->where('grupo', $type)
-            ->when($search, function ($q) use ($search) {
-                $q->where('nombre', 'like', "%{$search}%");
-            })
-            // ✅ primero orden incremental, luego nombre como “desempate”
-            ->orderBy('orden', 'asc')
+            ->when($search, fn ($q) => $q->where('nombre', 'like', "%{$search}%"))
             ->orderBy('nombre', $dir)
+            ->orderBy('orden', 'asc')
             ->paginate(10)
             ->withQueryString();
 
@@ -41,30 +38,46 @@ class CategoryController extends Controller
             'categories',
             'types',
             'type',
-            'search'
+            'search',
+            'dir'
         ));
     }
 
     public function store(Request $request)
     {
-        $grupo = $request->input('grupo');
+        //  Normaliza nombre para evitar duplicados por espacios
+        $request->merge([
+            'nombre' => trim((string) $request->input('nombre')),
+        ]);
 
         $data = $request->validate([
             'grupo'  => ['required', Rule::in(['tipo_producto', 'ocasion', 'personalizacion'])],
-            'nombre' => [
-                'required', 'string', 'max:100',
-                // ✅ mismo nombre permitido en otro grupo
-                Rule::unique('categories', 'nombre')
-                    ->where(fn ($q) => $q->where('grupo', $grupo)),
-            ],
+            'nombre' => ['required', 'string', 'max:100'],
             'activo' => ['nullable', 'boolean'],
-        ], [
-            'nombre.unique' => 'Ya existe una categoría con ese nombre en este grupo.',
         ]);
 
         $data['activo'] = $request->boolean('activo');
 
-        // ✅ ORDEN incremental por grupo
+        //  Si ya existe la restaurar o actualiza y NO inserta
+        $existing = Category::withTrashed()
+            ->where('grupo', $data['grupo'])
+            ->where('nombre', $data['nombre'])
+            ->first();
+
+        if ($existing) {
+            if ($existing->trashed()) {
+                $existing->restore();
+            }
+
+            $existing->activo = $data['activo'];
+            $existing->save();
+
+            return redirect()
+         ->route('admin.categories.index', ['type' => $data['grupo']])
+         ->with('success', 'Categoría guardada correctamente.');
+         }
+
+        // ✅ Orden incremental por grupo
         $maxOrden = Category::where('grupo', $data['grupo'])->max('orden');
         $data['orden'] = is_null($maxOrden) ? 1 : ((int) $maxOrden + 1);
 
@@ -77,15 +90,16 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
-        // grupo actual o el que venga (pero en tu vista lo mandas hidden, así que viene siempre)
+        $request->merge([
+            'nombre' => trim((string) $request->input('nombre')),
+        ]);
+
         $grupo = $request->input('grupo', $category->grupo);
 
         $data = $request->validate([
-            'grupo'  => ['nullable', Rule::in(['tipo_producto', 'ocasion', 'personalizacion'])],
+            'grupo'  => ['required', Rule::in(['tipo_producto', 'ocasion', 'personalizacion'])],
             'nombre' => [
-                'required',
-                'string',
-                'max:100',
+                'required', 'string', 'max:100',
                 Rule::unique('categories', 'nombre')
                     ->ignore($category->id)
                     ->where(fn ($q) => $q->where('grupo', $grupo)),
@@ -97,23 +111,16 @@ class CategoryController extends Controller
 
         $data['activo'] = $request->boolean('activo');
 
-        // Si no mandan grupo, no lo cambiamos
-        if (empty($data['grupo'])) {
-            unset($data['grupo']);
-        }
-
-        // ✅ Si cambió de grupo, lo mandamos al final del nuevo grupo (nuevo orden incremental)
-        if (isset($data['grupo']) && $data['grupo'] !== $category->grupo) {
+        // ✅ Si cambió de grupo, mandarla al final del nuevo grupo
+        if ($data['grupo'] !== $category->grupo) {
             $maxOrden = Category::where('grupo', $data['grupo'])->max('orden');
             $data['orden'] = is_null($maxOrden) ? 1 : ((int) $maxOrden + 1);
         }
 
         $category->update($data);
 
-        $tab = $data['grupo'] ?? $category->grupo ?? 'tipo_producto';
-
         return redirect()
-            ->route('admin.categories.index', ['type' => $tab])
+            ->route('admin.categories.index', ['type' => $data['grupo']])
             ->with('success', 'Categoría actualizada.');
     }
 

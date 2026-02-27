@@ -15,6 +15,7 @@ class Product extends Model
 
     protected $fillable = [
         'category_id', // categoría principal (solo tipo_producto)
+        'imagen_principal',
         'nombre',
         'slug',
         'descripcion',

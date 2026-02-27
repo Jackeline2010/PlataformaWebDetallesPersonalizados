@@ -22,10 +22,11 @@
             </div>
         @endif
 
-        {{-- ✅ SIN enctype porque ya no hay imágenes --}}
+        {{-- ✅ AHORA CON enctype PARA IMÁGENES --}}
         <form id="productForm"
               action="{{ route('admin.products.store') }}"
               method="POST"
+              enctype="multipart/form-data"
               class="space-y-6">
             @csrf
 
@@ -89,7 +90,39 @@
                             @enderror
                         </div>
 
-                        {{-- ✅ IMÁGENES eliminadas completamente --}}
+                        {{-- ✅ IMAGEN PRINCIPAL --}}
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Imagen del producto</label>
+
+                            <div class="flex items-start gap-4">
+                                {{-- Preview (vacío al inicio) --}}
+                                <div class="w-28 h-28 rounded-2xl border border-pink-100 bg-pink-50/40 flex items-center justify-center overflow-hidden">
+                                    <img id="imgPreview" src="" alt="Vista previa"
+                                         class="hidden w-full h-full object-cover">
+                                    <div id="imgPlaceholder" class="text-xs text-gray-400 text-center px-2">
+                                        Sin imagen
+                                    </div>
+                                </div>
+
+                                <div class="flex-1">
+                                    <input
+                                        id="imagen_principal"
+                                        type="file"
+                                        name="imagen_principal"
+                                        accept="image/*"
+                                        class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                                    >
+                                    <p class="mt-2 text-xs text-gray-500">
+                                        Formatos: JPG, PNG o WEBP. Tamaño recomendado: 1200x1200.
+                                    </p>
+
+                                    {{-- ✅ CORREGIDO: el error es imagen_principal --}}
+                                    @error('imagen_principal')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
 
                         {{-- ✅ CATEGORÍAS (3 SELECTS) --}}
                         <div class="md:col-span-2">
@@ -99,7 +132,6 @@
 
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-600 mb-1">Tipo de producto</label>
-                                    {{-- ✅ Se agrega name para que old() funcione y por si lo necesitas --}}
                                     <select id="tipo_producto"
                                             name="tipo_producto"
                                             class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300">
@@ -152,7 +184,6 @@
                             </div>
 
                             {{-- ✅ Hidden enviados como categories[] --}}
-                            {{-- Nota: tu store debe filtrar vacíos o validar que vengan los 3 --}}
                             <input type="hidden" name="categories[]" id="cat_1" value="">
                             <input type="hidden" name="categories[]" id="cat_2" value="">
                             <input type="hidden" name="categories[]" id="cat_3" value="">
@@ -226,16 +257,15 @@
 
                     {{-- BOTONES --}}
                     <div class="flex flex-col gap-3">
-                        {{-- Botón con modal (no submit directo) --}}
-                      <button type="button"
-                 data-confirm-submit="productForm"
-                 data-confirm-title="Confirmar guardado"
-                 data-confirm-message="¿Está seguro que desea guardar este producto?"
-                 data-confirm-ok="Sí, guardar"
-                 data-confirm-cancel="Cancelar"
-                 class="w-full px-6 py-3 rounded-xl bg-pink-500 text-white font-semibold hover:bg-pink-600 shadow-sm">
-                 Guardar producto
-                </button>
+                        <button type="button"
+                                data-confirm-submit="productForm"
+                                data-confirm-title="Confirmar guardado"
+                                data-confirm-message="¿Está seguro que desea guardar este producto?"
+                                data-confirm-ok="Sí, guardar"
+                                data-confirm-cancel="Cancelar"
+                                class="w-full px-6 py-3 rounded-xl bg-pink-500 text-white font-semibold hover:bg-pink-600 shadow-sm">
+                            Guardar producto
+                        </button>
 
                         <a href="{{ route('admin.products.index') }}"
                            class="w-full px-5 py-3 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 text-center">
@@ -252,8 +282,8 @@
 
 @push('scripts')
 <script>
-  // ✅ Sync categorías (ahora SIN preview de imágenes)
   document.addEventListener('DOMContentLoaded', () => {
+    // ✅ Sync categorías (igual que lo tenías)
     const tipo = document.getElementById('tipo_producto');
     const ocasion = document.getElementById('ocasion_especial');
     const perso = document.getElementById('tipo_personalizacion');
@@ -270,6 +300,27 @@
 
     [tipo, ocasion, perso].forEach(el => el?.addEventListener('change', syncCats));
     syncCats();
+
+    // ✅ Preview de imagen (CORREGIDO: ahora usa imagen_principal)
+    const inputImg = document.getElementById('imagen_principal');
+    const imgPreview = document.getElementById('imgPreview');
+    const imgPlaceholder = document.getElementById('imgPlaceholder');
+
+    inputImg?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+
+      if (!file) {
+        imgPreview.src = '';
+        imgPreview.classList.add('hidden');
+        imgPlaceholder.classList.remove('hidden');
+        return;
+      }
+
+      const url = URL.createObjectURL(file);
+      imgPreview.src = url;
+      imgPreview.classList.remove('hidden');
+      imgPlaceholder.classList.add('hidden');
+    });
   });
 </script>
 @endpush

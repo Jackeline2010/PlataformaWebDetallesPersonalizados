@@ -115,13 +115,24 @@
                                     Editar
                                 </button>
 
-                                <form method="POST"
+                                {{-- ✅ Eliminar con modal global --}}
+                                <form id="deleteCategoryForm-{{ $cat->id }}"
+                                      method="POST"
                                       action="{{ route('admin.categories.destroy', $cat->id) }}"
-                                      class="inline"
-                                      onsubmit="return confirm('¿Eliminar esta categoría?')">
+                                      class="inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button class="text-pink-600 hover:underline">Eliminar</button>
+
+                                    <button type="button"
+                                            data-confirm-submit="deleteCategoryForm-{{ $cat->id }}"
+                                            data-confirm-title="Confirmar eliminación"
+                                            data-confirm-message="¿Seguro que deseas eliminar la categoría: {{ e($cat->nombre) }}?"
+                                            data-confirm-ok="Sí, eliminar"
+                                            data-confirm-cancel="Cancelar"
+                                            data-confirm-danger="1"
+                                            class="text-pink-600 hover:underline">
+                                        Eliminar
+                                    </button>
                                 </form>
                             </td>
                         </tr>
@@ -150,11 +161,12 @@
             <button type="button" class="text-gray-500" onclick="closeNewCategoryModal()">✕</button>
         </div>
 
-        <form method="POST" action="{{ route('admin.categories.store') }}" class="space-y-4">
+        <form id="createCategoryForm" method="POST" action="{{ route('admin.categories.store') }}" class="space-y-4">
             @csrf
 
-            {{-- grupo actual (tipo_producto | ocasion | personalizacion) --}}
-            <input type="hidden" name="grupo" value="{{ $type }}">
+            {{-- ✅ grupo actual seguro --}}
+            <input type="hidden" name="grupo"
+                   value="{{ in_array($type, ['tipo_producto','ocasion','personalizacion']) ? $type : 'tipo_producto' }}">
 
             <div>
                 <label class="block text-sm text-gray-600 mb-1">Nombre</label>
@@ -172,7 +184,15 @@
                 <button type="button" class="px-5 py-3 rounded-2xl border" onclick="closeNewCategoryModal()">
                     Cancelar
                 </button>
-                <button class="px-5 py-3 rounded-2xl bg-pink-500 text-white font-semibold hover:bg-pink-600">
+
+                {{-- ✅ Guardar con modal global --}}
+                <button type="button"
+                        data-confirm-submit="createCategoryForm"
+                        data-confirm-title="Confirmar guardado"
+                        data-confirm-message="¿Deseas guardar esta categoría?"
+                        data-confirm-ok="Sí, guardar"
+                        data-confirm-cancel="Cancelar"
+                        class="px-5 py-3 rounded-2xl bg-pink-500 text-white font-semibold hover:bg-pink-600">
                     Guardar
                 </button>
             </div>
@@ -192,8 +212,9 @@
             @csrf
             @method('PUT')
 
-            {{-- Mantener el grupo/tab actual --}}
-            <input type="hidden" name="grupo" value="{{ $type }}">
+            {{-- ✅ grupo actual seguro --}}
+            <input type="hidden" name="grupo"
+                   value="{{ in_array($type, ['tipo_producto','ocasion','personalizacion']) ? $type : 'tipo_producto' }}">
 
             <div>
                 <label class="block text-sm text-gray-600 mb-1">Nombre</label>
@@ -211,7 +232,15 @@
                 <button type="button" class="px-5 py-3 rounded-2xl border" onclick="closeEditCategoryModal()">
                     Cancelar
                 </button>
-                <button class="px-5 py-3 rounded-2xl bg-pink-500 text-white font-semibold hover:bg-pink-600">
+
+                {{-- ✅ Guardar cambios con modal global --}}
+                <button type="button"
+                        data-confirm-submit="editCategoryForm"
+                        data-confirm-title="Confirmar edición"
+                        data-confirm-message="¿Deseas guardar los cambios de esta categoría?"
+                        data-confirm-ok="Sí, guardar"
+                        data-confirm-cancel="Cancelar"
+                        class="px-5 py-3 rounded-2xl bg-pink-500 text-white font-semibold hover:bg-pink-600">
                     Guardar cambios
                 </button>
             </div>
@@ -221,10 +250,10 @@
 
 <script>
     function openNewCategoryModal() {
-        document.getElementById('modal-new-category').classList.remove('hidden');
+        document.getElementById('modal-new-category')?.classList.remove('hidden');
     }
     function closeNewCategoryModal() {
-        document.getElementById('modal-new-category').classList.add('hidden');
+        document.getElementById('modal-new-category')?.classList.add('hidden');
     }
 
     function openEditCategoryModal(id, nombre, activo) {
@@ -239,7 +268,20 @@
         modal.classList.remove('hidden');
     }
     function closeEditCategoryModal() {
-        document.getElementById('modal-edit-category').classList.add('hidden');
+        document.getElementById('modal-edit-category')?.classList.add('hidden');
     }
+
+    // ✅ Cierra modales locales antes de abrir el confirm global (evita que queden “pegados”)
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-confirm-submit]');
+        if (!btn) return;
+
+        // Solo cerramos si están abiertos
+        const modalNew = document.getElementById('modal-new-category');
+        const modalEdit = document.getElementById('modal-edit-category');
+
+        if (modalNew && !modalNew.classList.contains('hidden')) closeNewCategoryModal();
+        if (modalEdit && !modalEdit.classList.contains('hidden')) closeEditCategoryModal();
+    });
 </script>
 @endsection

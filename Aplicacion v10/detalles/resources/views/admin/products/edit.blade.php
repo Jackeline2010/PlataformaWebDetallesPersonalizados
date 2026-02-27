@@ -39,7 +39,8 @@
               method="POST"
               action="{{ route('admin.products.update', $product) }}"
               class="space-y-6"
-              autocomplete="off">
+              autocomplete="off"
+              enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -69,6 +70,47 @@
                         placeholder="Se genera automáticamente"
                     >
                     <p class="mt-1 text-xs text-gray-500">El SKU se genera automáticamente y no se edita.</p>
+                </div>
+
+                {{-- ✅ IMAGEN DEL PRODUCTO (NUEVO) --}}
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Imagen del producto</label>
+
+                    <div class="flex items-start gap-4">
+                        <div class="w-28 h-28 rounded-2xl border border-pink-100 bg-pink-50/40 flex items-center justify-center overflow-hidden">
+                            @if(!empty($product->imagen))
+                                <img id="imgPreviewEdit"
+                                     src="{{ asset('storage/' . $product->imagen) }}"
+                                     alt="Imagen actual"
+                                     class="w-full h-full object-cover">
+                                <div id="imgPlaceholderEdit" class="hidden text-xs text-gray-400 text-center px-2">
+                                    Sin imagen
+                                </div>
+                            @else
+                                <img id="imgPreviewEdit" src="" alt="Vista previa" class="hidden w-full h-full object-cover">
+                                <div id="imgPlaceholderEdit" class="text-xs text-gray-400 text-center px-2">
+                                    Sin imagen
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="flex-1">
+                            <input
+                                id="imagen"
+                                type="file"
+                                name="imagen"
+                                accept="image/*"
+                                class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                            >
+                            <p class="mt-2 text-xs text-gray-500">
+                                Si subes una nueva imagen, reemplazará la actual. Formatos: JPG, PNG o WEBP.
+                            </p>
+
+                            @error('imagen')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
                 </div>
 
                 {{-- PRECIO --}}
@@ -232,18 +274,39 @@
                 </a>
 
                 {{-- ✅ Botón con modal --}}
-               <button type="button"
-            data-confirm-submit="productEditForm"
-            data-confirm-title="Confirmar edición"
-            data-confirm-message="¿Está seguro que desea guardar los cambios del producto: {{ e($product->nombre) }}?"
-            data-confirm-ok="Sí, guardar"
-            data-confirm-cancel="Cancelar"
-             class="px-6 py-3 rounded-xl bg-pink-500 text-white font-semibold hover:bg-pink-600 shadow-sm">
-          Guardar cambios
-        </button>
+                <button type="button"
+                        data-confirm-submit="productEditForm"
+                        data-confirm-title="Confirmar edición"
+                        data-confirm-message="¿Está seguro que desea guardar los cambios del producto: {{ e($product->nombre) }}?"
+                        data-confirm-ok="Sí, guardar"
+                        data-confirm-cancel="Cancelar"
+                        class="px-6 py-3 rounded-xl bg-pink-500 text-white font-semibold hover:bg-pink-600 shadow-sm">
+                    Guardar cambios
+                </button>
             </div>
 
         </form>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // ✅ Preview de imagen (no afecta tu modal)
+    const inputImg = document.getElementById('imagen');
+    const imgPreview = document.getElementById('imgPreviewEdit');
+    const imgPlaceholder = document.getElementById('imgPlaceholderEdit');
+
+    inputImg?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const url = URL.createObjectURL(file);
+      imgPreview.src = url;
+      imgPreview.classList.remove('hidden');
+      imgPlaceholder?.classList.add('hidden');
+    });
+  });
+</script>
+@endpush
