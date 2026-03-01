@@ -5,7 +5,6 @@
     <title>@yield('title', 'Mi Cuenta | Sandy Decor')</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    {{-- ✅ VITE: CSS + JS (usa app.css porque es lo que estás compilando ahora) --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     {{-- Flowbite --}}
@@ -14,14 +13,15 @@
     @stack('styles')
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-[#FFF4F8] text-gray-800 overflow-x-hidden">
 
     {{-- Navbar cliente --}}
     @include('client.partials.navigation')
 
-    <div class="max-w-screen-xl mx-auto px-4 py-6">
+    {{-- IMPORTANTE: sin max-w-screen-xl para que NO se centre/distorsione --}}
+    <main class="w-full px-4 py-6">
         @yield('content')
-    </div>
+    </main>
 
     {{-- Flowbite JS --}}
     <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>

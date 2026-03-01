@@ -5,10 +5,10 @@
 @section('content')
     <!-- CSRF Token for AJAX requests -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    
+
     <!-- Features Section -->
     <section class="bg-gray-50 py-8 antialiased dark:bg-gray-900 md:py-12">
-        <div class="mx-auto max-w-screen-xl px-4 2xl:px-0">
+        <div class="space-y-6">
             <!-- Heading & Filters -->
             <div class="flex items-center justify-center flex-wrap" id="categoriesList">
                 <button type="button" data-category="all"
@@ -58,7 +58,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Products Grid -->
             <div class="mb-4 grid gap-4 sm:grid-cols-2 md:mb-8 lg:grid-cols-3 xl:grid-cols-4" id="productGallery">
                 @forelse($products as $product)
@@ -88,11 +88,11 @@
                             </div>
                             <a href="#"
                                 class="text-lg font-semibold leading-tight text-gray-900 hover:underline dark:text-white">{{ $product->nombre }}</a>
-                            
+
                             @if($product->descripcion_corta)
                                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ $product->descripcion_corta }}</p>
                             @endif
-                            
+
                             <ul class="mt-2 flex items-center gap-4">
                                 <li class="flex items-center gap-2">
                                     <svg class="h-4 w-4 text-gray-500 dark:text-gray-400" aria-hidden="true"
@@ -122,13 +122,13 @@
                                 @else
                                     <p class="text-lg font-medium text-gray-500 dark:text-gray-400">Consultar precio</p>
                                 @endif
-                                
+
                                 @if($product->stock > 0)
                                     <form action="{{ route('cart.add') }}" method="POST" style="display: inline;">
                                         @csrf
                                         <input type="hidden" name="product_id" value="{{ $product->id }}">
                                         <input type="hidden" name="cantidad" value="1">
-                                        <button type="submit" 
+                                        <button type="submit"
                                             class="inline-flex items-center rounded-lg bg-pink-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-pink-700 focus:outline-none focus:ring-4 focus:ring-pink-300 dark:bg-pink-600 dark:hover:bg-pink-700 dark:focus:ring-pink-800">
                                             <svg class="-ms-2 me-2 h-5 w-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                                                 width="24" height="24" fill="none" viewBox="0 0 24 24">
@@ -154,7 +154,7 @@
                     </div>
                 @endforelse
             </div>
-            
+
             @if($products->count() > 0)
                 <div class="w-full text-center">
                     <button type="button"
@@ -178,30 +178,30 @@
                 button.addEventListener('click', function() {
                     const selectedCategory = this.getAttribute('data-category');
                     const categoryName = this.textContent.trim();
-                    
+
                     // Update subtitle based on selected category
                     if (selectedCategory === 'all') {
                         productSubtitle.textContent = 'Todos los Productos';
                     } else {
                         productSubtitle.textContent = categoryName;
                     }
-                    
+
                     // Remove active class from all buttons
                     categoryButtons.forEach(btn => {
                         btn.classList.remove('active');
                         btn.classList.remove('text-blue-700', 'border-blue-600');
                         btn.classList.add('text-gray-900', 'border-white');
                     });
-                    
+
                     // Add active class to clicked button
                     this.classList.add('active');
                     this.classList.remove('text-gray-900', 'border-white');
                     this.classList.add('text-blue-700', 'border-blue-600');
-                    
+
                     // Filter products
                     productItems.forEach(item => {
                         const productCategories = item.getAttribute('data-categories').split(',');
-                        
+
                         if (selectedCategory === 'all' || productCategories.includes(selectedCategory)) {
                             item.style.display = 'block';
                             item.classList.remove('hidden');
@@ -218,17 +218,17 @@
                 option.addEventListener('click', function(e) {
                     e.preventDefault();
                     const sortType = this.getAttribute('data-sort');
-                    
+
                     // Get all visible products
-                    const visibleProducts = Array.from(productItems).filter(item => 
+                    const visibleProducts = Array.from(productItems).filter(item =>
                         item.style.display !== 'none' && !item.classList.contains('hidden')
                     );
-                    
+
                     // Sort products by price
                     visibleProducts.sort((a, b) => {
                         const priceA = extractPrice(a);
                         const priceB = extractPrice(b);
-                        
+
                         if (sortType === 'price-high') {
                             return priceB - priceA; // Descending order (highest first)
                         } else if (sortType === 'price-low') {
@@ -236,12 +236,12 @@
                         }
                         return 0;
                     });
-                    
+
                     // Reorder products in the DOM
                     visibleProducts.forEach(product => {
                         productGallery.appendChild(product);
                     });
-                    
+
                     // Close dropdown (if using Flowbite or similar)
                     const dropdown = document.getElementById('dropdownSort1');
                     if (dropdown) {
@@ -263,12 +263,12 @@
             // Toggle dropdown functionality
             const sortButton = document.getElementById('sortDropdownButton1');
             const dropdown = document.getElementById('dropdownSort1');
-            
+
             if (sortButton && dropdown) {
                 sortButton.addEventListener('click', function() {
                     dropdown.classList.toggle('hidden');
                 });
-                
+
                 // Close dropdown when clicking outside
                 document.addEventListener('click', function(e) {
                     if (!sortButton.contains(e.target) && !dropdown.contains(e.target)) {
@@ -279,37 +279,37 @@
 
             // Buy Button Functionality
             const buyButtons = document.querySelectorAll('.buyButton');
-            
+
             // Set up CSRF token for AJAX requests
             const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
             const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '{{ csrf_token() }}';
-            
+
             buyButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const productId = this.getAttribute('data-product-id');
                     const productName = this.getAttribute('data-product-name');
                     const productPrice = this.getAttribute('data-product-price');
                     const productStock = parseInt(this.getAttribute('data-product-stock'));
-                    
+
                     // Check if product is in stock
                     if (productStock <= 0) {
                         showMessage('Este producto está agotado', 'error');
                         return;
                     }
-                    
+
                     // Disable button and show loading state
                     const originalText = this.querySelector('.button-text').textContent;
                     this.disabled = true;
                     this.querySelector('.button-text').textContent = 'Agregando...';
                     this.classList.add('opacity-75', 'cursor-not-allowed');
-                    
+
                     // Prepare data for cart addition
                     const cartData = {
                         product_id: productId,
                         cantidad: 1, // Default quantity is 1
                         _token: csrfToken
                     };
-                    
+
                     // Send AJAX request to add product to cart
                     fetch('/cart/add', {
                         method: 'POST',
@@ -342,27 +342,27 @@
                     });
                 });
             });
-            
+
             // Function to show messages to user
             function showMessage(message, type = 'info') {
                 // Create message element
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
-                    type === 'success' ? 'bg-green-500 text-white' : 
-                    type === 'error' ? 'bg-red-500 text-white' : 
+                    type === 'success' ? 'bg-green-500 text-white' :
+                    type === 'error' ? 'bg-red-500 text-white' :
                     'bg-blue-500 text-white'
                 }`;
                 messageDiv.textContent = message;
-                
+
                 // Add to page
                 document.body.appendChild(messageDiv);
-                
+
                 // Remove after 3 seconds
                 setTimeout(() => {
                     messageDiv.remove();
                 }, 3000);
             }
-            
+
             // Function to update cart count in UI (if cart counter exists)
             function updateCartCount(count) {
                 const cartCountElements = document.querySelectorAll('.cart-count');

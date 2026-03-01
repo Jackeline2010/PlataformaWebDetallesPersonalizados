@@ -285,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeModal();
     });
 
-    // ✅ Detecta botones con data-confirm-submit
+    // Detecta botones con data-confirm-submit
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-confirm-submit]');
         if (!btn) return;

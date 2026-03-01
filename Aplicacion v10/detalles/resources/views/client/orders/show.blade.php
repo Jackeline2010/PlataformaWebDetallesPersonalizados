@@ -1,3 +1,4 @@
+
 @extends('layouts.app')
 
 @section('title', 'SandyDecor - Resumen de Orden')
@@ -5,7 +6,7 @@
 @section('content')
     <!-- CSRF Token for AJAX requests -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    
+
     <section class="bg-white py-8 antialiased dark:bg-gray-900 md:py-16">
         <form id="orderForm" class="mx-auto max-w-screen-xl px-4 2xl:px-0">
             <div class="mx-auto max-w-3xl">
@@ -117,7 +118,7 @@
                                 <span class="button-text">Confirmar la Orden</span>
                             </button>
                         </div>
-                        
+
                         <!-- Hidden field for order ID -->
                         @if(isset($order))
                             <input type="hidden" name="order_id" value="{{ $order->id }}">
@@ -215,7 +216,7 @@
                             </div>
                         </div>
 
-                        
+
 
 
                         <div>
@@ -274,35 +275,35 @@
             const confirmOrderBtn = document.getElementById('confirmOrderBtn');
             const saveBillingBtn = document.getElementById('saveBillingBtn');
             const billingForm = document.querySelector('#billingInformationModal form');
-            
+
             // Set up CSRF token for AJAX requests
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            
+
             // Handle order confirmation
             if (orderForm) {
                 orderForm.addEventListener('submit', function(e) {
                     e.preventDefault();
-                    
+
                     const formData = new FormData(orderForm);
                     const termsAccepted = formData.get('terms_accepted');
                     const orderId = formData.get('order_id');
-                    
+
                     if (!termsAccepted) {
                         showMessage('Debe aceptar los términos y condiciones', 'error');
                         return;
                     }
-                    
+
                     if (!orderId) {
                         showMessage('ID de orden no encontrado', 'error');
                         return;
                     }
-                    
+
                     // Disable button and show loading state
                     const originalText = confirmOrderBtn.querySelector('.button-text').textContent;
                     confirmOrderBtn.disabled = true;
                     confirmOrderBtn.querySelector('.button-text').textContent = 'Procesando...';
                     confirmOrderBtn.classList.add('opacity-75', 'cursor-not-allowed');
-                    
+
                     // Send AJAX request to confirm order
                     fetch('/order/confirm', {
                         method: 'POST',
@@ -340,26 +341,26 @@
                     });
                 });
             }
-            
+
             // Handle billing information update
             if (billingForm) {
                 billingForm.addEventListener('submit', function(e) {
                     e.preventDefault();
-                    
+
                     const formData = new FormData(billingForm);
                     const orderId = document.querySelector('input[name="order_id"]').value;
-                    
+
                     if (!orderId) {
                         showMessage('ID de orden no encontrado', 'error');
                         return;
                     }
-                    
+
                     // Disable button and show loading state
                     const originalText = saveBillingBtn.querySelector('.billing-button-text').textContent;
                     saveBillingBtn.disabled = true;
                     saveBillingBtn.querySelector('.billing-button-text').textContent = 'Guardando...';
                     saveBillingBtn.classList.add('opacity-75', 'cursor-not-allowed');
-                    
+
                     // Prepare billing data
                     const billingData = {
                         order_id: orderId,
@@ -368,7 +369,7 @@
                         telefono_contacto: formData.get('phone-input'),
                         observaciones: formData.get('address_billing_modal')
                     };
-                    
+
                     // Send AJAX request to update billing information
                     fetch('/order/update-billing', {
                         method: 'POST',
@@ -406,7 +407,7 @@
                     });
                 });
             }
-            
+
             // Function to update delivery information display
             function updateDeliveryInfo(billingData) {
                 const deliveryInfo = document.querySelector('dl dd');
@@ -419,21 +420,21 @@
                     `;
                 }
             }
-            
+
             // Function to show messages to user
             function showMessage(message, type = 'info') {
                 // Create message element
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
-                    type === 'success' ? 'bg-green-500 text-white' : 
-                    type === 'error' ? 'bg-red-500 text-white' : 
+                    type === 'success' ? 'bg-green-500 text-white' :
+                    type === 'error' ? 'bg-red-500 text-white' :
                     'bg-blue-500 text-white'
                 }`;
                 messageDiv.textContent = message;
-                
+
                 // Add to page
                 document.body.appendChild(messageDiv);
-                
+
                 // Remove after 3 seconds
                 setTimeout(() => {
                     messageDiv.remove();

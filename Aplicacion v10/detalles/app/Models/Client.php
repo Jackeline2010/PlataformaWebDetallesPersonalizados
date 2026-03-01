@@ -13,42 +13,49 @@ class Client extends Model
     protected $table = 'clients';
 
     protected $fillable = [
+        // ✅ Relación con usuario (si existe en tu tabla)
+        'user_id',
+
+        // ✅ Datos personales (soporta ambos nombres)
         'nombre',
         'apellido',
+        'nombres',
+        'apellidos',
+
+        //Otros campos comunes que estás usando en la vista / controller
+        'identificacion',
+        'genero',
         'email',
         'telefono',
         'direccion',
         'ciudad',
         'provincia',
         'codigo_postal',
-        'fecha_nacimiento',
+        'fnacimiento',
+        'fingreso',
         'activo',
     ];
 
     protected $casts = [
-        'fecha_nacimiento' => 'date',
+        'fnacimiento' => 'date',
         'activo' => 'boolean',
     ];
 
-    /**
-     * Relationship with Orders
-     */
+    // Si tus orders tienen client_id, esto está bien.
+    // Si tus orders usan user_id, dime y lo ajustamos.
     public function orders()
     {
         return $this->hasMany(Order::class);
     }
 
-    /**
-     * Get full name attribute
-     */
+    // Nombre completo robusto (funciona con nombre/apellido o nombres/apellidos)
     public function getFullNameAttribute()
     {
-        return $this->nombre . ' ' . $this->apellido;
+        $first = $this->nombres ?? $this->nombre ?? '';
+        $last  = $this->apellidos ?? $this->apellido ?? '';
+        return trim($first . ' ' . $last);
     }
 
-    /**
-     * Scope for active clients
-     */
     public function scopeActive($query)
     {
         return $query->where('activo', true);
