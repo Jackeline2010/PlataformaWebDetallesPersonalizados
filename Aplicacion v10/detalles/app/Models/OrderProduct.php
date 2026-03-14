@@ -34,6 +34,10 @@ class OrderProduct extends Model
         return $this->belongsTo(Order::class);
     }
 
+    public function customizations()
+    {
+    return $this->hasMany(\App\Models\OrderProductCustomization::class, 'order_product_id');
+    }
     /**
      * Relationship with Product
      */
@@ -41,6 +45,8 @@ class OrderProduct extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+
 
     /**
      * Calculate total for this order product

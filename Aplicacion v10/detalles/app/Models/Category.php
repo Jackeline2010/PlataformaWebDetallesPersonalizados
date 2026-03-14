@@ -14,7 +14,7 @@ class Category extends Model
 
     protected $fillable = [
         'nombre',
-        'grupo',        // tipo_producto | ocasion | personalizacion
+        'grupo',        // tipo_producto | ocasion_especial
         'descripcion',
         'imagen',
         'icono',
@@ -34,8 +34,8 @@ class Category extends Model
     */
 
     /**
-     * Productos donde esta categoría es FILTRO
-     * (ocasión o personalización)
+     * Productos relacionados por categorías secundarias
+     * (por ejemplo: ocasión especial).
      */
     public function products()
     {
@@ -48,8 +48,8 @@ class Category extends Model
     }
 
     /**
-     * Productos donde esta categoría es CATEGORÍA PRINCIPAL
-     * (solo grupo = tipo_producto)
+     * Productos donde esta categoría es la categoría principal
+     * (solo grupo = tipo_producto).
      */
     public function mainProducts()
     {

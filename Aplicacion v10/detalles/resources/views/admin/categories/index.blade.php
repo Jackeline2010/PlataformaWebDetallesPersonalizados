@@ -166,7 +166,7 @@
 
             {{-- ✅ grupo actual seguro --}}
             <input type="hidden" name="grupo"
-                   value="{{ in_array($type, ['tipo_producto','ocasion','personalizacion']) ? $type : 'tipo_producto' }}">
+                   value="{{ in_array($type, ['tipo_producto','ocasion_especial']) ? $type : 'tipo_producto' }}">
 
             <div>
                 <label class="block text-sm text-gray-600 mb-1">Nombre</label>
@@ -214,7 +214,7 @@
 
             {{-- ✅ grupo actual seguro --}}
             <input type="hidden" name="grupo"
-                   value="{{ in_array($type, ['tipo_producto','ocasion','personalizacion']) ? $type : 'tipo_producto' }}">
+                   value="{{ in_array($type, ['tipo_producto','ocasion_especial']) ? $type : 'tipo_producto' }}">
 
             <div>
                 <label class="block text-sm text-gray-600 mb-1">Nombre</label>
@@ -276,7 +276,6 @@
         const btn = e.target.closest('[data-confirm-submit]');
         if (!btn) return;
 
-        // Solo cerramos si están abiertos
         const modalNew = document.getElementById('modal-new-category');
         const modalEdit = document.getElementById('modal-edit-category');
 

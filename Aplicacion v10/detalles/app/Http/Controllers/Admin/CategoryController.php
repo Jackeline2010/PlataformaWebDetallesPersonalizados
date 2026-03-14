@@ -12,9 +12,8 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         $types = [
-            'tipo_producto'   => 'Tipo de Producto',
-            'ocasion'         => 'Ocasión Especial',
-            'personalizacion' => 'Tipo de Personalización',
+            'tipo_producto'    => 'Tipo de Producto',
+            'ocasion_especial' => 'Ocasión Especial',
         ];
 
         $type = $request->get('type', 'tipo_producto');
@@ -45,20 +44,18 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
-        //  Normaliza nombre para evitar duplicados por espacios
         $request->merge([
             'nombre' => trim((string) $request->input('nombre')),
         ]);
 
         $data = $request->validate([
-            'grupo'  => ['required', Rule::in(['tipo_producto', 'ocasion', 'personalizacion'])],
+            'grupo'  => ['required', Rule::in(['tipo_producto', 'ocasion_especial'])],
             'nombre' => ['required', 'string', 'max:100'],
             'activo' => ['nullable', 'boolean'],
         ]);
 
         $data['activo'] = $request->boolean('activo');
 
-        //  Si ya existe la restaurar o actualiza y NO inserta
         $existing = Category::withTrashed()
             ->where('grupo', $data['grupo'])
             ->where('nombre', $data['nombre'])
@@ -73,11 +70,10 @@ class CategoryController extends Controller
             $existing->save();
 
             return redirect()
-         ->route('admin.categories.index', ['type' => $data['grupo']])
-         ->with('success', 'Categoría guardada correctamente.');
-         }
+                ->route('admin.categories.index', ['type' => $data['grupo']])
+                ->with('success', 'Categoría guardada correctamente.');
+        }
 
-        // ✅ Orden incremental por grupo
         $maxOrden = Category::where('grupo', $data['grupo'])->max('orden');
         $data['orden'] = is_null($maxOrden) ? 1 : ((int) $maxOrden + 1);
 
@@ -97,9 +93,11 @@ class CategoryController extends Controller
         $grupo = $request->input('grupo', $category->grupo);
 
         $data = $request->validate([
-            'grupo'  => ['required', Rule::in(['tipo_producto', 'ocasion', 'personalizacion'])],
+            'grupo'  => ['required', Rule::in(['tipo_producto', 'ocasion_especial'])],
             'nombre' => [
-                'required', 'string', 'max:100',
+                'required',
+                'string',
+                'max:100',
                 Rule::unique('categories', 'nombre')
                     ->ignore($category->id)
                     ->where(fn ($q) => $q->where('grupo', $grupo)),
@@ -111,7 +109,6 @@ class CategoryController extends Controller
 
         $data['activo'] = $request->boolean('activo');
 
-        // ✅ Si cambió de grupo, mandarla al final del nuevo grupo
         if ($data['grupo'] !== $category->grupo) {
             $maxOrden = Category::where('grupo', $data['grupo'])->max('orden');
             $data['orden'] = is_null($maxOrden) ? 1 : ((int) $maxOrden + 1);

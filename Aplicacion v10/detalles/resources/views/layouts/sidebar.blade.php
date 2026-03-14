@@ -66,11 +66,6 @@
                                 Ocasión especial
                             </a>
 
-                            <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
-                               href="{{ route('admin.categories.index', ['type' => 'personalizacion']) }}">
-                                Tipo de personalización
-                            </a>
-
                         </div>
                     </div>
 

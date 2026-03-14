@@ -22,7 +22,6 @@
             </div>
         @endif
 
-        {{-- ✅ AHORA CON enctype PARA IMÁGENES --}}
         <form id="productForm"
               action="{{ route('admin.products.store') }}"
               method="POST"
@@ -30,7 +29,6 @@
               class="space-y-6">
             @csrf
 
-            {{-- GRID PRINCIPAL --}}
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                 {{-- COLUMNA IZQUIERDA --}}
@@ -52,8 +50,6 @@
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
-
-                        {{-- ✅ SKU eliminado (se generará automático en backend) --}}
 
                         {{-- PRECIO --}}
                         <div>
@@ -90,12 +86,11 @@
                             @enderror
                         </div>
 
-                        {{-- ✅ IMAGEN PRINCIPAL --}}
+                        {{-- IMAGEN PRINCIPAL --}}
                         <div class="md:col-span-2">
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Imagen del producto</label>
 
                             <div class="flex items-start gap-4">
-                                {{-- Preview (vacío al inicio) --}}
                                 <div class="w-28 h-28 rounded-2xl border border-pink-100 bg-pink-50/40 flex items-center justify-center overflow-hidden">
                                     <img id="imgPreview" src="" alt="Vista previa"
                                          class="hidden w-full h-full object-cover">
@@ -116,7 +111,6 @@
                                         Formatos: JPG, PNG o WEBP. Tamaño recomendado: 1200x1200.
                                     </p>
 
-                                    {{-- ✅ CORREGIDO: el error es imagen_principal --}}
                                     @error('imagen_principal')
                                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                     @enderror
@@ -124,11 +118,11 @@
                             </div>
                         </div>
 
-                        {{-- ✅ CATEGORÍAS (3 SELECTS) --}}
+                        {{-- CATEGORÍAS --}}
                         <div class="md:col-span-2">
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Categorías</label>
 
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-600 mb-1">Tipo de producto</label>
@@ -164,29 +158,11 @@
                                     @enderror
                                 </div>
 
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Tipo de personalización</label>
-                                    <select id="tipo_personalizacion"
-                                            name="tipo_personalizacion"
-                                            class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300">
-                                        <option value="">Selecciona un tipo...</option>
-                                        @foreach($catsPersonal as $c)
-                                            <option value="{{ $c->id }}" {{ old('tipo_personalizacion') == $c->id ? 'selected' : '' }}>
-                                                {{ $c->nombre }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('tipo_personalizacion')
-                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
                             </div>
 
-                            {{-- ✅ Hidden enviados como categories[] --}}
+                            {{-- Hidden enviados como categories[] --}}
                             <input type="hidden" name="categories[]" id="cat_1" value="">
                             <input type="hidden" name="categories[]" id="cat_2" value="">
-                            <input type="hidden" name="categories[]" id="cat_3" value="">
                             @error('categories')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
@@ -283,25 +259,20 @@
 @push('scripts')
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    // ✅ Sync categorías (igual que lo tenías)
     const tipo = document.getElementById('tipo_producto');
     const ocasion = document.getElementById('ocasion_especial');
-    const perso = document.getElementById('tipo_personalizacion');
 
     const c1 = document.getElementById('cat_1');
     const c2 = document.getElementById('cat_2');
-    const c3 = document.getElementById('cat_3');
 
-    function syncCats(){
+    function syncCats() {
       c1.value = tipo?.value || '';
       c2.value = ocasion?.value || '';
-      c3.value = perso?.value || '';
     }
 
-    [tipo, ocasion, perso].forEach(el => el?.addEventListener('change', syncCats));
+    [tipo, ocasion].forEach(el => el?.addEventListener('change', syncCats));
     syncCats();
 
-    // ✅ Preview de imagen (CORREGIDO: ahora usa imagen_principal)
     const inputImg = document.getElementById('imagen_principal');
     const imgPreview = document.getElementById('imgPreview');
     const imgPlaceholder = document.getElementById('imgPlaceholder');

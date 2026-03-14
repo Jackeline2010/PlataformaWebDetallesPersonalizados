@@ -14,7 +14,7 @@ class Product extends Model
     protected $table = 'products';
 
     protected $fillable = [
-        'category_id', // categoría principal (solo tipo_producto)
+        'category_id', // categoría principal: tipo_producto
         'imagen_principal',
         'nombre',
         'slug',
@@ -35,61 +35,70 @@ class Product extends Model
     ];
 
     protected $casts = [
-        'fingreso' => 'date',
-        'precio' => 'decimal:2',
-        'descuento' => 'decimal:2',
-        'peso' => 'decimal:2',
-        'activo' => 'boolean',
-        'destacado' => 'boolean',
-        'personalizable' => 'boolean',
-        'opciones_personalizacion' => 'array',
-        'orden' => 'integer',
-        'stock' => 'integer',
-        'stock_minimo' => 'integer',
+        'fingreso'                  => 'date',
+        'precio'                    => 'decimal:2',
+        'descuento'                 => 'decimal:2',
+        'peso'                      => 'decimal:2',
+        'activo'                    => 'boolean',
+        'destacado'                 => 'boolean',
+        'personalizable'            => 'boolean',
+        'opciones_personalizacion'  => 'array',
+        'orden'                     => 'integer',
+        'stock'                     => 'integer',
+        'stock_minimo'              => 'integer',
     ];
 
-   protected static function booted()
-{
-    static::creating(function (Product $product) {
+    protected static function booted()
+    {
+        static::creating(function (Product $product) {
+            // Generar slug único si no viene informado
+            if (empty($product->slug) && !empty($product->nombre)) {
+                $baseSlug = Str::slug($product->nombre);
+                $slug = $baseSlug;
+                $i = 2;
 
-        // Slug único (incluye soft-deletes)
-        if (empty($product->slug) && !empty($product->nombre)) {
-            $baseSlug = Str::slug($product->nombre);
-            $slug = $baseSlug;
-            $i = 2;
+                while (static::withTrashed()->where('slug', $slug)->exists()) {
+                    $slug = $baseSlug . '-' . $i;
+                    $i++;
+                }
 
-            while (static::withTrashed()->where('slug', $slug)->exists()) {
-                $slug = $baseSlug . '-' . $i;
-                $i++;
+                $product->slug = $slug;
             }
 
-            $product->slug = $slug;
-        }
+            // Generar SKU único si no viene informado
+            if (empty($product->sku)) {
+                do {
+                    $sku = 'SD-' . Str::upper(Str::random(8));
+                } while (static::withTrashed()->where('sku', $sku)->exists());
 
-        // SKU automático + ÚNICO (incluye soft-deletes)
-        if (empty($product->sku)) {
-            do {
-                $sku = 'SD-' . Str::upper(Str::random(8));
-            } while (static::withTrashed()->where('sku', $sku)->exists());
+                $product->sku = $sku;
+            }
 
-            $product->sku = $sku;
-        }
+            // Valores por defecto
+            if ($product->activo === null) {
+                $product->activo = true;
+            }
 
-        // Defaults útiles
-        if ($product->activo === null) $product->activo = true;
-        if ($product->personalizable === null) $product->personalizable = false;
-        if ($product->stock === null) $product->stock = 0;
-        if (empty($product->fingreso)) $product->fingreso = now()->toDateString();
-    });
-}
+            if ($product->personalizable === null) {
+                $product->personalizable = false;
+            }
+
+            if ($product->stock === null) {
+                $product->stock = 0;
+            }
+
+            if (empty($product->fingreso)) {
+                $product->fingreso = now()->toDateString();
+            }
+        });
+    }
 
     /**
-     * Genera un SKU único (incluye soft deletes).
+     * Genera un SKU único incluyendo registros soft deleted.
      */
     public static function generateUniqueSku(): string
     {
         do {
-            // Mantengo tu estilo pero con tu prefijo de marca
             $sku = 'SD-' . Str::upper(Str::random(8));
         } while (static::withTrashed()->where('sku', $sku)->exists());
 
@@ -102,31 +111,41 @@ class Product extends Model
     |--------------------------------------------------------------------------
     */
 
-    // Categoría principal (products.category_id -> categories.id)
+    /**
+     * Categoría principal del producto.
+     * Debe corresponder al grupo: tipo_producto.
+     */
     public function principalCategory()
     {
         return $this->belongsTo(Category::class, 'category_id');
     }
 
-    // Alias útil
+    /**
+     * Alias útil de principalCategory().
+     */
     public function category()
     {
         return $this->principalCategory();
     }
 
     /**
-     * Categorías/Filtros (many-to-many)
-     *
-     * ⚠️ MUY IMPORTANTE:
-     * Confirma el nombre REAL de tu tabla pivote.
-     * Si tu tabla se llama "categories_products" déjalo así.
-     * Si se llama "categorias_products" cambia el nombre abajo.
+     * Campos de personalización configurables del producto.
+     */
+    public function customFields()
+    {
+        return $this->hasMany(ProductCustomField::class, 'product_id')
+                    ->orderBy('sort_order');
+    }
+
+    /**
+     * Categorías secundarias relacionadas al producto
+     * (por ejemplo: ocasión especial).
      */
     public function categories()
     {
         return $this->belongsToMany(
             Category::class,
-            'categories_products', // <-- cambia a 'categorias_products' si tu tabla se llama así
+            'categories_products',
             'product_id',
             'category_id'
         );

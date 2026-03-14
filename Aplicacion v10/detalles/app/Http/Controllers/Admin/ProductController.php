@@ -28,20 +28,14 @@ class ProductController extends Controller
             ->get();
 
         $catsOcasion = Category::where('activo', 1)
-            ->where('grupo', 'ocasion')
-            ->orderBy('orden')
-            ->get();
-
-        $catsPersonal = Category::where('activo', 1)
-            ->where('grupo', 'personalizacion')
+            ->where('grupo', 'ocasion_especial')
             ->orderBy('orden')
             ->get();
 
         return view('admin.products.index', compact(
             'products',
             'catsTipoProducto',
-            'catsOcasion',
-            'catsPersonal'
+            'catsOcasion'
         ));
     }
 
@@ -58,19 +52,13 @@ class ProductController extends Controller
             ->get();
 
         $catsOcasion = Category::where('activo', 1)
-            ->where('grupo', 'ocasion')
-            ->orderBy('orden')
-            ->get();
-
-        $catsPersonal = Category::where('activo', 1)
-            ->where('grupo', 'personalizacion')
+            ->where('grupo', 'ocasion_especial')
             ->orderBy('orden')
             ->get();
 
         return view('admin.products.create', compact(
             'catsTipoProducto',
-            'catsOcasion',
-            'catsPersonal'
+            'catsOcasion'
         ));
     }
 
@@ -86,18 +74,14 @@ class ProductController extends Controller
             'descripcion_corta' => 'nullable|string|max:255',
             'precio'            => 'required|numeric|min:0',
             'stock'             => 'required|integer|min:0',
-
-            'tipo_producto'        => 'required|integer|exists:categories,id',
-            'ocasion_especial'     => 'nullable|integer|exists:categories,id',
-            'tipo_personalizacion' => 'nullable|integer|exists:categories,id',
-
-            'activo'         => 'required|boolean',
-            'personalizable' => 'required|boolean',
-
-            'imagen_principal' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'tipo_producto'     => 'required|integer|exists:categories,id',
+            'ocasion_especial'  => 'nullable|integer|exists:categories,id',
+            'activo'            => 'required|boolean',
+            'personalizable'    => 'required|boolean',
+            'imagen_principal'  => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        // Validar grupo correcto
+        // Validar grupo correcto para tipo de producto
         $mainCategory = Category::where('id', $data['tipo_producto'])
             ->where('grupo', 'tipo_producto')
             ->first();
@@ -108,11 +92,24 @@ class ProductController extends Controller
                 ->withInput();
         }
 
+        // Validar grupo correcto para ocasión especial
+        if (!empty($data['ocasion_especial'])) {
+            $ocasionCategory = Category::where('id', $data['ocasion_especial'])
+                ->where('grupo', 'ocasion_especial')
+                ->first();
+
+            if (!$ocasionCategory) {
+                return back()
+                    ->withErrors(['ocasion_especial' => 'Debe seleccionar una ocasión válida.'])
+                    ->withInput();
+            }
+        }
+
         // Guardar imagen
         $imagePath = null;
+
         if ($request->hasFile('imagen_principal')) {
-            $imagePath = $request->file('imagen_principal')
-                ->store('products', 'public');
+            $imagePath = $request->file('imagen_principal')->store('products', 'public');
         }
 
         // Generar SKU único
@@ -136,15 +133,11 @@ class ProductController extends Controller
             'imagen_principal'  => $imagePath,
         ]);
 
-        // Guardar pivot
+        // Guardar categorías relacionadas en pivot
         $pivotIds = [];
 
         if (!empty($data['ocasion_especial'])) {
             $pivotIds[] = $data['ocasion_especial'];
-        }
-
-        if (!empty($data['tipo_personalizacion'])) {
-            $pivotIds[] = $data['tipo_personalizacion'];
         }
 
         $product->categories()->sync($pivotIds);
@@ -161,19 +154,20 @@ class ProductController extends Controller
     */
     public function edit(Product $product)
     {
-        $catsTipoProducto = Category::where('grupo', 'tipo_producto')->get();
-        $catsOcasion = Category::where('grupo', 'ocasion')->get();
-        $catsPersonal = Category::where('grupo', 'personalizacion')->get();
+        $catsTipoProducto = Category::where('activo', 1)
+            ->where('grupo', 'tipo_producto')
+            ->orderBy('orden')
+            ->get();
+
+        $catsOcasion = Category::where('activo', 1)
+            ->where('grupo', 'ocasion_especial')
+            ->orderBy('orden')
+            ->get();
 
         $selectedIds = $product->categories()->pluck('categories.id')->toArray();
 
         $selectedOcasion = Category::whereIn('id', $selectedIds)
-            ->where('grupo', 'ocasion')
-            ->pluck('id')
-            ->toArray();
-
-        $selectedPersonal = Category::whereIn('id', $selectedIds)
-            ->where('grupo', 'personalizacion')
+            ->where('grupo', 'ocasion_especial')
             ->pluck('id')
             ->toArray();
 
@@ -181,9 +175,7 @@ class ProductController extends Controller
             'product',
             'catsTipoProducto',
             'catsOcasion',
-            'catsPersonal',
-            'selectedOcasion',
-            'selectedPersonal'
+            'selectedOcasion'
         ));
     }
 
@@ -199,16 +191,36 @@ class ProductController extends Controller
             'descripcion_corta' => 'nullable|string|max:255',
             'precio'            => 'required|numeric|min:0',
             'stock'             => 'required|integer|min:0',
-
-            'tipo_producto'        => 'required|integer|exists:categories,id',
-            'ocasion_especial'     => 'nullable|integer|exists:categories,id',
-            'tipo_personalizacion' => 'nullable|integer|exists:categories,id',
-
-            'activo'         => 'required|boolean',
-            'personalizable' => 'required|boolean',
-
-            'imagen_principal' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'tipo_producto'     => 'required|integer|exists:categories,id',
+            'ocasion_especial'  => 'nullable|integer|exists:categories,id',
+            'activo'            => 'required|boolean',
+            'personalizable'    => 'required|boolean',
+            'imagen_principal'  => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
+
+        // Validar que la categoría principal pertenezca al grupo correcto
+        $mainCategory = Category::where('id', $data['tipo_producto'])
+            ->where('grupo', 'tipo_producto')
+            ->first();
+
+        if (!$mainCategory) {
+            return back()
+                ->withErrors(['tipo_producto' => 'Debe seleccionar una categoría válida.'])
+                ->withInput();
+        }
+
+        // Validar que la ocasión pertenezca al grupo correcto
+        if (!empty($data['ocasion_especial'])) {
+            $ocasionCategory = Category::where('id', $data['ocasion_especial'])
+                ->where('grupo', 'ocasion_especial')
+                ->first();
+
+            if (!$ocasionCategory) {
+                return back()
+                    ->withErrors(['ocasion_especial' => 'Debe seleccionar una ocasión válida.'])
+                    ->withInput();
+            }
+        }
 
         $updateData = [
             'nombre'            => $data['nombre'],
@@ -220,30 +232,29 @@ class ProductController extends Controller
             'personalizable'    => $request->boolean('personalizable'),
         ];
 
-        // Regenerar slug si cambia nombre
+        // Regenerar slug si cambia el nombre
         if ($product->nombre !== $data['nombre']) {
             $updateData['slug'] = $this->uniqueSlug($data['nombre'], $product->id);
         }
 
         // Actualizar imagen
         if ($request->hasFile('imagen_principal')) {
-            if (!empty($product->imagen_principal)) {
+            if (!empty($product->imagen_principal) && Storage::disk('public')->exists($product->imagen_principal)) {
                 Storage::disk('public')->delete($product->imagen_principal);
             }
 
-            $updateData['imagen_principal'] = $request->file('imagen_principal')
+            $updateData['imagen_principal'] = $request
+                ->file('imagen_principal')
                 ->store('products', 'public');
         }
 
         $product->update($updateData);
 
-        // Sync pivot
+        // Sincronizar categorías pivot
         $pivotIds = [];
+
         if (!empty($data['ocasion_especial'])) {
             $pivotIds[] = $data['ocasion_especial'];
-        }
-        if (!empty($data['tipo_personalizacion'])) {
-            $pivotIds[] = $data['tipo_personalizacion'];
         }
 
         $product->categories()->sync($pivotIds);

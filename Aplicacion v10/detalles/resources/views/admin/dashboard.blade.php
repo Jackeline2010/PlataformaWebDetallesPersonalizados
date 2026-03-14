@@ -4,6 +4,7 @@
 
 @section('content')
 
+<img src="{{ asset('storage/products/Basico.jpg') }}" width="200">
 <div class="p-6">
 
     <h1 class="text-4xl font-bold text-pink-400 mb-8 text-center">

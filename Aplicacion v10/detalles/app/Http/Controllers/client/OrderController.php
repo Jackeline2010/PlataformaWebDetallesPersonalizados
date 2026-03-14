@@ -19,9 +19,17 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        if ($order->user_id !== auth()->id()) abort(403);
+        // Seguridad: solo el dueño del pedido
+        if ((int) $order->user_id !== (int) auth()->id()) {
+            abort(403);
+        }
 
-        $order->load('orderProducts.product');
+        // Cargar productos del pedido + personalizaciones (si existen)
+        $order->load([
+            'orderProducts.product',
+            'orderProducts.customizations.field',
+            'orderProducts.customizations.option',
+        ]);
 
         return view('client.orders.show', [
             'order' => $order,

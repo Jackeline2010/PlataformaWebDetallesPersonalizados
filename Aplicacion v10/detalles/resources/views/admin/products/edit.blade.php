@@ -3,14 +3,8 @@
 
 @section('content')
 @php
-    // Selección actual (principal)
     $currentTipo = old('tipo_producto', $product->category_id);
-
-    // Pivot seleccionados (llegan desde el controller: $selectedOcasion, $selectedPersonal)
-    $currentOcasion  = old('ocasion_especial', $selectedOcasion[0] ?? null);
-    $currentPersonal = old('tipo_personalizacion', $selectedPersonal[0] ?? null);
-
-    // SKU solo para mostrar
+    $currentOcasion = old('ocasion_especial', $selectedOcasion[0] ?? null);
     $sku = $product->sku ?? '';
 @endphp
 
@@ -72,22 +66,25 @@
                     <p class="mt-1 text-xs text-gray-500">El SKU se genera automáticamente y no se edita.</p>
                 </div>
 
-                {{-- ✅ IMAGEN DEL PRODUCTO (NUEVO) --}}
+                {{-- IMAGEN DEL PRODUCTO --}}
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Imagen del producto</label>
 
                     <div class="flex items-start gap-4">
                         <div class="w-28 h-28 rounded-2xl border border-pink-100 bg-pink-50/40 flex items-center justify-center overflow-hidden">
-                            @if(!empty($product->imagen))
+                            @if(!empty($product->imagen_principal))
                                 <img id="imgPreviewEdit"
-                                     src="{{ asset('storage/' . $product->imagen) }}"
+                                     src="{{ asset('storage/' . $product->imagen_principal) }}"
                                      alt="Imagen actual"
                                      class="w-full h-full object-cover">
                                 <div id="imgPlaceholderEdit" class="hidden text-xs text-gray-400 text-center px-2">
                                     Sin imagen
                                 </div>
                             @else
-                                <img id="imgPreviewEdit" src="" alt="Vista previa" class="hidden w-full h-full object-cover">
+                                <img id="imgPreviewEdit"
+                                     src=""
+                                     alt="Vista previa"
+                                     class="hidden w-full h-full object-cover">
                                 <div id="imgPlaceholderEdit" class="text-xs text-gray-400 text-center px-2">
                                     Sin imagen
                                 </div>
@@ -96,9 +93,9 @@
 
                         <div class="flex-1">
                             <input
-                                id="imagen"
+                                id="imagen_principal"
                                 type="file"
-                                name="imagen"
+                                name="imagen_principal"
                                 accept="image/*"
                                 class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300"
                             >
@@ -106,7 +103,7 @@
                                 Si subes una nueva imagen, reemplazará la actual. Formatos: JPG, PNG o WEBP.
                             </p>
 
-                            @error('imagen')
+                            @error('imagen_principal')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -161,11 +158,11 @@
                     @enderror
                 </div>
 
-                {{-- CATEGORÍAS (3 SELECTS) --}}
+                {{-- CATEGORÍAS --}}
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Categorías</label>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 mb-1">Tipo de producto *</label>
@@ -202,23 +199,6 @@
                             @enderror
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">Tipo de personalización</label>
-                            <select id="tipo_personalizacion"
-                                    name="tipo_personalizacion"
-                                    class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300">
-                                <option value="">Selecciona un tipo...</option>
-                                @foreach($catsPersonal as $c)
-                                    <option value="{{ $c->id }}" {{ (string)$currentPersonal === (string)$c->id ? 'selected' : '' }}>
-                                        {{ $c->nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('tipo_personalizacion')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
                     </div>
                 </div>
 
@@ -251,7 +231,7 @@
                     @enderror
                 </div>
 
-                {{-- ESTADO (Activo/Inactivo) --}}
+                {{-- ESTADO --}}
                 <div class="md:col-span-2 p-5 rounded-2xl border border-pink-100 bg-white shadow-sm">
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Estado</label>
                     <select name="activo"
@@ -273,7 +253,6 @@
                     Cancelar
                 </a>
 
-                {{-- ✅ Botón con modal --}}
                 <button type="button"
                         data-confirm-submit="productEditForm"
                         data-confirm-title="Confirmar edición"
@@ -293,14 +272,16 @@
 @push('scripts')
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    // ✅ Preview de imagen (no afecta tu modal)
-    const inputImg = document.getElementById('imagen');
+    const inputImg = document.getElementById('imagen_principal');
     const imgPreview = document.getElementById('imgPreviewEdit');
     const imgPlaceholder = document.getElementById('imgPlaceholderEdit');
 
     inputImg?.addEventListener('change', (e) => {
       const file = e.target.files?.[0];
-      if (!file) return;
+
+      if (!file) {
+        return;
+      }
 
       const url = URL.createObjectURL(file);
       imgPreview.src = url;
