@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\ProductColor;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -14,13 +15,14 @@ class Product extends Model
     protected $table = 'products';
 
     protected $fillable = [
-        'category_id', // categoría principal: tipo_producto
+        'category_id',
         'imagen_principal',
         'nombre',
         'slug',
         'descripcion',
         'descripcion_corta',
         'precio',
+        'photo_print_price',
         'stock',
         'stock_minimo',
         'fingreso',
@@ -32,26 +34,28 @@ class Product extends Model
         'personalizable',
         'opciones_personalizacion',
         'orden',
+        'tiene_variantes',
     ];
 
     protected $casts = [
-        'fingreso'                  => 'date',
-        'precio'                    => 'decimal:2',
-        'descuento'                 => 'decimal:2',
-        'peso'                      => 'decimal:2',
-        'activo'                    => 'boolean',
-        'destacado'                 => 'boolean',
-        'personalizable'            => 'boolean',
-        'opciones_personalizacion'  => 'array',
-        'orden'                     => 'integer',
-        'stock'                     => 'integer',
-        'stock_minimo'              => 'integer',
+        'fingreso'                 => 'date',
+        'precio'                   => 'decimal:2',
+        'photo_print_price'        => 'decimal:2',
+        'descuento'                => 'decimal:2',
+        'peso'                     => 'decimal:2',
+        'activo'                   => 'boolean',
+        'destacado'                => 'boolean',
+        'personalizable'           => 'boolean',
+        'opciones_personalizacion' => 'array',
+        'orden'                    => 'integer',
+        'stock'                    => 'integer',
+        'stock_minimo'             => 'integer',
+        'tiene_variantes'          => 'boolean',
     ];
 
     protected static function booted()
     {
         static::creating(function (Product $product) {
-            // Generar slug único si no viene informado
             if (empty($product->slug) && !empty($product->nombre)) {
                 $baseSlug = Str::slug($product->nombre);
                 $slug = $baseSlug;
@@ -65,7 +69,6 @@ class Product extends Model
                 $product->slug = $slug;
             }
 
-            // Generar SKU único si no viene informado
             if (empty($product->sku)) {
                 do {
                     $sku = 'SD-' . Str::upper(Str::random(8));
@@ -74,7 +77,6 @@ class Product extends Model
                 $product->sku = $sku;
             }
 
-            // Valores por defecto
             if ($product->activo === null) {
                 $product->activo = true;
             }
@@ -87,15 +89,20 @@ class Product extends Model
                 $product->stock = 0;
             }
 
+            if ($product->stock_minimo === null) {
+                $product->stock_minimo = 5;
+            }
+
+            if ($product->photo_print_price === null) {
+                $product->photo_print_price = 0;
+            }
+
             if (empty($product->fingreso)) {
                 $product->fingreso = now()->toDateString();
             }
         });
     }
 
-    /**
-     * Genera un SKU único incluyendo registros soft deleted.
-     */
     public static function generateUniqueSku(): string
     {
         do {
@@ -105,42 +112,36 @@ class Product extends Model
         return $sku;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | RELACIONES
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Categoría principal del producto.
-     * Debe corresponder al grupo: tipo_producto.
-     */
     public function principalCategory()
     {
         return $this->belongsTo(Category::class, 'category_id');
     }
 
-    /**
-     * Alias útil de principalCategory().
-     */
     public function category()
     {
         return $this->principalCategory();
     }
 
-    /**
-     * Campos de personalización configurables del producto.
-     */
+    public function colors()
+    {
+        return $this->hasMany(ProductColor::class, 'product_id')
+            ->orderBy('nombre');
+    }
+
     public function customFields()
     {
         return $this->hasMany(ProductCustomField::class, 'product_id')
-                    ->orderBy('sort_order');
+            ->where('is_active', true)
+            ->orderBy('sort_order');
     }
 
-    /**
-     * Categorías secundarias relacionadas al producto
-     * (por ejemplo: ocasión especial).
-     */
+    public function extras()
+    {
+        return $this->belongsToMany(\App\Models\Extra::class, 'extra_product')
+            ->withPivot('is_active')
+            ->withTimestamps();
+    }
+
     public function categories()
     {
         return $this->belongsToMany(
@@ -151,12 +152,6 @@ class Product extends Model
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | SCOPES
-    |--------------------------------------------------------------------------
-    */
-
     public function scopeActive($query)
     {
         return $query->where('activo', true);
@@ -166,12 +161,6 @@ class Product extends Model
     {
         return $query->where('destacado', true);
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | ACCESSORS / HELPERS
-    |--------------------------------------------------------------------------
-    */
 
     public function getPriceWithDiscountAttribute()
     {

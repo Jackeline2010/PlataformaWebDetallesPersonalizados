@@ -42,6 +42,13 @@
                         <span class="sidebar-text font-semibold">Productos</span>
                     </a>
 
+                    <a href="{{ route('admin.extras.index') }}"
+                     class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-pink-100 text-gray-700">
+                     <span>🎀</span>
+                     <span>Extras</span>
+                        </a>
+
+
                     {{-- CATEGORÍAS --}}
                     <div class="mt-1">
 

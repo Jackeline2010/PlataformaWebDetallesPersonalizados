@@ -312,7 +312,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
-
 {{-- ✅ Scripts de cada vista --}}
 @stack('scripts')
 </body>

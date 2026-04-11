@@ -1,5 +1,6 @@
 @extends('layouts.admin')
 @section('title','Nuevo Producto')
+
 @section('content')
 <div class="max-w-6xl mx-auto">
 
@@ -38,7 +39,9 @@
 
                         {{-- NOMBRE --}}
                         <div class="md:col-span-2">
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Nombre del producto *</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">
+                                Nombre del producto *
+                            </label>
                             <input
                                 name="nombre"
                                 value="{{ old('nombre') }}"
@@ -53,7 +56,9 @@
 
                         {{-- PRECIO --}}
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Precio *</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">
+                                Precio *
+                            </label>
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">$</span>
                                 <input
@@ -72,9 +77,36 @@
                             @enderror
                         </div>
 
+                        {{-- COSTO FOTO IMPRESA --}}
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">
+                                Costo foto impresa
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                                <input
+                                    name="photo_print_price"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value="{{ old('photo_print_price', 0) }}"
+                                    placeholder="0.00"
+                                    class="w-full pl-9 rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                                >
+                            </div>
+                            <p class="mt-2 text-xs text-gray-500">
+                                Este valor solo se cobrará cuando el cliente agregue una foto para impresión.
+                            </p>
+                            @error('photo_print_price')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         {{-- DESCRIPCIÓN CORTA --}}
                         <div class="md:col-span-2">
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Descripción corta</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">
+                                Descripción corta
+                            </label>
                             <input
                                 name="descripcion_corta"
                                 value="{{ old('descripcion_corta') }}"
@@ -88,7 +120,9 @@
 
                         {{-- IMAGEN PRINCIPAL --}}
                         <div class="md:col-span-2">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Imagen del producto</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Imagen del producto
+                            </label>
 
                             <div class="flex items-start gap-4">
                                 <div class="w-28 h-28 rounded-2xl border border-pink-100 bg-pink-50/40 flex items-center justify-center overflow-hidden">
@@ -125,7 +159,9 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Tipo de producto</label>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">
+                                        Tipo de producto
+                                    </label>
                                     <select id="tipo_producto"
                                             name="tipo_producto"
                                             class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300">
@@ -142,7 +178,9 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Ocasión especial</label>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">
+                                        Ocasión especial
+                                    </label>
                                     <select id="ocasion_especial"
                                             name="ocasion_especial"
                                             class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300">
@@ -231,6 +269,43 @@
                         @enderror
                     </div>
 
+                    {{-- VARIANTES PRODUCTO --}}
+                    <div class="bg-white rounded-2xl border border-pink-100 p-5 shadow-sm">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            ¿Deseas agregar colores para este producto?
+                        </label>
+
+                        <p class="text-xs text-gray-500 mb-3">
+                            Este campo es opcional. Si eliges “Sí”, luego podrás registrar los colores disponibles del producto.
+                        </p>
+
+                        <div class="flex items-center gap-6">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="tiene_variantes"
+                                    value="1"
+                                    {{ old('tiene_variantes') == '1' ? 'checked' : '' }}
+                                    class="text-pink-600 focus:ring-pink-500 border-gray-300">
+                                <span class="text-sm text-gray-700">Sí</span>
+                            </label>
+
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="tiene_variantes"
+                                    value="0"
+                                    {{ old('tiene_variantes', '0') == '0' ? 'checked' : '' }}
+                                    class="text-pink-600 focus:ring-pink-500 border-gray-300">
+                                <span class="text-sm text-gray-700">No</span>
+                            </label>
+                        </div>
+
+                        @error('tiene_variantes')
+                            <p class="text-sm text-red-500 mt-2">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     {{-- BOTONES --}}
                     <div class="flex flex-col gap-3">
                         <button type="button"
@@ -258,40 +333,40 @@
 
 @push('scripts')
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const tipo = document.getElementById('tipo_producto');
-    const ocasion = document.getElementById('ocasion_especial');
+    document.addEventListener('DOMContentLoaded', () => {
+        const tipo = document.getElementById('tipo_producto');
+        const ocasion = document.getElementById('ocasion_especial');
 
-    const c1 = document.getElementById('cat_1');
-    const c2 = document.getElementById('cat_2');
+        const c1 = document.getElementById('cat_1');
+        const c2 = document.getElementById('cat_2');
 
-    function syncCats() {
-      c1.value = tipo?.value || '';
-      c2.value = ocasion?.value || '';
-    }
+        function syncCats() {
+            c1.value = tipo?.value || '';
+            c2.value = ocasion?.value || '';
+        }
 
-    [tipo, ocasion].forEach(el => el?.addEventListener('change', syncCats));
-    syncCats();
+        [tipo, ocasion].forEach(el => el?.addEventListener('change', syncCats));
+        syncCats();
 
-    const inputImg = document.getElementById('imagen_principal');
-    const imgPreview = document.getElementById('imgPreview');
-    const imgPlaceholder = document.getElementById('imgPlaceholder');
+        const inputImg = document.getElementById('imagen_principal');
+        const imgPreview = document.getElementById('imgPreview');
+        const imgPlaceholder = document.getElementById('imgPlaceholder');
 
-    inputImg?.addEventListener('change', (e) => {
-      const file = e.target.files?.[0];
+        inputImg?.addEventListener('change', (e) => {
+            const file = e.target.files?.[0];
 
-      if (!file) {
-        imgPreview.src = '';
-        imgPreview.classList.add('hidden');
-        imgPlaceholder.classList.remove('hidden');
-        return;
-      }
+            if (!file) {
+                imgPreview.src = '';
+                imgPreview.classList.add('hidden');
+                imgPlaceholder.classList.remove('hidden');
+                return;
+            }
 
-      const url = URL.createObjectURL(file);
-      imgPreview.src = url;
-      imgPreview.classList.remove('hidden');
-      imgPlaceholder.classList.add('hidden');
+            const url = URL.createObjectURL(file);
+            imgPreview.src = url;
+            imgPreview.classList.remove('hidden');
+            imgPlaceholder.classList.add('hidden');
+        });
     });
-  });
 </script>
 @endpush

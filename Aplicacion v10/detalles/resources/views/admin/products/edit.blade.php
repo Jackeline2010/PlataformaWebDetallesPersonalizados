@@ -8,7 +8,7 @@
     $sku = $product->sku ?? '';
 @endphp
 
-<div class="max-w-4xl mx-auto">
+<div class="max-w-5xl mx-auto">
 
     <div class="mb-6">
         <h1 class="text-2xl font-extrabold text-pink-500">Editar Producto</h1>
@@ -32,9 +32,8 @@
         <form id="productEditForm"
               method="POST"
               action="{{ route('admin.products.update', $product) }}"
-              class="space-y-6"
-              autocomplete="off"
-              enctype="multipart/form-data">
+              enctype="multipart/form-data"
+              class="space-y-6">
             @csrf
             @method('PUT')
 
@@ -46,67 +45,37 @@
                     <input
                         name="nombre"
                         value="{{ old('nombre', $product->nombre) }}"
-                        class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                        class="w-full rounded-xl border border-pink-200 px-4 py-3"
                         required
                     >
-                    @error('nombre')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
                 </div>
 
-                {{-- SKU (solo lectura) --}}
+                {{-- SKU --}}
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 mb-1">SKU</label>
                     <input
                         value="{{ $sku }}"
                         readonly
-                        class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-600"
-                        placeholder="Se genera automáticamente"
+                        class="w-full rounded-xl border bg-gray-50 px-4 py-3 text-gray-600"
                     >
-                    <p class="mt-1 text-xs text-gray-500">El SKU se genera automáticamente y no se edita.</p>
                 </div>
 
-                {{-- IMAGEN DEL PRODUCTO --}}
+                {{-- IMAGEN --}}
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Imagen del producto</label>
 
-                    <div class="flex items-start gap-4">
-                        <div class="w-28 h-28 rounded-2xl border border-pink-100 bg-pink-50/40 flex items-center justify-center overflow-hidden">
-                            @if(!empty($product->imagen_principal))
+                    <div class="flex gap-4">
+                        <div class="w-28 h-28 rounded-2xl border bg-pink-50 flex items-center justify-center overflow-hidden">
+                            @if($product->imagen_principal)
                                 <img id="imgPreviewEdit"
-                                     src="{{ asset('storage/' . $product->imagen_principal) }}"
-                                     alt="Imagen actual"
+                                     src="{{ asset('storage/'.$product->imagen_principal) }}"
                                      class="w-full h-full object-cover">
-                                <div id="imgPlaceholderEdit" class="hidden text-xs text-gray-400 text-center px-2">
-                                    Sin imagen
-                                </div>
                             @else
-                                <img id="imgPreviewEdit"
-                                     src=""
-                                     alt="Vista previa"
-                                     class="hidden w-full h-full object-cover">
-                                <div id="imgPlaceholderEdit" class="text-xs text-gray-400 text-center px-2">
-                                    Sin imagen
-                                </div>
+                                <img id="imgPreviewEdit" class="hidden w-full h-full object-cover">
                             @endif
                         </div>
 
-                        <div class="flex-1">
-                            <input
-                                id="imagen_principal"
-                                type="file"
-                                name="imagen_principal"
-                                accept="image/*"
-                                class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300"
-                            >
-                            <p class="mt-2 text-xs text-gray-500">
-                                Si subes una nueva imagen, reemplazará la actual. Formatos: JPG, PNG o WEBP.
-                            </p>
-
-                            @error('imagen_principal')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
+                        <input type="file" name="imagen_principal" class="w-full border rounded-xl p-3">
                     </div>
                 </div>
 
@@ -119,15 +88,32 @@
                             name="precio"
                             type="number"
                             step="0.01"
-                            min="0"
                             value="{{ old('precio', $product->precio) }}"
-                            class="w-full pl-9 rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                            class="w-full pl-9 rounded-xl border px-4 py-3"
                             required
                         >
                     </div>
-                    @error('precio')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
+                </div>
+
+                {{-- COSTO FOTO IMPRESA --}}
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">
+                        Costo foto impresa
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                        <input
+                            name="photo_print_price"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value="{{ old('photo_print_price', $product->photo_print_price ?? 0) }}"
+                            class="w-full pl-9 rounded-xl border px-4 py-3"
+                        >
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Solo se cobrará si el cliente agrega una foto.
+                    </p>
                 </div>
 
                 {{-- STOCK --}}
@@ -136,158 +122,79 @@
                     <input
                         name="stock"
                         type="number"
-                        min="0"
-                        value="{{ old('stock', $product->stock ?? 0) }}"
-                        class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                        value="{{ old('stock', $product->stock) }}"
+                        class="w-full rounded-xl border px-4 py-3"
                     >
-                    @error('stock')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
                 </div>
 
-                {{-- DESCRIPCIÓN CORTA --}}
+                {{-- DESCRIPCIÓN --}}
                 <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Descripción corta</label>
                     <input
                         name="descripcion_corta"
                         value="{{ old('descripcion_corta', $product->descripcion_corta) }}"
-                        class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                        class="w-full rounded-xl border px-4 py-3"
                     >
-                    @error('descripcion_corta')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
                 </div>
 
                 {{-- CATEGORÍAS --}}
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Categorías</label>
+                <div>
+                    <label class="text-sm">Tipo producto</label>
+                    <select name="tipo_producto" class="w-full border rounded-xl p-3">
+                        @foreach($catsTipoProducto as $c)
+                            <option value="{{ $c->id }}" {{ $currentTipo == $c->id ? 'selected' : '' }}>
+                                {{ $c->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">Tipo de producto *</label>
-                            <select id="tipo_producto"
-                                    name="tipo_producto"
-                                    class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300"
-                                    required>
-                                <option value="">Selecciona un tipo...</option>
-                                @foreach($catsTipoProducto as $c)
-                                    <option value="{{ $c->id }}" {{ (string)$currentTipo === (string)$c->id ? 'selected' : '' }}>
-                                        {{ $c->nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('tipo_producto')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-600 mb-1">Ocasión especial</label>
-                            <select id="ocasion_especial"
-                                    name="ocasion_especial"
-                                    class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300">
-                                <option value="">Selecciona una ocasión...</option>
-                                @foreach($catsOcasion as $c)
-                                    <option value="{{ $c->id }}" {{ (string)$currentOcasion === (string)$c->id ? 'selected' : '' }}>
-                                        {{ $c->nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('ocasion_especial')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                    </div>
+                <div>
+                    <label class="text-sm">Ocasión</label>
+                    <select name="ocasion_especial" class="w-full border rounded-xl p-3">
+                        @foreach($catsOcasion as $c)
+                            <option value="{{ $c->id }}" {{ $currentOcasion == $c->id ? 'selected' : '' }}>
+                                {{ $c->nombre }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
 
                 {{-- PERSONALIZABLE --}}
-                <div class="md:col-span-2 p-5 rounded-2xl border border-pink-100 bg-white shadow-sm">
-                    <p class="text-sm font-semibold text-gray-700 mb-2">Personalizable</p>
-
-                    <div class="flex gap-3">
-                        <label class="flex-1">
-                            <input type="radio" name="personalizable" value="1" class="peer hidden"
-                                   {{ old('personalizable', (int)($product->personalizable ?? 0)) == 1 ? 'checked' : '' }}>
-                            <div class="w-full text-center px-4 py-2 rounded-xl border border-pink-200
-                                        peer-checked:bg-pink-500 peer-checked:text-white peer-checked:border-pink-500 cursor-pointer">
-                                Sí
-                            </div>
-                        </label>
-
-                        <label class="flex-1">
-                            <input type="radio" name="personalizable" value="0" class="peer hidden"
-                                   {{ old('personalizable', (int)($product->personalizable ?? 0)) == 0 ? 'checked' : '' }}>
-                            <div class="w-full text-center px-4 py-2 rounded-xl border border-pink-200
-                                        peer-checked:bg-pink-500 peer-checked:text-white peer-checked:border-pink-500 cursor-pointer">
-                                No
-                            </div>
-                        </label>
-                    </div>
-
-                    @error('personalizable')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold">Personalizable</label>
+                    <select name="personalizable" class="w-full border rounded-xl p-3">
+                        <option value="1" {{ $product->personalizable ? 'selected' : '' }}>Sí</option>
+                        <option value="0" {{ !$product->personalizable ? 'selected' : '' }}>No</option>
+                    </select>
                 </div>
 
                 {{-- ESTADO --}}
-                <div class="md:col-span-2 p-5 rounded-2xl border border-pink-100 bg-white shadow-sm">
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Estado</label>
-                    <select name="activo"
-                            class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300">
-                        <option value="1" {{ old('activo', (int)($product->activo ?? 1)) == 1 ? 'selected' : '' }}>Activo</option>
-                        <option value="0" {{ old('activo', (int)($product->activo ?? 1)) == 0 ? 'selected' : '' }}>Inactivo</option>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold">Estado</label>
+                    <select name="activo" class="w-full border rounded-xl p-3">
+                        <option value="1" {{ $product->activo ? 'selected' : '' }}>Activo</option>
+                        <option value="0" {{ !$product->activo ? 'selected' : '' }}>Inactivo</option>
                     </select>
-                    @error('activo')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
                 </div>
 
             </div>
 
             {{-- BOTONES --}}
-            <div class="flex flex-col sm:flex-row gap-3 sm:justify-end">
+            <div class="flex justify-end gap-3">
                 <a href="{{ route('admin.products.index') }}"
-                   class="px-5 py-3 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 text-center">
+                   class="px-4 py-2 border rounded-xl">
                     Cancelar
                 </a>
 
-                <button type="button"
-                        data-confirm-submit="productEditForm"
-                        data-confirm-title="Confirmar edición"
-                        data-confirm-message="¿Está seguro que desea guardar los cambios del producto: {{ e($product->nombre) }}?"
-                        data-confirm-ok="Sí, guardar"
-                        data-confirm-cancel="Cancelar"
-                        class="px-6 py-3 rounded-xl bg-pink-500 text-white font-semibold hover:bg-pink-600 shadow-sm">
+                <button type="submit"
+                        class="px-6 py-2 bg-pink-500 text-white rounded-xl">
                     Guardar cambios
                 </button>
             </div>
 
         </form>
+
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const inputImg = document.getElementById('imagen_principal');
-    const imgPreview = document.getElementById('imgPreviewEdit');
-    const imgPlaceholder = document.getElementById('imgPlaceholderEdit');
-
-    inputImg?.addEventListener('change', (e) => {
-      const file = e.target.files?.[0];
-
-      if (!file) {
-        return;
-      }
-
-      const url = URL.createObjectURL(file);
-      imgPreview.src = url;
-      imgPreview.classList.remove('hidden');
-      imgPlaceholder?.classList.add('hidden');
-    });
-  });
-</script>
-@endpush

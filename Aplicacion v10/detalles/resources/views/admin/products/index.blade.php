@@ -124,7 +124,7 @@
               </td>
 
               <td class="p-4 text-right whitespace-nowrap">
-                <a href="{{ route('admin.products.personalization.index', $product) }}"
+                <a href="{{ route('admin.products.personalization', $product) }}"
                    class="inline-flex items-center px-3 py-1.5 rounded-xl border border-pink-100 bg-pink-50 text-pink-700 hover:bg-pink-100 mr-2">
                   Personalización
                 </a>

@@ -1,188 +1,167 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Client;
 
-use App\Models\Cart;
+use App\Http\Controllers\Controller;
+use App\Models\Extra;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 
 class CartController extends Controller
 {
     /**
-     * Display the cart page
+     * Mostrar carrito
      */
     public function index()
     {
-        $userId = Auth::id();
-        $sessionId = Session::getId();
-        
-        // Get cart data with totals
-        $cartData = Cart::calculateCartTotals($userId, $sessionId);
-        
-        return view('shop.checkout.cart', $cartData);
+        $cart = session()->get('cart', []);
+
+        $subtotal = collect($cart)->sum(function ($item) {
+            return (float) ($item['total'] ?? 0);
+        });
+
+        return view('client.cart.index', compact('cart', 'subtotal'));
     }
 
     /**
-     * Add product to cart
+     * Agregar producto al carrito sin personalización
      */
-    public function add(Request $request)
+    public function buyAsIs(Request $request, Product $product)
     {
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'cantidad' => 'required|integer|min:1',
-            'personalizacion' => 'nullable|array'
-        ]);
-
-        $product = Product::findOrFail($request->product_id);
-        $userId = Auth::id();
-        $sessionId = Session::getId();
-
-        // Check if item already exists in cart
-        $cartItem = Cart::where('product_id', $request->product_id)
-            ->where(function ($query) use ($userId, $sessionId) {
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
-            })
-            ->first();
-
-        if ($cartItem) {
-            // Update existing item
-            $cartItem->cantidad += $request->cantidad;
-            $cartItem->updateTotal();
-        } else {
-            // Calculate total before creating cart item
-            $precio_unitario = $product->precio;
-            $descuento = $product->descuento ?? 0;
-            $subtotal = $precio_unitario * $request->cantidad;
-            $discount_amount = $subtotal * ($descuento / 100);
-            $total = $subtotal - $discount_amount;
-            
-            // Create new cart item
-            $cartItem = Cart::create([
-                'user_id' => $userId,
-                'session_id' => $userId ? null : $sessionId,
-                'product_id' => $request->product_id,
-                'cantidad' => $request->cantidad,
-                'precio_unitario' => $precio_unitario,
-                'descuento' => $descuento,
-                'total' => $total,
-                'personalizacion' => $request->personalizacion,
-                'fecha_agregado' => now(),
-            ]);
+        if (!$product->activo) {
+            return back()->with('error', 'Este producto no está disponible.');
         }
 
-        // Check if it's an AJAX request
-        if (request()->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Producto agregado al carrito',
-                'cart_count' => Cart::getCartItems($userId, $sessionId)->count()
-            ]);
+        $cart = session()->get('cart', []);
+
+        $productId = (string) $product->id;
+        $basePrice = (float) $product->precio;
+
+        if (isset($cart[$productId]) && empty($cart[$productId]['is_customized'])) {
+            $cart[$productId]['quantity'] += 1;
+            $cart[$productId]['total'] = (float) $cart[$productId]['unit_price'] * (int) $cart[$productId]['quantity'];
         } else {
-            // Regular form submission - redirect to cart with success message
-            return redirect()->route('cart')->with('success', 'Producto agregado al carrito exitosamente');
+            $cart[$productId] = [
+                'id' => $productId,
+                'product_id' => $product->id,
+                'name' => $product->nombre,
+                'slug' => $product->slug,
+                'image' => $product->imagen_principal,
+                'quantity' => 1,
+                'base_price' => $basePrice,
+                'photo_price' => 0,
+                'extras_total' => 0,
+                'custom_price' => 0,
+                'unit_price' => $basePrice,
+                'total' => $basePrice,
+                'is_customized' => false,
+                'dedicatoria' => null,
+                'destinatario' => null,
+                'color' => null,
+                'selected_color' => null,
+                'photo' => null,
+                'extras' => [],
+                'custom_fields' => [],
+                'design_json' => null,
+                'frase' => null,
+            ];
         }
+
+        session()->put('cart', $cart);
+
+        return redirect()
+            ->route('client.cart.index')
+            ->with('success', 'Producto agregado al carrito correctamente.');
     }
 
     /**
-     * Update cart item quantity
+     * Agregar producto personalizado al carrito
      */
-    public function update(Request $request, $id)
+    public function add(Request $request, Product $product)
     {
-        $request->validate([
-            'cantidad' => 'required|integer|min:1'
-        ]);
-
-        $userId = Auth::id();
-        $sessionId = Session::getId();
-
-        $cartItem = Cart::where('id', $id)
-            ->where(function ($query) use ($userId, $sessionId) {
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
-            })
-            ->firstOrFail();
-
-        $cartItem->cantidad = $request->cantidad;
-        $cartItem->updateTotal();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Cantidad actualizada',
-            'new_total' => $cartItem->total,
-            'cart_totals' => Cart::calculateCartTotals($userId, $sessionId)
-        ]);
-    }
-
-    /**
-     * Remove item from cart
-     */
-    public function remove($id)
-    {
-        $userId = Auth::id();
-        $sessionId = Session::getId();
-
-        $cartItem = Cart::where('id', $id)
-            ->where(function ($query) use ($userId, $sessionId) {
-                if ($userId) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('session_id', $sessionId);
-                }
-            })
-            ->firstOrFail();
-
-        $cartItem->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Producto eliminado del carrito',
-            'cart_totals' => Cart::calculateCartTotals($userId, $sessionId)
-        ]);
-    }
-
-    /**
-     * Clear entire cart
-     */
-    public function clear()
-    {
-        $userId = Auth::id();
-        $sessionId = Session::getId();
-
-        $query = Cart::query();
-        
-        if ($userId) {
-            $query->where('user_id', $userId);
-        } else {
-            $query->where('session_id', $sessionId);
+        if (!$product->activo) {
+            return back()->with('error', 'Este producto no está disponible.');
         }
-        
-        $query->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Carrito vaciado'
+        $validated = $request->validate([
+            'quantity' => ['nullable', 'integer', 'min:1'],
+            'dedicatoria' => ['nullable', 'string', 'max:255'],
+            'destinatario' => ['nullable', 'string', 'max:100'],
+            'frase' => ['nullable', 'string', 'max:255'],
+            'selected_color' => ['nullable', 'string', 'max:100'],
+            'color' => ['nullable', 'string', 'max:100'],
+            'design_json' => ['nullable', 'string'],
+            'customer_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'extras' => ['nullable', 'array'],
+            'extras.*' => ['integer', 'exists:extras,id'],
+            'custom_fields' => ['nullable', 'array'],
         ]);
-    }
 
-    /**
-     * Get cart count for AJAX requests
-     */
-    public function count()
-    {
-        $userId = Auth::id();
-        $sessionId = Session::getId();
-        
-        $count = Cart::getCartItems($userId, $sessionId)->count();
-        
-        return response()->json(['count' => $count]);
+        $quantity = (int) ($validated['quantity'] ?? 1);
+        $basePrice = (float) $product->precio;
+        $photoPrice = 0;
+        $photoPath = null;
+
+        if ($request->hasFile('customer_photo')) {
+            $photoPath = $request->file('customer_photo')->store('customizations/photos', 'public');
+            $photoPrice = (float) ($product->photo_print_price ?? 0);
+        }
+
+        $selectedExtras = collect();
+        $extrasTotal = 0;
+
+        if (!empty($validated['extras'])) {
+            $selectedExtras = Extra::whereIn('id', $validated['extras'])
+                ->where('activo', true)
+                ->get();
+
+            $extrasTotal = (float) $selectedExtras->sum('precio_adicional');
+        }
+
+        $customPrice = 0;
+        $unitPrice = $basePrice + $photoPrice + $extrasTotal + $customPrice;
+        $total = $unitPrice * $quantity;
+
+        $cart = session()->get('cart', []);
+        $cartItemId = (string) Str::uuid();
+
+        $cart[$cartItemId] = [
+            'id' => $cartItemId,
+            'product_id' => $product->id,
+            'name' => $product->nombre,
+            'slug' => $product->slug,
+            'image' => $product->imagen_principal,
+            'quantity' => $quantity,
+            'base_price' => $basePrice,
+            'photo_price' => $photoPrice,
+            'extras_total' => $extrasTotal,
+            'custom_price' => $customPrice,
+            'unit_price' => $unitPrice,
+            'total' => $total,
+            'is_customized' => true,
+            'dedicatoria' => $validated['dedicatoria'] ?? null,
+            'destinatario' => $validated['destinatario'] ?? null,
+            'frase' => $validated['frase'] ?? null,
+            'color' => $validated['color'] ?? ($validated['selected_color'] ?? null),
+            'selected_color' => $validated['selected_color'] ?? null,
+            'photo' => $photoPath,
+            'custom_fields' => $validated['custom_fields'] ?? [],
+            'design_json' => $validated['design_json'] ?? null,
+            'extras' => $selectedExtras->map(function ($extra) {
+                return [
+                    'id' => $extra->id,
+                    'nombre' => $extra->nombre,
+                    'precio' => (float) $extra->precio_adicional,
+                    'imagen' => $extra->imagen ?? null,
+                ];
+            })->values()->toArray(),
+        ];
+
+        session()->put('cart', $cart);
+
+        return redirect()
+            ->route('client.cart.index')
+            ->with('success', 'Producto personalizado agregado al carrito correctamente.');
     }
 }

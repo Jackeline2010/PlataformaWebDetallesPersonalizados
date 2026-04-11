@@ -5,25 +5,9 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 
-class ProductController extends Controller
+class ProductCustomizationController extends Controller
 {
-    /**
-     * Mostrar catálogo de productos
-     */
-    public function index()
-    {
-        $products = Product::where('activo', true)
-            ->orderBy('orden')
-            ->orderByDesc('created_at')
-            ->get();
-
-        return view('client.products.index', compact('products'));
-    }
-
-    /**
-     * Mostrar detalle del producto
-     */
-    public function show(Product $product)
+    public function edit(Product $product)
     {
         $product->load([
             'colors' => function ($query) {
@@ -63,54 +47,25 @@ class ProductController extends Controller
                 str_contains(mb_strtolower($field->label), 'color');
         });
 
+        $customFields = $fields->filter(function ($field) use ($dedicatoriaField, $fotoField, $colorField) {
+            return !in_array($field->id, array_filter([
+                optional($dedicatoriaField)->id,
+                optional($fotoField)->id,
+                optional($colorField)->id,
+            ]));
+        })->values();
+
         $colors = $product->colors ?? collect();
         $extras = $product->extras ?? collect();
 
-        $availableOptions = collect();
-
-        if ($dedicatoriaField) {
-            $availableOptions->push([
-                'key' => 'dedicatoria',
-                'label' => 'Dedicatoria',
-                'icon' => '💌',
-            ]);
-        }
-
-        if ($fotoField) {
-            $availableOptions->push([
-                'key' => 'foto',
-                'label' => 'Subir foto',
-                'icon' => '🖼️',
-            ]);
-        }
-
-        if ($colorField && $colors->count()) {
-            $availableOptions->push([
-                'key' => 'color',
-                'label' => 'Cambio de color',
-                'icon' => '🎨',
-            ]);
-        }
-
-        if ($extras->count()) {
-            $availableOptions->push([
-                'key' => 'extras',
-                'label' => 'Extras',
-                'icon' => '🎁',
-            ]);
-        }
-
-        $canCustomize = $availableOptions->isNotEmpty();
-
-        return view('client.products.show', compact(
+        return view('client.customization.editor', compact(
             'product',
             'dedicatoriaField',
             'fotoField',
             'colorField',
+            'customFields',
             'colors',
-            'extras',
-            'availableOptions',
-            'canCustomize'
+            'extras'
         ));
     }
 }

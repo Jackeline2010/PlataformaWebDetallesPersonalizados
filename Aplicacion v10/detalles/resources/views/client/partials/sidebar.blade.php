@@ -18,7 +18,7 @@
 
   // Fallbacks seguros
   $urlDashboard = $safeRoute('client.dashboard', route('home'));
-  $urlCatalog   = $safeRoute('client.catalog', route('products'));
+  $urlCatalog   = $safeRoute('client.products.index', route('products'));
   $urlOrders    = $safeRoute('client.orders', route('home'));
   $urlCart      = $safeRoute('client.cart', route('cart'));
 
@@ -40,7 +40,7 @@
   </a>
 
   <a href="{{ $urlCatalog }}"
-     class="flex items-center gap-3 px-5 py-3 rounded-2xl transition {{ $exists('client.catalog') ? $cls('client.catalog') : 'text-gray-800 hover:bg-white hover:text-pink-600' }}">
+     class="flex items-center gap-3 px-5 py-3 rounded-2xl transition {{ $exists('client.products.index') ? $cls('client.products.index') : 'text-gray-800 hover:bg-white hover:text-pink-600' }}">
     <span class="text-lg">🧩</span> <span>Catálogo</span>
   </a>
 
