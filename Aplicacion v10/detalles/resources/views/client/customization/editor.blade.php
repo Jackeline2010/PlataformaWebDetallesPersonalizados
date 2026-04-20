@@ -217,17 +217,17 @@
                         <textarea
                             id="input-dedicatoria"
                             rows="4"
-                            maxlength="{{ $dedicatoriaField->max_length ?? 120 }}"
                             class="w-full rounded-xl border border-pink-100 px-3 py-2 focus:border-pink-300 focus:ring focus:ring-pink-100 resize-none"
                             placeholder="Escribe aquí tu dedicatoria..."
+                            data-max-words="20"
                         >{{ old('dedicatoria') }}</textarea>
 
                         <div class="flex items-center justify-between mt-2">
                             <p class="text-xs text-gray-400">
-                                Máximo {{ $dedicatoriaField->max_length ?? 120 }} caracteres
+                                Máximo 20 palabras
                             </p>
                             <span id="count-dedicatoria" class="text-xs text-gray-400">
-                                0/{{ $dedicatoriaField->max_length ?? 120 }}
+                                0/20 palabras
                             </span>
                         </div>
                     </div>
@@ -390,6 +390,72 @@
         </div>
     </form>
 </div>
+
+{{-- MODAL AJUSTE DE FOTO --}}
+<div
+    id="photo-adjust-modal"
+    class="fixed inset-0 z-[999] hidden items-center justify-center bg-black/70 px-4"
+>
+    <div class="w-full max-w-xl rounded-2xl bg-white shadow-2xl overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-pink-100">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800">Ajusta tu foto dentro del marco</h3>
+                <p class="text-sm text-gray-500 mt-1">Muévela y acércala o aléjala hasta que quede como deseas.</p>
+            </div>
+
+            <button
+                type="button"
+                id="close-photo-adjust-modal"
+                class="w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 text-xl leading-none"
+            >
+                ×
+            </button>
+        </div>
+
+        <div class="p-5">
+            <div class="relative w-full max-w-[540px] aspect-[4/5] max-h-[60vh] mx-auto rounded-2xl bg-gray-100 overflow-hidden border border-pink-100">
+                <div
+                    id="photo-adjust-window"
+                    class="absolute overflow-hidden"
+                    style="left: 20%; top: 7%; width: 60%; height: 64%; border-radius: 12px;"
+                >
+                    <img
+                        id="photo-adjust-image"
+                        alt="Ajuste de foto"
+                        class="select-none"
+                        draggable="false"
+                    >
+                </div>
+
+                <img
+                    id="photo-adjust-frame"
+                    src="{{ asset('storage/frames/portarretrato-vertical.png') }}"
+                    alt="Marco de foto"
+                    class="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+                    draggable="false"
+                >
+            </div>
+
+            <input
+                id="photo-zoom-range"
+                type="range"
+                min="0.65"
+                max="2.2"
+                step="0.01"
+                value="1"
+                class="w-full mt-4"
+            >
+
+            <button
+                type="button"
+                id="save-photo-adjust"
+                class="w-full mt-5 bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
+            >
+                Guardar
+            </button>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -460,11 +526,33 @@
                 if (totalPriceEl) totalPriceEl.textContent = formatMoney(total);
             }
 
+            function countWords(text) {
+                return ((text || '').match(/\S+/g) || []).length;
+            }
+
+            function trimToMaxWords(text, maxWords) {
+                const words = (text || '').match(/\S+/g) || [];
+                if (words.length <= maxWords) return text;
+                return words.slice(0, maxWords).join(' ');
+            }
+
             function updateDedicatoriaCounter() {
                 if (!inputDedicatoria || !countDedicatoria) return;
-                const max = inputDedicatoria.getAttribute('maxlength') || 120;
-                countDedicatoria.textContent = `${inputDedicatoria.value.length}/${max}`;
-                if (hiddenDedicatoria) hiddenDedicatoria.value = inputDedicatoria.value;
+
+                const maxWords = parseInt(inputDedicatoria.dataset.maxWords || '20', 10);
+                const currentValue = inputDedicatoria.value || '';
+                const words = currentValue.match(/\S+/g) || [];
+
+                if (words.length > maxWords) {
+                    inputDedicatoria.value = trimToMaxWords(currentValue, maxWords);
+                }
+
+                const totalWords = countWords(inputDedicatoria.value);
+                countDedicatoria.textContent = `${totalWords}/${maxWords} palabras`;
+
+                if (hiddenDedicatoria) {
+                    hiddenDedicatoria.value = inputDedicatoria.value;
+                }
             }
 
             function updateDestinatarioCounter() {

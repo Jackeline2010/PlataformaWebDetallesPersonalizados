@@ -11,6 +11,11 @@ use Illuminate\Support\Str;
 class CartController extends Controller
 {
     /**
+     * Límite automático de palabras para la dedicatoria.
+     */
+    private const DEDICATION_MAX_WORDS = 22;
+
+    /**
      * Mostrar carrito
      */
     public function index()
@@ -86,7 +91,17 @@ class CartController extends Controller
 
         $validated = $request->validate([
             'quantity' => ['nullable', 'integer', 'min:1'],
-            'dedicatoria' => ['nullable', 'string', 'max:255'],
+            'dedicatoria' => [
+                'nullable',
+                'string',
+                function ($attribute, $value, $fail) {
+                    $wordCount = $this->countWords($value);
+
+                    if ($wordCount > self::DEDICATION_MAX_WORDS) {
+                        $fail('La dedicatoria no puede tener más de ' . self::DEDICATION_MAX_WORDS . ' palabras.');
+                    }
+                },
+            ],
             'destinatario' => ['nullable', 'string', 'max:100'],
             'frase' => ['nullable', 'string', 'max:255'],
             'selected_color' => ['nullable', 'string', 'max:100'],
@@ -102,6 +117,8 @@ class CartController extends Controller
         $basePrice = (float) $product->precio;
         $photoPrice = 0;
         $photoPath = null;
+
+        $cleanDedicatoria = $this->normalizeSpaces($validated['dedicatoria'] ?? null);
 
         if ($request->hasFile('customer_photo')) {
             $photoPath = $request->file('customer_photo')->store('customizations/photos', 'public');
@@ -140,7 +157,7 @@ class CartController extends Controller
             'unit_price' => $unitPrice,
             'total' => $total,
             'is_customized' => true,
-            'dedicatoria' => $validated['dedicatoria'] ?? null,
+            'dedicatoria' => $cleanDedicatoria,
             'destinatario' => $validated['destinatario'] ?? null,
             'frase' => $validated['frase'] ?? null,
             'color' => $validated['color'] ?? ($validated['selected_color'] ?? null),
@@ -163,5 +180,37 @@ class CartController extends Controller
         return redirect()
             ->route('client.cart.index')
             ->with('success', 'Producto personalizado agregado al carrito correctamente.');
+    }
+
+    /**
+     * Cuenta palabras ignorando espacios repetidos.
+     */
+    private function countWords(?string $text): int
+    {
+        $text = $this->normalizeSpaces($text);
+
+        if (empty($text)) {
+            return 0;
+        }
+
+        return count(preg_split('/\s+/', $text, -1, PREG_SPLIT_NO_EMPTY));
+    }
+
+    /**
+     * Limpia espacios dobles y extremos.
+     */
+    private function normalizeSpaces(?string $text): ?string
+    {
+        if ($text === null) {
+            return null;
+        }
+
+        $text = trim($text);
+
+        if ($text === '') {
+            return null;
+        }
+
+        return preg_replace('/\s+/', ' ', $text);
     }
 }

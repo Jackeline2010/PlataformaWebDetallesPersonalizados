@@ -34,11 +34,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const photoInput =
         document.getElementById('input-foto') ||
+        document.querySelector('input[name="customer_photo"]') ||
         document.getElementById('input-photo') ||
         document.querySelector('input[type="file"][name="foto"]') ||
         document.querySelector('input[type="file"][name="foto_cliente"]') ||
         document.querySelector('input[type="file"][name="photo"]') ||
         document.querySelector('input[type="file"]');
+
+    const photoAdjustModal = document.getElementById('photo-adjust-modal');
+    const closePhotoAdjustModal = document.getElementById('close-photo-adjust-modal');
+    const photoAdjustWindow = document.getElementById('photo-adjust-window');
+    const photoAdjustImage = document.getElementById('photo-adjust-image');
+    const photoAdjustFrame = document.getElementById('photo-adjust-frame');
+    const photoZoomRange = document.getElementById('photo-zoom-range');
+    const savePhotoAdjust = document.getElementById('save-photo-adjust');
 
     const cardTemplate =
         (designArea && designArea.dataset.cardTemplate) ||
@@ -65,6 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
         src: '',
         orientation: 'vertical',
         objectUrl: null,
+        offsetX: 0,
+        offsetY: 0,
+        scale: 1.12,
     };
 
     if (!designArea || !itemsLayer || !textLayer) {
@@ -75,6 +87,30 @@ document.addEventListener('DOMContentLoaded', () => {
         baseProductImage.addEventListener('error', () => {
             baseProductImage.src = originalBaseImage;
         });
+    }
+
+    function countWords(text) {
+        return ((text || '').match(/\S+/g) || []).length;
+    }
+
+    function trimToMaxWords(text, maxWords) {
+        const words = (text || '').match(/\S+/g) || [];
+        if (words.length <= maxWords) return text;
+        return words.slice(0, maxWords).join(' ');
+    }
+
+    function enforceDedicatoriaLimit() {
+        if (!dedicatoriaInput) return '';
+
+        const maxWords = parseInt(dedicatoriaInput.dataset.maxWords || '20', 10);
+        const currentValue = dedicatoriaInput.value || '';
+        const words = currentValue.match(/\S+/g) || [];
+
+        if (words.length > maxWords) {
+            dedicatoriaInput.value = trimToMaxWords(currentValue, maxWords);
+        }
+
+        return dedicatoriaInput.value || '';
     }
 
     function updateEmptyState() {
@@ -103,7 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (countDedicatoria && dedicatoriaInput) {
-            countDedicatoria.textContent = `${dedicatoriaInput.value.length}/100`;
+            const maxWords = parseInt(dedicatoriaInput.dataset.maxWords || '20', 10);
+            const totalWords = countWords(dedicatoriaInput.value);
+            countDedicatoria.textContent = `${Math.min(totalWords, maxWords)}/${maxWords} palabras`;
         }
 
         if (countDestinatario && destinatarioInput) {
@@ -138,6 +176,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? {
                     src: photoState.src,
                     orientation: photoState.orientation,
+                    offsetX: photoState.offsetX,
+                    offsetY: photoState.offsetY,
+                    scale: photoState.scale,
                 }
                 : null,
             card: cardWrapper
@@ -306,10 +347,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateCardText() {
-        const text = document.getElementById('card-dedicatoria-text');
-        if (!text) return;
+        const textEl = document.getElementById('card-dedicatoria-text');
+        if (!textEl) return;
 
-        text.textContent = dedicatoriaInput ? dedicatoriaInput.value.trim() : '';
+        const safeText = enforceDedicatoriaLimit();
+        textEl.textContent = safeText;
+
+        const totalWords = countWords(safeText);
+
+        let fontSize = 5.2;
+        let lineHeight = 1.05;
+
+        if (totalWords >= 6 && totalWords <= 10) {
+            fontSize = 4.8;
+        } else if (totalWords >= 11 && totalWords <= 15) {
+            fontSize = 4.2;
+        } else if (totalWords >= 16 && totalWords <= 20) {
+            fontSize = 3.6;
+            lineHeight = 1.0;
+        }
+
+        textEl.style.fontSize = `${fontSize}px`;
+        textEl.style.lineHeight = String(lineHeight);
+        textEl.style.whiteSpace = 'pre-wrap';
+        textEl.style.wordBreak = 'break-word';
+        textEl.style.overflowWrap = 'break-word';
+        textEl.style.overflow = 'hidden';
+        textEl.style.display = '-webkit-box';
+        textEl.style.webkitLineClamp = '4';
+        textEl.style.webkitBoxOrient = 'vertical';
     }
 
     function ensureCardInsideZone() {
@@ -366,14 +432,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 >
                 <div
                     id="card-dedicatoria-text"
-                    class="absolute inset-0 flex items-center justify-center text-center px-2 pointer-events-none"
+                    class="absolute pointer-events-none text-center"
                     style="
+                        left: 16%;
+                        top: 22%;
+                        width: 68%;
+                        height: 36%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 2px 4px;
                         font-size: 5px;
                         line-height: 1.05;
                         color: #4B5563;
                         white-space: pre-wrap;
                         word-break: break-word;
+                        overflow-wrap: break-word;
                         overflow: hidden;
+                        text-align: center;
                         transform: rotate(-8deg);
                         transform-origin: center center;
                     "
@@ -387,30 +463,191 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getPhotoZoneMetrics() {
-    if (photoGuideZone) {
+        if (photoGuideZone) {
+            return {
+                left: photoGuideZone.offsetLeft - (photoGuideZone.offsetWidth * 0.06),
+                top: photoGuideZone.offsetTop - (photoGuideZone.offsetHeight * 0.10),
+                zoneWidth: photoGuideZone.offsetWidth * 1.55,
+                zoneHeight: photoGuideZone.offsetHeight * 1.70,
+            };
+        }
+
+        const width = designArea.clientWidth;
+        const height = designArea.clientHeight;
+
         return {
-            left: photoGuideZone.offsetLeft - (photoGuideZone.offsetWidth * 0.03),
-            top: photoGuideZone.offsetTop - (photoGuideZone.offsetHeight * 0.03),
-            zoneWidth: photoGuideZone.offsetWidth * 1.10,
-            zoneHeight: photoGuideZone.offsetHeight * 1.10,
+            left: width * 0.60,
+            top: height * 0.03,
+            zoneWidth: width * 0.18,
+            zoneHeight: height * 0.36,
         };
     }
-
-    const width = designArea.clientWidth;
-    const height = designArea.clientHeight;
-
-    return {
-        left: width * 0.64,
-        top: height * 0.08,
-        zoneWidth: width * 0.30,
-        zoneHeight: height * 0.32,
-    };
-}
 
     function getFrameSrc() {
         return photoState.orientation === 'horizontal'
             ? (frameHorizontal || frameVertical)
             : (frameVertical || frameHorizontal);
+    }
+
+    function getPhotoInset() {
+        if (photoState.orientation === 'horizontal') {
+            return {
+                top: '12%',
+                right: '14%',
+                bottom: '24%',
+                left: '14%',
+                radius: '10px',
+            };
+        }
+
+        return {
+            top: '4%',
+            right: '20%',
+            bottom: '28%',
+            left: '20%',
+            radius: '10px',
+        };
+    }
+
+    function getAdjustWindowByOrientation() {
+        if (photoState.orientation === 'horizontal') {
+            return {
+                left: '15%',
+                top: '13%',
+                width: '70%',
+                height: '53%',
+                radius: '12px',
+            };
+        }
+
+        return {
+            left: '20%',
+            top: '7%',
+            width: '60%',
+            height: '64%',
+            radius: '12px',
+        };
+    }
+
+    function updateAdjustImageTransform() {
+        if (!photoAdjustImage) return;
+
+        photoAdjustImage.style.transform =
+            `translate(calc(-50% + ${photoState.offsetX}px), calc(-50% + ${photoState.offsetY}px)) scale(${photoState.scale})`;
+    }
+
+    function clampPhotoOffsets(container) {
+        if (!container) return;
+
+        const rect = container.getBoundingClientRect();
+
+        const scaledWidth = rect.width * photoState.scale;
+        const scaledHeight = rect.height * photoState.scale;
+
+        const overflowX = Math.max(0, (scaledWidth - rect.width) / 2);
+        const overflowY = Math.max(0, (scaledHeight - rect.height) / 2);
+
+        photoState.offsetX = Math.max(-overflowX, Math.min(photoState.offsetX, overflowX));
+        photoState.offsetY = Math.max(-overflowY, Math.min(photoState.offsetY, overflowY));
+    }
+
+    function syncAdjustStage() {
+        if (!photoAdjustWindow || !photoZoomRange) return;
+
+        const frameWindow = getAdjustWindowByOrientation();
+
+        photoAdjustWindow.style.position = 'absolute';
+        photoAdjustWindow.style.left = frameWindow.left;
+        photoAdjustWindow.style.top = frameWindow.top;
+        photoAdjustWindow.style.width = frameWindow.width;
+        photoAdjustWindow.style.height = frameWindow.height;
+        photoAdjustWindow.style.borderRadius = frameWindow.radius;
+        photoAdjustWindow.style.overflow = 'hidden';
+        photoAdjustWindow.style.background = 'transparent';
+
+        photoZoomRange.value = String(photoState.scale);
+        clampPhotoOffsets(photoAdjustWindow);
+        updateAdjustImageTransform();
+    }
+
+    function openPhotoAdjustModal() {
+        if (!photoAdjustModal || !photoAdjustImage) return false;
+
+        photoAdjustImage.src = photoState.src || '';
+        photoAdjustImage.style.position = 'absolute';
+        photoAdjustImage.style.left = '50%';
+        photoAdjustImage.style.top = '50%';
+        photoAdjustImage.style.width = '100%';
+        photoAdjustImage.style.height = '100%';
+        photoAdjustImage.style.maxWidth = 'none';
+        photoAdjustImage.style.maxHeight = 'none';
+        photoAdjustImage.style.objectFit = 'cover';
+        photoAdjustImage.style.transformOrigin = 'center center';
+        photoAdjustImage.style.cursor = 'grab';
+        photoAdjustImage.style.userSelect = 'none';
+        photoAdjustImage.style.webkitUserDrag = 'none';
+
+        if (photoAdjustFrame) {
+            photoAdjustFrame.src = getFrameSrc() || photoAdjustFrame.src;
+            photoAdjustFrame.style.pointerEvents = 'none';
+        }
+
+        syncAdjustStage();
+
+        photoAdjustModal.classList.remove('hidden');
+        photoAdjustModal.classList.add('flex');
+        return true;
+    }
+
+    function closeAdjustModal() {
+        if (!photoAdjustModal) return;
+
+        photoAdjustModal.classList.add('hidden');
+        photoAdjustModal.classList.remove('flex');
+    }
+
+    function makePhotoDraggable(container, img) {
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+
+        container.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            img.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+
+            startX = e.clientX;
+            startY = e.clientY;
+
+            photoState.offsetX += dx;
+            photoState.offsetY += dy;
+
+            clampPhotoOffsets(container);
+            updateAdjustImageTransform();
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            img.style.cursor = 'grab';
+        });
+
+        container.addEventListener('mouseleave', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            img.style.cursor = 'grab';
+        });
     }
 
     function renderPhotoFrame() {
@@ -427,6 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const metrics = getPhotoZoneMetrics();
         const frameSrc = getFrameSrc();
+        const inset = getPhotoInset();
 
         const wrapper = document.createElement('div');
         wrapper.id = 'photo-frame-wrapper';
@@ -438,35 +676,48 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.style.zIndex = '25';
         wrapper.style.pointerEvents = 'none';
 
-        const photoInset = photoState.orientation === 'horizontal'
-              ? '12% 10% 14% 10%'
-    :           '12% 10% 14% 10%';
+        wrapper.innerHTML = `
+            <div class="relative w-full h-full">
+                <div
+                    class="absolute overflow-hidden"
+                    style="
+                        top: ${inset.top};
+                        right: ${inset.right};
+                        bottom: ${inset.bottom};
+                        left: ${inset.left};
+                        border-radius: ${inset.radius};
+                    "
+                >
+                    <img
+                        src="${photoState.src}"
+                        alt="Foto del cliente"
+                        class="select-none pointer-events-none"
+                        draggable="false"
+                        style="
+                            position: absolute;
+                            left: 50%;
+                            top: 50%;
+                            width: 100%;
+                            height: 100%;
+                            max-width: none;
+                            max-height: none;
+                            object-fit: cover;
+                            transform: translate(calc(-50% + ${photoState.offsetX}px), calc(-50% + ${photoState.offsetY}px)) scale(${photoState.scale});
+                            transform-origin: center center;
+                        "
+                    >
+                </div>
+                ${frameSrc ? `
+                    <img
+                        src="${frameSrc}"
+                        alt="Portarretrato"
+                        class="absolute inset-0 w-full h-full object-contain select-none pointer-events-none"
+                        draggable="false"
+                    >
+                ` : ''}
+            </div>
+        `;
 
-wrapper.innerHTML = `
-    <div class="relative w-full h-full">
-        <div
-            class="absolute overflow-hidden rounded-md"
-            style="inset: ${photoInset};"
-        >
-           <img
-
-        src="${photoState.src}"
-        alt="Foto del cliente"
-        class="w-full h-full object-cover select-none pointer-events-none"
-        draggable="false"
-        style="transform: scale(1.02); transform-origin: center center;"
-        >
-        </div>
-        ${frameSrc ? `
-            <img
-                src="${frameSrc}"
-                alt="Portarretrato"
-                class="absolute inset-0 w-full h-full object-contain select-none pointer-events-none"
-                draggable="false"
-            >
-        ` : ''}
-    </div>
-`;
         photoLayer.appendChild(wrapper);
         updateEmptyState();
         updateSummary();
@@ -506,8 +757,15 @@ wrapper.innerHTML = `
         photoState.src = objectUrl;
         photoState.objectUrl = objectUrl;
         photoState.orientation = orientation;
+        photoState.offsetX = 0;
+        photoState.offsetY = 0;
+        photoState.scale = orientation === 'horizontal' ? 1.00 : 0.82;
 
-        renderPhotoFrame();
+        const modalOpened = openPhotoAdjustModal();
+
+        if (!modalOpened) {
+            renderPhotoFrame();
+        }
     }
 
     function renderTexts() {
@@ -572,6 +830,9 @@ wrapper.innerHTML = `
         const extraId = btn.dataset.extraId || '';
 
         if (!image) return;
+
+        const existing = itemsLayer.querySelector(`.design-item[data-extra-id="${extraId}"]`);
+        if (existing) return;
 
         const size = getDefaultSize(name);
 
@@ -664,7 +925,11 @@ wrapper.innerHTML = `
 
     addButtons.forEach((btn) => {
         btn.addEventListener('click', () => {
-            addExtra(btn);
+            const alreadyInCanvas = itemsLayer.querySelector(`.design-item[data-extra-id="${btn.dataset.extraId || ''}"]`);
+
+            if (!alreadyInCanvas) {
+                addExtra(btn);
+            }
         });
     });
 
@@ -688,17 +953,88 @@ wrapper.innerHTML = `
         fraseInput.addEventListener('input', renderTexts);
     }
 
-    if (dedicatoriaInput) {
-        dedicatoriaInput.addEventListener('input', renderTexts);
-    }
+   if (dedicatoriaInput) {
+
+    // 🚫 BLOQUEAR escribir más de 20 palabras
+    dedicatoriaInput.addEventListener('keydown', (e) => {
+        const maxWords = parseInt(dedicatoriaInput.dataset.maxWords || '20', 10);
+        const words = (dedicatoriaInput.value || '').match(/\S+/g) || [];
+
+        // Permitir borrar, flechas, etc.
+        const allowedKeys = [
+            'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight',
+            'ArrowUp', 'ArrowDown', 'Tab'
+        ];
+
+        if (allowedKeys.includes(e.key)) return;
+
+        // Si ya llegó al límite y presiona espacio → bloquear
+        if (e.key === ' ' && words.length >= maxWords) {
+            e.preventDefault();
+            return;
+        }
+
+        // Si ya llegó al límite y escribe letras → bloquear
+        if (words.length >= maxWords && e.key.length === 1) {
+            e.preventDefault();
+        }
+    });
+
+    // ✔️ mantener render y contador
+    dedicatoriaInput.addEventListener('input', () => {
+        renderTexts();
+    });
+}
 
     if (destinatarioInput) {
         destinatarioInput.addEventListener('input', renderTexts);
     }
 
+    if (photoAdjustWindow && photoAdjustImage) {
+        makePhotoDraggable(photoAdjustWindow, photoAdjustImage);
+    }
+
+    if (photoZoomRange) {
+        photoZoomRange.min = '0.65';
+        photoZoomRange.max = '2.2';
+        photoZoomRange.step = '0.01';
+
+        photoZoomRange.addEventListener('input', () => {
+            photoState.scale = parseFloat(photoZoomRange.value || '1');
+            clampPhotoOffsets(photoAdjustWindow);
+            updateAdjustImageTransform();
+        });
+    }
+
+    if (closePhotoAdjustModal) {
+        closePhotoAdjustModal.addEventListener('click', () => {
+            closeAdjustModal();
+        });
+    }
+
+    if (photoAdjustModal) {
+        photoAdjustModal.addEventListener('click', (e) => {
+            if (e.target === photoAdjustModal) {
+                closeAdjustModal();
+            }
+        });
+    }
+
+    if (savePhotoAdjust) {
+        savePhotoAdjust.addEventListener('click', () => {
+            closeAdjustModal();
+            renderPhotoFrame();
+            updateSummary();
+        });
+    }
+
     window.addEventListener('resize', () => {
         rebuildCardArea();
         rebuildPhotoArea();
+
+        if (photoAdjustModal && !photoAdjustModal.classList.contains('hidden')) {
+            syncAdjustStage();
+        }
     });
 
     rebuildCardArea();

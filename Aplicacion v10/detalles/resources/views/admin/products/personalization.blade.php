@@ -254,12 +254,11 @@
                 <div id="config-dedicatoria" class="hidden border rounded-xl p-4 bg-white">
                     <h3 class="font-semibold mb-3 text-gray-800">Configuración dedicatoria</h3>
 
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Límite de caracteres</label>
-                    <input type="number"
-                           name="dedicatoria_max"
-                           class="w-full border rounded-lg px-3 py-2"
-                           placeholder="120"
-                           value="{{ old('dedicatoria_max', $dedicatoriaField->max_length ?? 120) }}">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Límite de palabras</label>
+<p class="text-sm text-gray-500">
+    Límite automático: máximo 20 palabras.
+</p>
+<input type="hidden" name="dedicatoria_max_words" value="20">
 
                     <label class="flex items-center gap-2 mt-4">
                         <input type="checkbox"

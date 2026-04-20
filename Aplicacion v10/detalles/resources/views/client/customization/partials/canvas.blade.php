@@ -80,7 +80,7 @@
                 {{-- TARJETA DEDICATORIA --}}
                 <div id="card-layer" class="absolute inset-0 z-[30] pointer-events-none"></div>
 
-                {{-- TEXTO SOLO VISUAL --}}
+                {{-- TEXTO / CAPAS VISUALES --}}
                 <div id="text-layer" class="absolute inset-0 pointer-events-none z-[40]"></div>
 
             </div>

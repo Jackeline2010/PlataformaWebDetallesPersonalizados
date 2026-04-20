@@ -8,57 +8,67 @@ use App\Models\Product;
 use App\Models\ProductCustomField;
 use App\Models\ProductCustomFieldOption;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ProductPersonalizationController extends Controller
 {
+    /**
+     * Configuración automática para dedicatoria.
+     * max_length queda como respaldo técnico para no romper lógica existente.
+     * La regla real del lado cliente luego será por palabras.
+     */
+    private const DEDICATION_MAX_WORDS = 20;
+    private const DEDICATION_MAX_LENGTH_FALLBACK = 120;
+
     public function index(Product $product)
-{
-    $product->load([
-        'customFields' => function ($q) {
-            $q->orderBy('sort_order');
-        },
-        'customFields.options' => function ($q) {
-            $q->orderBy('sort_order');
-        },
-    ]);
+    {
+        $product->load([
+            'customFields' => function ($q) {
+                $q->orderBy('sort_order');
+            },
+            'customFields.options' => function ($q) {
+                $q->orderBy('sort_order');
+            },
+        ]);
 
-    $fields = $product->customFields;
-    $extras = Extra::where('activo', 1)->orderBy('nombre')->get();
+        $fields = $product->customFields;
+        $extras = Extra::where('activo', 1)->orderBy('nombre')->get();
 
-    $selectedExtras = method_exists($product, 'extras')
-        ? $product->extras()->pluck('extras.id')->toArray()
-        : [];
+        $selectedExtras = method_exists($product, 'extras')
+            ? $product->extras()->pluck('extras.id')->toArray()
+            : [];
 
-    $dedicatoriaField = $fields->first(function ($field) {
-        return in_array($field->type, ['text', 'textarea']) &&
-               str_contains(strtolower($field->label), 'dedicatoria');
-    });
+        $dedicatoriaField = $fields->first(function ($field) {
+            return in_array($field->type, ['text', 'textarea']) &&
+                Str::contains(Str::lower($field->label), 'dedicatoria');
+        });
 
-    $fotoField = $fields->first(function ($field) {
-        return $field->type === 'image' &&
-               str_contains(strtolower($field->label), 'foto');
-    });
+        $fotoField = $fields->first(function ($field) {
+            return $field->type === 'image' &&
+                Str::contains(Str::lower($field->label), 'foto');
+        });
 
-    $colorField = $fields->first(function ($field) {
-        return in_array($field->type, ['select', 'radio']) &&
-               str_contains(strtolower($field->label), 'color');
-    });
+        $colorField = $fields->first(function ($field) {
+            return in_array($field->type, ['select', 'radio']) &&
+                Str::contains(Str::lower($field->label), 'color');
+        });
 
-    $colors = method_exists($product, 'colors')
-        ? $product->colors()->where('activo', 1)->orderBy('nombre')->get()
-        : collect();
+        $colors = method_exists($product, 'colors')
+            ? $product->colors()->where('activo', 1)->orderBy('nombre')->get()
+            : collect();
 
-    return view('admin.products.personalization', compact(
-        'product',
-        'fields',
-        'extras',
-        'selectedExtras',
-        'dedicatoriaField',
-        'fotoField',
-        'colorField',
-        'colors'
-    ));
-}
+        return view('admin.products.personalization', compact(
+            'product',
+            'fields',
+            'extras',
+            'selectedExtras',
+            'dedicatoriaField',
+            'fotoField',
+            'colorField',
+            'colors'
+        ));
+    }
+
     public function update(Request $request, Product $product)
     {
         $accion = $request->input('accion');
@@ -115,7 +125,27 @@ class ProductPersonalizationController extends Controller
         $data['is_active'] = true;
         $data['sort_order'] = ((int) ProductCustomField::where('product_id', $product->id)->max('sort_order')) + 1;
 
-        if (!in_array($data['type'], ['text', 'textarea'])) {
+        $isDedicatoria = $this->isDedicatoriaField($data['label'] ?? null, $data['type'] ?? null);
+
+        /**
+         * Para dedicatoria:
+         * - ya no dependemos del max_length ingresado por el admin
+         * - guardamos un fallback interno para no romper compatibilidad
+         * - dejamos un help_text automático
+         */
+        if ($isDedicatoria) {
+            $data['max_length'] = self::DEDICATION_MAX_LENGTH_FALLBACK;
+            $data['help_text'] = 'Máximo ' . self::DEDICATION_MAX_WORDS . ' palabras';
+            $data['type'] = 'textarea';
+
+            if (empty($data['preview_type'])) {
+                $data['preview_type'] = 'text_overlay';
+            }
+
+            if (empty($data['preview_target'])) {
+                $data['preview_target'] = 'card';
+            }
+        } elseif (!in_array($data['type'], ['text', 'textarea'])) {
             $data['max_length'] = null;
         }
 
@@ -217,5 +247,21 @@ class ProductPersonalizationController extends Controller
         $option->delete();
 
         return back()->with('success', 'Opción eliminada.');
+    }
+
+    /**
+     * Detecta si el campo corresponde a dedicatoria.
+     */
+    private function isDedicatoriaField(?string $label, ?string $type): bool
+    {
+        if (empty($label) || empty($type)) {
+            return false;
+        }
+
+        if (!in_array($type, ['text', 'textarea'])) {
+            return false;
+        }
+
+        return Str::contains(Str::lower(trim($label)), 'dedicatoria');
     }
 }
