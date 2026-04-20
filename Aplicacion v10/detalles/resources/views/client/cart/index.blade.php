@@ -209,10 +209,12 @@
                         <span>${{ number_format((float) $subtotal, 2) }}</span>
                     </div>
 
-                    <button
-                        type="button"
-                        class="mt-6 w-full bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
-                    >
+                    <a
+    href="{{ route('client.checkout') }}"
+    class="mt-6 w-full inline-flex items-center justify-center bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
+>
+    Continuar compra
+</a>
                         Continuar compra
                     </button>
                 </div>

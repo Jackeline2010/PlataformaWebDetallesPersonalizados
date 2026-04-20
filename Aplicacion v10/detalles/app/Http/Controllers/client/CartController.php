@@ -13,7 +13,7 @@ class CartController extends Controller
     /**
      * Límite automático de palabras para la dedicatoria.
      */
-    private const DEDICATION_MAX_WORDS = 22;
+    private const DEDICATION_MAX_WORDS = 20;
 
     /**
      * Mostrar carrito
@@ -113,12 +113,18 @@ class CartController extends Controller
             'custom_fields' => ['nullable', 'array'],
         ]);
 
-        $quantity = (int) ($validated['quantity'] ?? 1);
+        $quantity = max(1, (int) ($validated['quantity'] ?? 1));
         $basePrice = (float) $product->precio;
-        $photoPrice = 0;
-        $photoPath = null;
 
         $cleanDedicatoria = $this->normalizeSpaces($validated['dedicatoria'] ?? null);
+        $cleanDestinatario = $this->normalizeSpaces($validated['destinatario'] ?? null);
+        $cleanFrase = $this->normalizeSpaces($validated['frase'] ?? null);
+
+        $selectedColor = $validated['selected_color'] ?? null;
+        $color = $validated['color'] ?? $selectedColor;
+
+        $photoPrice = 0;
+        $photoPath = null;
 
         if ($request->hasFile('customer_photo')) {
             $photoPath = $request->file('customer_photo')->store('customizations/photos', 'public');
@@ -158,10 +164,10 @@ class CartController extends Controller
             'total' => $total,
             'is_customized' => true,
             'dedicatoria' => $cleanDedicatoria,
-            'destinatario' => $validated['destinatario'] ?? null,
-            'frase' => $validated['frase'] ?? null,
-            'color' => $validated['color'] ?? ($validated['selected_color'] ?? null),
-            'selected_color' => $validated['selected_color'] ?? null,
+            'destinatario' => $cleanDestinatario,
+            'frase' => $cleanFrase,
+            'color' => $color,
+            'selected_color' => $selectedColor,
             'photo' => $photoPath,
             'custom_fields' => $validated['custom_fields'] ?? [],
             'design_json' => $validated['design_json'] ?? null,
