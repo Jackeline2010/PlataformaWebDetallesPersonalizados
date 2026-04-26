@@ -83,6 +83,8 @@ class ProductController extends Controller
             'activo'             => 'required|boolean',
             'personalizable'     => 'required|boolean',
             'tiene_variantes'    => 'nullable|boolean',
+            'tipo_arreglo'       => 'nullable|string|max:50',
+            'plantilla_preview'  => 'nullable|string|max:50',
             'imagen_principal'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
@@ -120,19 +122,22 @@ class ProductController extends Controller
         }
 
         $product = Product::create([
-            'nombre'             => $data['nombre'],
-            'descripcion_corta'  => $data['descripcion_corta'] ?? null,
-            'precio'             => $data['precio'],
-            'photo_print_price'  => $data['photo_print_price'] ?? 0,
-            'stock'              => $data['stock'],
-            'sku'                => $sku,
-            'category_id'        => $data['tipo_producto'],
-            'activo'             => $request->boolean('activo'),
-            'personalizable'     => $request->boolean('personalizable'),
-            'tiene_variantes'    => $request->boolean('tiene_variantes'),
-            'slug'               => $this->uniqueSlug($data['nombre']),
-            'fingreso'           => now()->toDateString(),
-            'imagen_principal'   => $imagePath,
+            'nombre'               => $data['nombre'],
+            'descripcion_corta'    => $data['descripcion_corta'] ?? null,
+            'precio'               => $data['precio'],
+            'photo_print_price'    => $data['photo_print_price'] ?? 0,
+            'stock'                => $data['stock'],
+            'sku'                  => $sku,
+            'category_id'          => $data['tipo_producto'],
+            'activo'               => $request->boolean('activo'),
+            'personalizable'       => $request->boolean('personalizable'),
+            'tiene_variantes'      => $request->boolean('tiene_variantes'),
+            'tipo_arreglo'         => $data['tipo_arreglo'] ?? null,
+            'plantilla_preview'    => $data['plantilla_preview'] ?? null,
+            'customization_zones'  => $this->getPreviewTemplate($data['plantilla_preview'] ?? null),
+            'slug'                 => $this->uniqueSlug($data['nombre']),
+            'fingreso'             => now()->toDateString(),
+            'imagen_principal'     => $imagePath,
         ]);
 
         $pivotIds = [];
@@ -206,6 +211,8 @@ class ProductController extends Controller
             'activo'             => 'required|boolean',
             'personalizable'     => 'required|boolean',
             'tiene_variantes'    => 'nullable|boolean',
+            'tipo_arreglo'       => 'nullable|string|max:50',
+            'plantilla_preview'  => 'nullable|string|max:50',
             'imagen_principal'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
@@ -232,15 +239,18 @@ class ProductController extends Controller
         }
 
         $updateData = [
-            'nombre'             => $data['nombre'],
-            'descripcion_corta'  => $data['descripcion_corta'] ?? null,
-            'precio'             => $data['precio'],
-            'photo_print_price'  => $data['photo_print_price'] ?? 0,
-            'stock'              => $data['stock'],
-            'category_id'        => $data['tipo_producto'],
-            'activo'             => $request->boolean('activo'),
-            'personalizable'     => $request->boolean('personalizable'),
-            'tiene_variantes'    => $request->boolean('tiene_variantes'),
+            'nombre'               => $data['nombre'],
+            'descripcion_corta'    => $data['descripcion_corta'] ?? null,
+            'precio'               => $data['precio'],
+            'photo_print_price'    => $data['photo_print_price'] ?? 0,
+            'stock'                => $data['stock'],
+            'category_id'          => $data['tipo_producto'],
+            'activo'               => $request->boolean('activo'),
+            'personalizable'       => $request->boolean('personalizable'),
+            'tiene_variantes'      => $request->boolean('tiene_variantes'),
+            'tipo_arreglo'         => $data['tipo_arreglo'] ?? null,
+            'plantilla_preview'    => $data['plantilla_preview'] ?? null,
+            'customization_zones'  => $this->getPreviewTemplate($data['plantilla_preview'] ?? null),
         ];
 
         if ($product->nombre !== $data['nombre']) {
@@ -739,5 +749,58 @@ class ProductController extends Controller
         }
 
         return $slug;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PLANTILLAS DE VISTA PREVIA
+    |--------------------------------------------------------------------------
+    */
+    private function getPreviewTemplate(?string $template): array
+    {
+        $templates = [
+            'bouquet_right' => [
+                'photo_zone' => ['x' => 60, 'y' => 18, 'width' => 20, 'height' => 26],
+                'card_zone' => ['x' => 22, 'y' => 76, 'width' => 34, 'height' => 14],
+                'extras_zone' => ['x' => 8, 'y' => 10, 'width' => 84, 'height' => 45],
+            ],
+            'bouquet_left' => [
+                'photo_zone' => ['x' => 20, 'y' => 18, 'width' => 20, 'height' => 26],
+                'card_zone' => ['x' => 22, 'y' => 76, 'width' => 34, 'height' => 14],
+                'extras_zone' => ['x' => 8, 'y' => 10, 'width' => 84, 'height' => 45],
+            ],
+            'balloon_top' => [
+                'photo_zone' => ['x' => 30, 'y' => 25, 'width' => 22, 'height' => 28],
+                'card_zone' => ['x' => 22, 'y' => 78, 'width' => 34, 'height' => 12],
+                'extras_zone' => ['x' => 10, 'y' => 45, 'width' => 80, 'height' => 30],
+            ],
+            'heart_center' => [
+                'photo_zone' => ['x' => 50, 'y' => 28, 'width' => 18, 'height' => 24],
+                'card_zone' => ['x' => 20, 'y' => 80, 'width' => 32, 'height' => 10],
+                'extras_zone' => ['x' => 10, 'y' => 10, 'width' => 80, 'height' => 35],
+            ],
+            'round_top' => [
+                'photo_zone' => ['x' => 40, 'y' => 22, 'width' => 20, 'height' => 25],
+                'card_zone' => ['x' => 25, 'y' => 78, 'width' => 30, 'height' => 12],
+                'extras_zone' => ['x' => 10, 'y' => 10, 'width' => 80, 'height' => 40],
+            ],
+            'teddy_center' => [
+                'photo_zone' => ['x' => 60, 'y' => 25, 'width' => 18, 'height' => 24],
+                'card_zone' => ['x' => 22, 'y' => 78, 'width' => 34, 'height' => 12],
+                'extras_zone' => ['x' => 8, 'y' => 10, 'width' => 50, 'height' => 45],
+            ],
+            'box_center' => [
+                'photo_zone' => ['x' => 55, 'y' => 22, 'width' => 18, 'height' => 22],
+                'card_zone' => ['x' => 25, 'y' => 78, 'width' => 30, 'height' => 12],
+                'extras_zone' => ['x' => 10, 'y' => 12, 'width' => 80, 'height' => 45],
+            ],
+            'free_layout' => [
+                'photo_zone' => ['x' => 50, 'y' => 25, 'width' => 20, 'height' => 25],
+                'card_zone' => ['x' => 22, 'y' => 80, 'width' => 34, 'height' => 10],
+                'extras_zone' => ['x' => 5, 'y' => 10, 'width' => 90, 'height' => 50],
+            ],
+        ];
+
+        return $templates[$template] ?? $templates['free_layout'];
     }
 }

@@ -222,6 +222,14 @@
                             data-max-words="20"
                         >{{ old('dedicatoria') }}</textarea>
 
+                    <button
+                    type="button"
+                    id="restore-card-btn"
+                    class="hidden mt-3 w-full rounded-xl border border-pink-200 px-3 py-2 text-sm text-pink-600 hover:bg-pink-50"
+                      >
+                     Restaurar tarjeta de dedicatoria
+                    </button>
+
                         <div class="flex items-center justify-between mt-2">
                             <p class="text-xs text-gray-400">
                                 Máximo 20 palabras
@@ -413,7 +421,7 @@
         </div>
 
         <div class="p-5">
-            <div class="relative w-full max-w-[540px] aspect-[4/5] max-h-[60vh] mx-auto rounded-2xl bg-gray-100 overflow-hidden border border-pink-100">
+          <div class="relative w-full max-w-[360px] aspect-[3/4] max-h-[60vh] mx-auto rounded-2xl bg-gray-100 overflow-hidden border border-pink-100">
                 <div
                     id="photo-adjust-window"
                     class="absolute overflow-hidden"
@@ -459,6 +467,17 @@
 @endsection
 
 @push('scripts')
+    <script>
+        window.productConfig = {
+            id: @json($product->id),
+            name: @json($product->nombre),
+            baseImage: @json($product->imagen_principal ? asset('storage/' . $product->imagen_principal) : null),
+            zones: @json($product->customization_zones ?? []),
+            frameImage: @json(asset('storage/frames/portarretrato-vertical.png')),
+            cardImage: @json(asset('storage/cards/tarjeta-base.png'))
+        };
+    </script>
+
     @vite('resources/js/customization-editor.js')
 
     <script>
@@ -567,6 +586,7 @@
                     const extraId = button.dataset.extraId;
                     const extraName = button.dataset.extraName || '';
                     const extraPrice = parseFloat(button.dataset.extraPrice || '0');
+                    const extraImage = button.dataset.extraImage || '';
                     const isSelected = button.dataset.selected === '1';
 
                     if (isSelected) {
@@ -583,7 +603,8 @@
                         selectedExtras.set(extraId, {
                             id: extraId,
                             name: extraName,
-                            price: extraPrice
+                            price: extraPrice,
+                            image: extraImage
                         });
                     }
 

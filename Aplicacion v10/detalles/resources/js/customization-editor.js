@@ -10,12 +10,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const editorWrapper = document.getElementById('editor-wrapper');
     const photoGuideZone = document.getElementById('photo-guide-zone');
 
+    const config = window.productConfig || {};
+    const zones = config.zones || {};
+
     const addButtons = document.querySelectorAll('.add-extra-btn');
     const colorButtons = document.querySelectorAll('.color-swatch');
 
     const fraseInput = document.getElementById('input-frase');
     const dedicatoriaInput = document.getElementById('input-dedicatoria');
     const destinatarioInput = document.getElementById('input-destinatario');
+    const restoreCardBtn = document.getElementById('restore-card-btn');
 
     const extrasCount = document.getElementById('extras-count');
     const summaryMainText = document.getElementById('summary-main-text');
@@ -50,25 +54,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const savePhotoAdjust = document.getElementById('save-photo-adjust');
 
     const cardTemplate =
+        config.cardImage ||
         (designArea && designArea.dataset.cardTemplate) ||
         (editorWrapper && editorWrapper.dataset.cardTemplate) ||
         '/storage/cards/tarjeta-base.png';
 
     const frameVertical =
+        config.frameImage ||
         (designArea && designArea.dataset.frameVertical) ||
         (editorWrapper && editorWrapper.dataset.frameVertical) ||
-        '';
+        '/storage/frames/portarretrato-vertical.png';
 
     const frameHorizontal =
         (designArea && designArea.dataset.frameHorizontal) ||
         (editorWrapper && editorWrapper.dataset.frameHorizontal) ||
-        '';
+        frameVertical;
 
     let selectedColor = '';
     const originalBaseImage = baseProductImage ? baseProductImage.getAttribute('src') : '';
 
     let cardZone = null;
     let cardWrapper = null;
+    let cardEnabled = true;
+    let extrasZoneEl = null;
+    let photoMoveZoneEl = null;
 
     let photoState = {
         src: '',
@@ -77,6 +86,8 @@ document.addEventListener('DOMContentLoaded', () => {
         offsetX: 0,
         offsetY: 0,
         scale: 1.12,
+        frameLeft: null,
+        frameTop: null,
     };
 
     if (!designArea || !itemsLayer || !textLayer) {
@@ -87,6 +98,39 @@ document.addEventListener('DOMContentLoaded', () => {
         baseProductImage.addEventListener('error', () => {
             baseProductImage.src = originalBaseImage;
         });
+    }
+
+    function zoneToPx(zone) {
+        const width = designArea.clientWidth;
+        const height = designArea.clientHeight;
+
+        if (!zone) return null;
+
+        return {
+            left: (Number(zone.x || 0) / 100) * width,
+            top: (Number(zone.y || 0) / 100) * height,
+            width: (Number(zone.width || 0) / 100) * width,
+            height: (Number(zone.height || 0) / 100) * height,
+        };
+    }
+
+    function expandMetrics(metrics, percent = 0.08) {
+        if (!metrics) return null;
+
+        const dx = designArea.clientWidth * percent;
+        const dy = designArea.clientHeight * percent;
+
+        const left = Math.max(0, metrics.left - dx);
+        const top = Math.max(0, metrics.top - dy);
+        const right = Math.min(designArea.clientWidth, metrics.left + metrics.width + dx);
+        const bottom = Math.min(designArea.clientHeight, metrics.top + metrics.height + dy);
+
+        return {
+            left,
+            top,
+            width: Math.max(metrics.width, right - left),
+            height: Math.max(metrics.height, bottom - top),
+        };
     }
 
     function countWords(text) {
@@ -179,6 +223,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     offsetX: photoState.offsetX,
                     offsetY: photoState.offsetY,
                     scale: photoState.scale,
+                    frameLeft: photoState.frameLeft,
+                    frameTop: photoState.frameTop,
                 }
                 : null,
             card: cardWrapper
@@ -189,7 +235,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     height: cardWrapper.style.height || '48px',
                 }
                 : null,
-            items: items,
+            zones,
+            items,
         };
     }
 
@@ -232,17 +279,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function clampPosition(left, top, elWidth, elHeight, boundsEl = designArea) {
-        const maxLeft = Math.max(0, boundsEl.clientWidth - elWidth);
-        const maxTop = Math.max(0, boundsEl.clientHeight - elHeight);
+    function isOverlapping(el1, el2) {
+        if (!el1 || !el2) return false;
+
+        const r1 = el1.getBoundingClientRect();
+        const r2 = el2.getBoundingClientRect();
+
+        return !(
+            r1.right < r2.left ||
+            r1.left > r2.right ||
+            r1.bottom < r2.top ||
+            r1.top > r2.bottom
+        );
+    }
+
+    function getReservedElementsForExtras() {
+        return [
+            document.getElementById('photo-frame-wrapper'),
+            document.getElementById('card-zone'),
+            document.getElementById('preview-card-wrapper'),
+        ].filter(Boolean);
+    }
+
+    function overlapsReservedZones(element) {
+        return getReservedElementsForExtras().some((reserved) => isOverlapping(element, reserved));
+    }
+
+    function clampToMetrics(left, top, elWidth, elHeight, metrics) {
+        const maxLeft = Math.max(metrics.left, metrics.left + metrics.width - elWidth);
+        const maxTop = Math.max(metrics.top, metrics.top + metrics.height - elHeight);
 
         return {
-            left: Math.max(0, Math.min(left, maxLeft)),
-            top: Math.max(0, Math.min(top, maxTop)),
+            left: Math.max(metrics.left, Math.min(left, maxLeft)),
+            top: Math.max(metrics.top, Math.min(top, maxTop)),
         };
     }
 
-    function makeDraggable(el, boundsEl = designArea, onMoveEnd = null) {
+    function makeDraggableInMetrics(el, getMetrics, onMoveEnd = null) {
         let isDragging = false;
         let offsetX = 0;
         let offsetY = 0;
@@ -250,13 +323,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const onMouseMove = (e) => {
             if (!isDragging) return;
 
-            const parentRect = boundsEl.getBoundingClientRect();
+            const metrics = typeof getMetrics === 'function' ? getMetrics() : getMetrics;
+            if (!metrics) return;
+
+            const parentRect = designArea.getBoundingClientRect();
             const elRect = el.getBoundingClientRect();
 
-            const left = e.clientX - parentRect.left - offsetX;
-            const top = e.clientY - parentRect.top - offsetY;
+            const rawLeft = e.clientX - parentRect.left - offsetX;
+            const rawTop = e.clientY - parentRect.top - offsetY;
 
-            const clamped = clampPosition(left, top, elRect.width, elRect.height, boundsEl);
+            const clamped = clampToMetrics(rawLeft, rawTop, elRect.width, elRect.height, metrics);
 
             el.style.left = `${clamped.left}px`;
             el.style.top = `${clamped.top}px`;
@@ -274,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.removeEventListener('mouseup', onMouseUp);
 
             if (typeof onMoveEnd === 'function') {
-                onMoveEnd();
+                onMoveEnd(el);
             }
 
             updateSummary();
@@ -292,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
             offsetX = e.clientX - rect.left;
             offsetY = e.clientY - rect.top;
 
-            el.style.zIndex = '60';
+            el.style.zIndex = '80';
             el.classList.remove('cursor-grab');
             el.classList.add('cursor-grabbing');
 
@@ -315,14 +391,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getCardZoneMetrics() {
+        const configured = zoneToPx(zones.card_zone);
+
+        if (configured) {
+            return configured;
+        }
+
         const width = designArea.clientWidth;
         const height = designArea.clientHeight;
 
         return {
             left: width * 0.22,
             top: height * 0.72,
-            zoneWidth: width * 0.34,
-            zoneHeight: height * 0.18,
+            width: width * 0.34,
+            height: height * 0.18,
         };
     }
 
@@ -340,10 +422,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
         cardZone.style.left = `${metrics.left}px`;
         cardZone.style.top = `${metrics.top}px`;
-        cardZone.style.width = `${metrics.zoneWidth}px`;
-        cardZone.style.height = `${metrics.zoneHeight}px`;
+        cardZone.style.width = `${metrics.width}px`;
+        cardZone.style.height = `${metrics.height}px`;
 
         designArea.appendChild(cardZone);
+    }
+
+    function getExtrasZoneMetrics() {
+        const configured = zoneToPx(zones.extras_zone);
+
+        if (configured) {
+            return configured;
+        }
+
+        const width = designArea.clientWidth;
+        const height = designArea.clientHeight;
+
+        return {
+            left: width * 0.08,
+            top: height * 0.10,
+            width: width * 0.84,
+            height: height * 0.45,
+        };
+    }
+
+    function renderExtrasZone() {
+        const oldZone = document.getElementById('extras-zone');
+        if (oldZone) oldZone.remove();
+
+        const metrics = getExtrasZoneMetrics();
+
+        extrasZoneEl = document.createElement('div');
+        extrasZoneEl.id = 'extras-zone';
+        extrasZoneEl.className = 'absolute rounded-xl border border-dashed border-purple-200 bg-purple-50/10';
+        extrasZoneEl.style.left = `${metrics.left}px`;
+        extrasZoneEl.style.top = `${metrics.top}px`;
+        extrasZoneEl.style.width = `${metrics.width}px`;
+        extrasZoneEl.style.height = `${metrics.height}px`;
+        extrasZoneEl.style.zIndex = '5';
+        extrasZoneEl.style.pointerEvents = 'none';
+
+        designArea.appendChild(extrasZoneEl);
     }
 
     function updateCardText() {
@@ -378,25 +497,67 @@ document.addEventListener('DOMContentLoaded', () => {
         textEl.style.webkitBoxOrient = 'vertical';
     }
 
-    function ensureCardInsideZone() {
-        if (!cardWrapper || !cardZone) return;
+    function makeCardDraggableInsideZone(el, zoneEl) {
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
 
-        const cardRect = cardWrapper.getBoundingClientRect();
+    const onMouseMove = (e) => {
+        if (!isDragging) return;
 
-        const clamped = clampPosition(
-            parseFloat(cardWrapper.style.left || '0'),
-            parseFloat(cardWrapper.style.top || '0'),
-            cardRect.width,
-            cardRect.height,
-            cardZone
-        );
+        const zoneRect = zoneEl.getBoundingClientRect();
+        const elRect = el.getBoundingClientRect();
 
-        cardWrapper.style.left = `${clamped.left}px`;
-        cardWrapper.style.top = `${clamped.top}px`;
-    }
+        let left = e.clientX - zoneRect.left - offsetX;
+        let top = e.clientY - zoneRect.top - offsetY;
+
+        const maxLeft = Math.max(0, zoneEl.clientWidth - elRect.width);
+        const maxTop = Math.max(0, zoneEl.clientHeight - elRect.height);
+
+        left = Math.max(0, Math.min(left, maxLeft));
+        top = Math.max(0, Math.min(top, maxTop));
+
+        el.style.left = `${left}px`;
+        el.style.top = `${top}px`;
+    };
+
+    const onMouseUp = () => {
+        if (!isDragging) return;
+
+        isDragging = false;
+        el.style.zIndex = el.dataset.baseZ || '35';
+        el.classList.remove('cursor-grabbing');
+        el.classList.add('cursor-grab');
+
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+
+        updateSummary();
+    };
+
+    el.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.remove-card')) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        isDragging = true;
+
+        const rect = el.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+
+        el.style.zIndex = '80';
+        el.classList.remove('cursor-grab');
+        el.classList.add('cursor-grabbing');
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+}
 
     function renderCardTemplate() {
-        if (!cardZone) return;
+        if (!cardZone || !cardEnabled) return;
 
         const oldCard = document.getElementById('preview-card-wrapper');
         if (oldCard) oldCard.remove();
@@ -455,20 +616,68 @@ document.addEventListener('DOMContentLoaded', () => {
                     "
                 ></div>
             </div>
+
+            <button
+    type="button"
+    class="remove-card absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center shadow pointer-events-auto"
+    aria-label="Quitar dedicatoria"
+>
+    ×
+</button>
         `;
 
         cardZone.appendChild(cardWrapper);
-        makeDraggable(cardWrapper, cardZone, ensureCardInsideZone);
+        makeCardDraggableInsideZone(cardWrapper, cardZone);
         updateCardText();
+        const removeCardBtn = cardWrapper.querySelector('.remove-card');
+
+if (removeCardBtn) {
+    removeCardBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        cardEnabled = false;
+
+        if (dedicatoriaInput) {
+            dedicatoriaInput.value = '';
+        }
+
+        if (saveDedicatoria) {
+            saveDedicatoria.value = '';
+        }
+
+        cardWrapper.remove();
+        cardWrapper = null;
+
+        if (restoreCardBtn) {
+            restoreCardBtn.classList.remove('hidden');
+        }
+
+        updateCounters();
+        updateEmptyState();
+        updateSummary();
+    });
+}
     }
 
-    function getPhotoZoneMetrics() {
+    function getPhotoFrameMetrics() {
+        const configured = zoneToPx(zones.photo_zone);
+
+        if (configured) {
+    return {
+        left: configured.left - (configured.width * 0.35),
+        top: configured.top - (configured.height * 0.25),
+        width: configured.width * 2.1,
+        height: configured.height * 2.1,
+    };
+}
+
         if (photoGuideZone) {
             return {
                 left: photoGuideZone.offsetLeft - (photoGuideZone.offsetWidth * 0.06),
                 top: photoGuideZone.offsetTop - (photoGuideZone.offsetHeight * 0.10),
-                zoneWidth: photoGuideZone.offsetWidth * 1.55,
-                zoneHeight: photoGuideZone.offsetHeight * 1.70,
+                width: photoGuideZone.offsetWidth * 1.55,
+                height: photoGuideZone.offsetHeight * 1.70,
             };
         }
 
@@ -478,9 +687,33 @@ document.addEventListener('DOMContentLoaded', () => {
         return {
             left: width * 0.60,
             top: height * 0.03,
-            zoneWidth: width * 0.18,
-            zoneHeight: height * 0.36,
+            width: width * 0.18,
+            height: height * 0.36,
         };
+    }
+
+    function getPhotoMoveMetrics() {
+        return expandMetrics(getPhotoFrameMetrics(), 0.08);
+    }
+
+    function renderPhotoMoveZone() {
+        const old = document.getElementById('photo-move-zone');
+        if (old) old.remove();
+
+        const metrics = getPhotoMoveMetrics();
+        if (!metrics) return;
+
+        photoMoveZoneEl = document.createElement('div');
+        photoMoveZoneEl.id = 'photo-move-zone';
+        photoMoveZoneEl.className = 'absolute rounded-xl border border-dashed border-blue-200 bg-blue-50/10';
+        photoMoveZoneEl.style.left = `${metrics.left}px`;
+        photoMoveZoneEl.style.top = `${metrics.top}px`;
+        photoMoveZoneEl.style.width = `${metrics.width}px`;
+        photoMoveZoneEl.style.height = `${metrics.height}px`;
+        photoMoveZoneEl.style.zIndex = '6';
+        photoMoveZoneEl.style.pointerEvents = 'none';
+
+        designArea.appendChild(photoMoveZoneEl);
     }
 
     function getFrameSrc() {
@@ -490,44 +723,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getPhotoInset() {
-        if (photoState.orientation === 'horizontal') {
-            return {
-                top: '12%',
-                right: '14%',
-                bottom: '24%',
-                left: '14%',
-                radius: '10px',
-            };
-        }
-
+    if (photoState.orientation === 'horizontal') {
         return {
-            top: '4%',
-            right: '20%',
-            bottom: '28%',
-            left: '20%',
+            top: '12%',
+            right: '15%',
+            bottom: '27%',
+            left: '15%',
             radius: '10px',
         };
     }
 
-    function getAdjustWindowByOrientation() {
-        if (photoState.orientation === 'horizontal') {
-            return {
-                left: '15%',
-                top: '13%',
-                width: '70%',
-                height: '53%',
-                radius: '12px',
-            };
-        }
+   return {
+     top: '0%',
+    right: '20%',
+    bottom: '28%',
+    left: '20%',
+    radius: '10px',
+};
+}
 
-        return {
-            left: '20%',
-            top: '7%',
-            width: '60%',
-            height: '64%',
-            radius: '12px',
-        };
-    }
+    function getAdjustWindowByOrientation() {
+    const inset = getPhotoInset();
+
+    return {
+        left: inset.left,
+        top: inset.top,
+        width: `calc(100% - ${inset.left} - ${inset.right})`,
+        height: `calc(100% - ${inset.top} - ${inset.bottom})`,
+        radius: inset.radius,
+    };
+}
 
     function updateAdjustImageTransform() {
         if (!photoAdjustImage) return;
@@ -552,53 +777,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function syncAdjustStage() {
-        if (!photoAdjustWindow || !photoZoomRange) return;
+    if (!photoAdjustWindow || !photoZoomRange) return;
 
-        const frameWindow = getAdjustWindowByOrientation();
+    const frameWindow = getAdjustWindowByOrientation();
 
-        photoAdjustWindow.style.position = 'absolute';
-        photoAdjustWindow.style.left = frameWindow.left;
-        photoAdjustWindow.style.top = frameWindow.top;
-        photoAdjustWindow.style.width = frameWindow.width;
-        photoAdjustWindow.style.height = frameWindow.height;
-        photoAdjustWindow.style.borderRadius = frameWindow.radius;
-        photoAdjustWindow.style.overflow = 'hidden';
-        photoAdjustWindow.style.background = 'transparent';
+    photoAdjustWindow.style.position = 'absolute';
+    photoAdjustWindow.style.left = frameWindow.left;
+    photoAdjustWindow.style.top = frameWindow.top;
+    photoAdjustWindow.style.width = frameWindow.width;
+    photoAdjustWindow.style.height = frameWindow.height;
+    photoAdjustWindow.style.borderRadius = frameWindow.radius;
+    photoAdjustWindow.style.overflow = 'hidden';
+    photoAdjustWindow.style.background = 'transparent';
+    photoAdjustWindow.style.zIndex = '5';
 
-        photoZoomRange.value = String(photoState.scale);
+    photoZoomRange.value = String(photoState.scale);
+
+    requestAnimationFrame(() => {
         clampPhotoOffsets(photoAdjustWindow);
         updateAdjustImageTransform();
+    });
+}
+
+   function openPhotoAdjustModal() {
+    if (!photoAdjustModal || !photoAdjustImage) return false;
+
+    photoAdjustImage.src = photoState.src || '';
+    photoAdjustImage.style.position = 'absolute';
+    photoAdjustImage.style.left = '50%';
+    photoAdjustImage.style.top = '50%';
+    photoAdjustImage.style.width = '100%';
+    photoAdjustImage.style.height = '100%';
+    photoAdjustImage.style.maxWidth = 'none';
+    photoAdjustImage.style.maxHeight = 'none';
+    photoAdjustImage.style.objectFit = 'cover';
+    photoAdjustImage.style.transformOrigin = 'center center';
+    photoAdjustImage.style.cursor = 'grab';
+    photoAdjustImage.style.userSelect = 'none';
+    photoAdjustImage.style.webkitUserDrag = 'none';
+
+    if (photoAdjustFrame) {
+        photoAdjustFrame.src = getFrameSrc() || photoAdjustFrame.src;
+        photoAdjustFrame.style.pointerEvents = 'none';
     }
 
-    function openPhotoAdjustModal() {
-        if (!photoAdjustModal || !photoAdjustImage) return false;
+    photoAdjustModal.classList.remove('hidden');
+    photoAdjustModal.classList.add('flex');
 
-        photoAdjustImage.src = photoState.src || '';
-        photoAdjustImage.style.position = 'absolute';
-        photoAdjustImage.style.left = '50%';
-        photoAdjustImage.style.top = '50%';
-        photoAdjustImage.style.width = '100%';
-        photoAdjustImage.style.height = '100%';
-        photoAdjustImage.style.maxWidth = 'none';
-        photoAdjustImage.style.maxHeight = 'none';
-        photoAdjustImage.style.objectFit = 'cover';
-        photoAdjustImage.style.transformOrigin = 'center center';
-        photoAdjustImage.style.cursor = 'grab';
-        photoAdjustImage.style.userSelect = 'none';
-        photoAdjustImage.style.webkitUserDrag = 'none';
-
-        if (photoAdjustFrame) {
-            photoAdjustFrame.src = getFrameSrc() || photoAdjustFrame.src;
-            photoAdjustFrame.style.pointerEvents = 'none';
-        }
-
+    requestAnimationFrame(() => {
         syncAdjustStage();
+    });
 
-        photoAdjustModal.classList.remove('hidden');
-        photoAdjustModal.classList.add('flex');
-        return true;
-    }
-
+    return true;
+}
     function closeAdjustModal() {
         if (!photoAdjustModal) return;
 
@@ -656,25 +887,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const oldPhoto = document.getElementById('photo-frame-wrapper');
         if (oldPhoto) oldPhoto.remove();
 
+        renderPhotoMoveZone();
+
         if (!photoState.src) {
             updateEmptyState();
             updateSummary();
             return;
         }
 
-        const metrics = getPhotoZoneMetrics();
+        const metrics = getPhotoFrameMetrics();
+        const moveMetrics = getPhotoMoveMetrics();
         const frameSrc = getFrameSrc();
         const inset = getPhotoInset();
 
         const wrapper = document.createElement('div');
         wrapper.id = 'photo-frame-wrapper';
-        wrapper.className = 'absolute';
-        wrapper.style.left = `${metrics.left}px`;
-        wrapper.style.top = `${metrics.top}px`;
-        wrapper.style.width = `${metrics.zoneWidth}px`;
-        wrapper.style.height = `${metrics.zoneHeight}px`;
-        wrapper.style.zIndex = '25';
-        wrapper.style.pointerEvents = 'none';
+        wrapper.className = 'absolute select-none cursor-grab';
+        wrapper.dataset.baseZ = '28';
+
+        const initialLeft = photoState.frameLeft ?? metrics.left;
+        const initialTop = photoState.frameTop ?? metrics.top;
+        const clampedInitial = clampToMetrics(initialLeft, initialTop, metrics.width, metrics.height, moveMetrics);
+
+        wrapper.style.left = `${clampedInitial.left}px`;
+        wrapper.style.top = `${clampedInitial.top}px`;
+        wrapper.style.width = `${metrics.width}px`;
+        wrapper.style.height = `${metrics.height}px`;
+        wrapper.style.zIndex = '28';
+        wrapper.style.pointerEvents = 'auto';
 
         wrapper.innerHTML = `
             <div class="relative w-full h-full">
@@ -719,6 +959,21 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         photoLayer.appendChild(wrapper);
+
+        makeDraggableInMetrics(wrapper, getPhotoMoveMetrics, (el) => {
+            photoState.frameLeft = parseFloat(el.style.left || '0');
+            photoState.frameTop = parseFloat(el.style.top || '0');
+
+            itemsLayer.querySelectorAll('.design-item').forEach((item) => {
+                if (overlapsReservedZones(item)) {
+                    item.style.left = item.dataset.lastValidLeft || item.style.left;
+                    item.style.top = item.dataset.lastValidTop || item.style.top;
+                }
+            });
+
+            updateSummary();
+        });
+
         updateEmptyState();
         updateSummary();
     }
@@ -758,8 +1013,12 @@ document.addEventListener('DOMContentLoaded', () => {
         photoState.objectUrl = objectUrl;
         photoState.orientation = orientation;
         photoState.offsetX = 0;
-        photoState.offsetY = 0;
-        photoState.scale = orientation === 'horizontal' ? 1.00 : 0.82;
+        photoState.offsetY = -30;
+        photoState.scale = orientation === 'horizontal' ? 1.35 : 1.45;
+
+        const metrics = getPhotoFrameMetrics();
+        photoState.frameLeft = metrics.left;
+        photoState.frameTop = metrics.top;
 
         const modalOpened = openPhotoAdjustModal();
 
@@ -806,22 +1065,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const value = (name || '').toLowerCase();
 
         if (value.includes('globo')) {
-            return { width: 160, height: 160 };
+            return { width: 115, height: 115 };
         }
 
         if (value.includes('peluche')) {
-            return { width: 150, height: 150 };
+            return { width: 120, height: 120 };
         }
 
         if (value.includes('chocolate')) {
-            return { width: 130, height: 130 };
+            return { width: 105, height: 105 };
         }
 
         if (value.includes('foto')) {
-            return { width: 140, height: 140 };
+            return { width: 110, height: 110 };
         }
 
-        return { width: 140, height: 140 };
+        return { width: 110, height: 110 };
+    }
+
+    function getInitialExtraPosition(width, height) {
+        const metrics = getExtrasZoneMetrics();
+
+        const left = metrics.left + Math.max(0, (metrics.width - width) / 2);
+        const top = metrics.top + Math.max(0, (metrics.height - height) / 2);
+
+        return clampToMetrics(left, top, width, height, metrics);
     }
 
     function addExtra(btn) {
@@ -835,14 +1103,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (existing) return;
 
         const size = getDefaultSize(name);
+        const initial = getInitialExtraPosition(size.width, size.height);
 
         const wrapper = document.createElement('div');
         wrapper.className = 'design-item absolute select-none cursor-grab group';
         wrapper.dataset.extraId = extraId;
         wrapper.dataset.extraName = name;
         wrapper.dataset.baseZ = '20';
-        wrapper.style.left = '20px';
-        wrapper.style.top = '20px';
+        wrapper.dataset.lastValidLeft = `${initial.left}px`;
+        wrapper.dataset.lastValidTop = `${initial.top}px`;
+        wrapper.style.left = `${initial.left}px`;
+        wrapper.style.top = `${initial.top}px`;
         wrapper.style.width = `${size.width}px`;
         wrapper.style.height = `${size.height}px`;
         wrapper.style.zIndex = '20';
@@ -867,7 +1138,25 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         itemsLayer.appendChild(wrapper);
-        makeDraggable(wrapper, designArea);
+
+        if (overlapsReservedZones(wrapper)) {
+            const metrics = getExtrasZoneMetrics();
+            wrapper.style.left = `${metrics.left}px`;
+            wrapper.style.top = `${metrics.top}px`;
+            wrapper.dataset.lastValidLeft = wrapper.style.left;
+            wrapper.dataset.lastValidTop = wrapper.style.top;
+        }
+
+        makeDraggableInMetrics(wrapper, getExtrasZoneMetrics, (el) => {
+            if (overlapsReservedZones(el)) {
+                el.style.left = el.dataset.lastValidLeft || el.style.left;
+                el.style.top = el.dataset.lastValidTop || el.style.top;
+                return;
+            }
+
+            el.dataset.lastValidLeft = el.style.left;
+            el.dataset.lastValidTop = el.style.top;
+        });
 
         const removeBtn = wrapper.querySelector('.remove-item');
         if (removeBtn) {
@@ -923,6 +1212,27 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPhotoFrame();
     }
 
+    function rebuildExtrasArea() {
+        renderExtrasZone();
+
+        itemsLayer.querySelectorAll('.design-item').forEach((item) => {
+            const rect = item.getBoundingClientRect();
+            const parent = designArea.getBoundingClientRect();
+
+            const currentLeft = rect.left - parent.left;
+            const currentTop = rect.top - parent.top;
+            const clamped = clampToMetrics(currentLeft, currentTop, rect.width, rect.height, getExtrasZoneMetrics());
+
+            item.style.left = `${clamped.left}px`;
+            item.style.top = `${clamped.top}px`;
+
+            if (!overlapsReservedZones(item)) {
+                item.dataset.lastValidLeft = item.style.left;
+                item.dataset.lastValidTop = item.style.top;
+            }
+        });
+    }
+
     addButtons.forEach((btn) => {
         btn.addEventListener('click', () => {
             const alreadyInCanvas = itemsLayer.querySelector(`.design-item[data-extra-id="${btn.dataset.extraId || ''}"]`);
@@ -953,38 +1263,32 @@ document.addEventListener('DOMContentLoaded', () => {
         fraseInput.addEventListener('input', renderTexts);
     }
 
-   if (dedicatoriaInput) {
+    if (dedicatoriaInput) {
+        dedicatoriaInput.addEventListener('keydown', (e) => {
+            const maxWords = parseInt(dedicatoriaInput.dataset.maxWords || '20', 10);
+            const words = (dedicatoriaInput.value || '').match(/\S+/g) || [];
 
-    // 🚫 BLOQUEAR escribir más de 20 palabras
-    dedicatoriaInput.addEventListener('keydown', (e) => {
-        const maxWords = parseInt(dedicatoriaInput.dataset.maxWords || '20', 10);
-        const words = (dedicatoriaInput.value || '').match(/\S+/g) || [];
+            const allowedKeys = [
+                'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight',
+                'ArrowUp', 'ArrowDown', 'Tab',
+            ];
 
-        // Permitir borrar, flechas, etc.
-        const allowedKeys = [
-            'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight',
-            'ArrowUp', 'ArrowDown', 'Tab'
-        ];
+            if (allowedKeys.includes(e.key)) return;
 
-        if (allowedKeys.includes(e.key)) return;
+            if (e.key === ' ' && words.length >= maxWords) {
+                e.preventDefault();
+                return;
+            }
 
-        // Si ya llegó al límite y presiona espacio → bloquear
-        if (e.key === ' ' && words.length >= maxWords) {
-            e.preventDefault();
-            return;
-        }
+            if (words.length >= maxWords && e.key.length === 1) {
+                e.preventDefault();
+            }
+        });
 
-        // Si ya llegó al límite y escribe letras → bloquear
-        if (words.length >= maxWords && e.key.length === 1) {
-            e.preventDefault();
-        }
-    });
-
-    // ✔️ mantener render y contador
-    dedicatoriaInput.addEventListener('input', () => {
-        renderTexts();
-    });
-}
+        dedicatoriaInput.addEventListener('input', () => {
+            renderTexts();
+        });
+    }
 
     if (destinatarioInput) {
         destinatarioInput.addEventListener('input', renderTexts);
@@ -1027,20 +1331,58 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSummary();
         });
     }
+    if (restoreCardBtn) {
+    restoreCardBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
 
-    window.addEventListener('resize', () => {
-        rebuildCardArea();
-        rebuildPhotoArea();
+        cardEnabled = true;
 
-        if (photoAdjustModal && !photoAdjustModal.classList.contains('hidden')) {
-            syncAdjustStage();
-        }
+        const oldZone = document.getElementById('card-zone');
+        if (oldZone) oldZone.remove();
+
+        renderCardZone();
+        renderCardTemplate();
+        updateCardText();
+
+        restoreCardBtn.classList.add('hidden');
+
+        updateCounters();
+        updateEmptyState();
+        updateSummary();
     });
+}
 
-    rebuildCardArea();
+   window.addEventListener('resize', () => {
+    renderExtrasZone();
+
+    renderCardZone();
+
+    if (cardEnabled) {
+        renderCardTemplate();
+        updateCardText();
+    }
+
     rebuildPhotoArea();
-    renderTexts();
-    updateExtrasCount();
-    updateEmptyState();
-    updateSummary();
+    rebuildExtrasArea();
+
+    if (photoAdjustModal && !photoAdjustModal.classList.contains('hidden')) {
+        syncAdjustStage();
+    }
+});
+
+renderExtrasZone();
+
+renderCardZone();
+
+if (cardEnabled) {
+    renderCardTemplate();
+    updateCardText();
+}
+
+rebuildPhotoArea();
+renderTexts();
+updateExtrasCount();
+updateEmptyState();
+updateSummary();
 });

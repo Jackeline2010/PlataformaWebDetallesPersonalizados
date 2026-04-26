@@ -90,21 +90,11 @@ Route::middleware(['auth'])
         Route::post('profile', [\App\Http\Controllers\Client\ProfileController::class, 'update'])
             ->name('profile.update');
 
-        Route::get('checkout', function () {
-         $cart = session()->get('cart', []);
+        Route::get('checkout', [\App\Http\Controllers\Client\OrderController::class, 'checkout'])
+            ->name('checkout');
 
-         $subtotal = collect($cart)->sum(function ($item) {
-        return (float) ($item['total'] ?? 0);
-    });
-
-    if (empty($cart)) {
-        return redirect()
-            ->route('client.cart.index')
-            ->with('error', 'Tu carrito está vacío.');
-    }
-
-    return view('client.checkout.index', compact('cart', 'subtotal'));
-})->name('checkout');
+        Route::post('checkout/confirm', [\App\Http\Controllers\Client\OrderController::class, 'store'])
+            ->name('checkout.store');
 
         /*
         |--------------------------------------------------------------------------

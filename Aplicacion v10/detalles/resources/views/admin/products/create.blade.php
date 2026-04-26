@@ -206,8 +206,84 @@
                             @enderror
                         </div>
 
-                    </div>
-                </div>
+                        {{-- CONFIGURACIÓN DE VISTA PREVIA --}}
+                        <div class="md:col-span-2">
+                            <div class="p-5 rounded-2xl border border-pink-100 bg-pink-50/40">
+                                <div class="mb-4">
+                                    <h3 class="text-sm font-bold text-gray-800">
+                                        Configuración de vista previa
+                                    </h3>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        Define cómo se ubicará la foto, los extras y la dedicatoria en el editor del cliente.
+                                    </p>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                                    {{-- TIPO DE ARREGLO --}}
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">
+                                            Tipo de arreglo
+                                        </label>
+                                        <select
+                                            name="tipo_arreglo"
+                                            class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300"
+                                        >
+                                            <option value="">Selecciona...</option>
+                                            <option value="bouquet" {{ old('tipo_arreglo') == 'bouquet' ? 'selected' : '' }}>Bouquet</option>
+                                            <option value="corazon" {{ old('tipo_arreglo') == 'corazon' ? 'selected' : '' }}>Caja corazón</option>
+                                            <option value="redondo" {{ old('tipo_arreglo') == 'redondo' ? 'selected' : '' }}>Caja redonda</option>
+                                            <option value="cuadrado" {{ old('tipo_arreglo') == 'cuadrado' ? 'selected' : '' }}>Caja cuadrada</option>
+                                            <option value="peluche" {{ old('tipo_arreglo') == 'peluche' ? 'selected' : '' }}>Arreglo con peluche</option>
+                                            <option value="caja_sorpresa" {{ old('tipo_arreglo') == 'caja_sorpresa' ? 'selected' : '' }}>Caja sorpresa</option>
+                                            <option value="globos" {{ old('tipo_arreglo') == 'globos' ? 'selected' : '' }}>Arreglo con globos</option>
+                                        </select>
+
+                                        @error('tipo_arreglo')
+                                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                   {{-- PLANTILLA VISUAL --}}
+<div>
+    <label class="block text-xs font-semibold text-gray-600 mb-1">
+        Distribución del diseño
+    </label>
+    <select
+        name="plantilla_preview"
+        class="w-full rounded-xl border border-pink-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-300"
+    >
+        <option value="">Selecciona...</option>
+        <option value="bouquet_right" {{ old('plantilla_preview') == 'bouquet_right' ? 'selected' : '' }}>
+            Foto a la derecha + dedicatoria en base
+        </option>
+        <option value="bouquet_left" {{ old('plantilla_preview') == 'bouquet_left' ? 'selected' : '' }}>
+            Foto a la izquierda + dedicatoria en base
+        </option>
+        <option value="balloon_top" {{ old('plantilla_preview') == 'balloon_top' ? 'selected' : '' }}>
+            Foto central + extras en parte baja
+        </option>
+        <option value="heart_center" {{ old('plantilla_preview') == 'heart_center' ? 'selected' : '' }}>
+            Foto centrada + dedicatoria en base
+        </option>
+        <option value="round_top" {{ old('plantilla_preview') == 'round_top' ? 'selected' : '' }}>
+            Foto arriba + extras alrededor
+        </option>
+        <option value="teddy_center" {{ old('plantilla_preview') == 'teddy_center' ? 'selected' : '' }}>
+            Foto lateral + extras sin cubrir peluche
+        </option>
+        <option value="box_center" {{ old('plantilla_preview') == 'box_center' ? 'selected' : '' }}>
+            Foto lateral + extras centrales
+        </option>
+        <option value="free_layout" {{ old('plantilla_preview') == 'free_layout' ? 'selected' : '' }}>
+            Distribución libre
+        </option>
+    </select>
+
+    @error('plantilla_preview')
+        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+    @enderror
+</div>
 
                 {{-- COLUMNA DERECHA --}}
                 <div class="lg:col-span-4 space-y-6">

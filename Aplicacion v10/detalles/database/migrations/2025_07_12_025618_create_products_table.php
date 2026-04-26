@@ -33,7 +33,7 @@ return new class extends Migration
             $table->integer('orden')->default(0);
             $table->softDeletes();
             $table->timestamps();
-            
+
             // Índices para optimización
             $table->index(['activo', 'destacado']);
             $table->index('stock');

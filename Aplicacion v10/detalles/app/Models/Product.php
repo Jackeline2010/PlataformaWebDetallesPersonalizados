@@ -35,6 +35,10 @@ class Product extends Model
         'opciones_personalizacion',
         'orden',
         'tiene_variantes',
+        'customization_zones',
+        'tipo_arreglo',
+        'plantilla_preview',
+
     ];
 
     protected $casts = [
@@ -51,6 +55,7 @@ class Product extends Model
         'stock'                    => 'integer',
         'stock_minimo'             => 'integer',
         'tiene_variantes'          => 'boolean',
+        'customization_zones'      => 'array',
     ];
 
     protected static function booted()
