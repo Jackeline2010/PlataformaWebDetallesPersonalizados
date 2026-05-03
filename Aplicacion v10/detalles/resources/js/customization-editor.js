@@ -663,12 +663,12 @@ if (removeCardBtn) {
     function getPhotoFrameMetrics() {
         const configured = zoneToPx(zones.photo_zone);
 
-        if (configured) {
+       if (configured) {
     return {
-        left: configured.left - (configured.width * 0.35),
-        top: configured.top - (configured.height * 0.25),
-        width: configured.width * 2.1,
-        height: configured.height * 2.1,
+        left: configured.left + (configured.width * 0.04),
+        top: configured.top + (configured.height * 0.04),
+        width: configured.width * 1.15,
+        height: configured.height * 1.15,
     };
 }
 
@@ -725,21 +725,21 @@ if (removeCardBtn) {
     function getPhotoInset() {
     if (photoState.orientation === 'horizontal') {
         return {
-            top: '12%',
-            right: '15%',
-            bottom: '27%',
-            left: '15%',
+            top: '10%',
+            right: '22%',
+            bottom: '30%',
+            left: '22%',
             radius: '10px',
         };
     }
 
    return {
-     top: '0%',
-    right: '20%',
-    bottom: '28%',
-    left: '20%',
+    top: '6%',
+    right: '22%',
+    bottom: '20%',
+    left: '22%',
     radius: '10px',
-};
+    };
 }
 
     function getAdjustWindowByOrientation() {
@@ -978,54 +978,106 @@ if (removeCardBtn) {
         updateSummary();
     }
 
-    function detectImageOrientation(file) {
-        return new Promise((resolve) => {
-            const tempUrl = URL.createObjectURL(file);
-            const img = new Image();
+    function detectImageInfo(file) {
+    return new Promise((resolve) => {
+        const tempUrl = URL.createObjectURL(file);
+        const img = new Image();
 
-            img.onload = () => {
-                const orientation = img.width >= img.height ? 'horizontal' : 'vertical';
-                URL.revokeObjectURL(tempUrl);
-                resolve(orientation);
-            };
+        img.onload = () => {
+            const orientation = img.width >= img.height ? 'horizontal' : 'vertical';
 
-            img.onerror = () => {
-                URL.revokeObjectURL(tempUrl);
-                resolve('vertical');
-            };
+            resolve({
+                orientation,
+                width: img.width,
+                height: img.height,
+            });
 
-            img.src = tempUrl;
-        });
-    }
+            URL.revokeObjectURL(tempUrl);
+        };
 
-    async function handlePhotoChange(file) {
-        if (!file || !photoLayer) return;
+        img.onerror = () => {
+            URL.revokeObjectURL(tempUrl);
 
-        if (photoState.objectUrl) {
-            URL.revokeObjectURL(photoState.objectUrl);
-            photoState.objectUrl = null;
-        }
+            resolve({
+                orientation: 'vertical',
+                width: 1,
+                height: 1,
+            });
+        };
 
-        const orientation = await detectImageOrientation(file);
+        img.src = tempUrl;
+    });
+}
+
+        function handlePhotoChange(file) {
+    return new Promise(async (resolve) => {
+
+        const imageInfo = await detectImageInfo(file);
         const objectUrl = URL.createObjectURL(file);
 
         photoState.src = objectUrl;
         photoState.objectUrl = objectUrl;
-        photoState.orientation = orientation;
-        photoState.offsetX = 0;
-        photoState.offsetY = -30;
-        photoState.scale = orientation === 'horizontal' ? 1.35 : 1.45;
+        photoState.orientation = imageInfo.orientation;
 
-        const metrics = getPhotoFrameMetrics();
-        photoState.frameLeft = metrics.left;
-        photoState.frameTop = metrics.top;
+        photoState.offsetX = 0;
+        photoState.offsetY = 0;
+
+        // 🔥 AUTO-FIT REAL
+        photoState.scale = 4;
 
         const modalOpened = openPhotoAdjustModal();
 
-        if (!modalOpened) {
+        if (modalOpened) {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+
+                    const autoScale = calculatePhotoAutoFitScale(
+                        imageInfo.width,
+                        imageInfo.height
+                    );
+
+                    photoState.scale = Math.max(autoScale, 3);
+
+                    if (photoZoomRange) {
+                        photoZoomRange.value = String(photoState.scale);
+                    }
+
+                    clampPhotoOffsets(photoAdjustWindow);
+                    updateAdjustImageTransform();
+                });
+            });
+        } else {
             renderPhotoFrame();
         }
+
+        resolve();
+    });
+}
+
+       function calculatePhotoAutoFitScale(imageWidth, imageHeight) {
+    if (!photoAdjustWindow) return 3;
+
+    const containerRect = photoAdjustWindow.getBoundingClientRect();
+
+    if (!containerRect.width || !containerRect.height) {
+        return 3;
     }
+
+    const imageRatio = imageWidth / imageHeight;
+    const containerRatio = containerRect.width / containerRect.height;
+
+    let scale;
+
+    if (imageRatio > containerRatio) {
+        scale = (containerRect.height / containerRect.width) * imageRatio;
+    } else {
+        scale = (containerRect.width / containerRect.height) / imageRatio;
+    }
+
+    // 🔥 MÁS AGRESIVO para llenar el marco
+    return Math.max(3, Math.min(scale * 2.2, 6));
+}
+
 
     function renderTexts() {
         const fraseEl = createTextElement(
@@ -1299,8 +1351,8 @@ if (removeCardBtn) {
     }
 
     if (photoZoomRange) {
-        photoZoomRange.min = '0.65';
-        photoZoomRange.max = '2.2';
+        photoZoomRange.min = '1';
+        photoZoomRange.max = '5';
         photoZoomRange.step = '0.01';
 
         photoZoomRange.addEventListener('input', () => {

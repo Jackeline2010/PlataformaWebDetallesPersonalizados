@@ -71,94 +71,99 @@ class ProductController extends Controller
     |--------------------------------------------------------------------------
     */
     public function store(Request $request)
-    {
-        $data = $request->validate([
-            'nombre'             => 'required|string|max:255',
-            'descripcion_corta'  => 'nullable|string|max:255',
-            'precio'             => 'required|numeric|min:0',
-            'photo_print_price'  => 'nullable|numeric|min:0',
-            'stock'              => 'required|integer|min:0',
-            'tipo_producto'      => 'required|integer|exists:categories,id',
-            'ocasion_especial'   => 'nullable|integer|exists:categories,id',
-            'activo'             => 'required|boolean',
-            'personalizable'     => 'required|boolean',
-            'tiene_variantes'    => 'nullable|boolean',
-            'tipo_arreglo'       => 'nullable|string|max:50',
-            'plantilla_preview'  => 'nullable|string|max:50',
-            'imagen_principal'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
+{
+    $data = $request->validate([
+        'nombre'             => 'required|string|max:255',
+        'descripcion_corta'  => 'nullable|string|max:255',
+        'precio'             => 'required|numeric|min:0',
+        'photo_print_price'  => 'nullable|numeric|min:0',
+        'stock'              => 'required|integer|min:0',
+        'tipo_producto'      => 'required|integer|exists:categories,id',
+        'ocasion_especial'   => 'nullable|integer|exists:categories,id',
+        'activo'             => 'required|boolean',
+        'personalizable'     => 'required|boolean',
+        'tiene_variantes'    => 'nullable|boolean',
+        'tipo_arreglo'       => 'nullable|string|max:50',
+        'plantilla_preview'  => 'nullable|string|max:50',
+        'imagen_principal'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+    ]);
 
-        $mainCategory = Category::where('id', $data['tipo_producto'])
-            ->where('grupo', 'tipo_producto')
-            ->first();
+    $mainCategory = Category::where('id', $data['tipo_producto'])
+        ->where('grupo', 'tipo_producto')
+        ->first();
 
-        if (!$mainCategory) {
-            return back()
-                ->withErrors(['tipo_producto' => 'Debe seleccionar una categoría válida.'])
-                ->withInput();
-        }
-
-        if (!empty($data['ocasion_especial'])) {
-            $ocasionCategory = Category::where('id', $data['ocasion_especial'])
-                ->where('grupo', 'ocasion_especial')
-                ->first();
-
-            if (!$ocasionCategory) {
-                return back()
-                    ->withErrors(['ocasion_especial' => 'Debe seleccionar una ocasión válida.'])
-                    ->withInput();
-            }
-        }
-
-        $imagePath = null;
-
-        if ($request->hasFile('imagen_principal')) {
-            $imagePath = $request->file('imagen_principal')->store('products', 'public');
-        }
-
-        $sku = 'SD-' . strtoupper(Str::random(8));
-        while (Product::where('sku', $sku)->exists()) {
-            $sku = 'SD-' . strtoupper(Str::random(8));
-        }
-
-        $product = Product::create([
-            'nombre'               => $data['nombre'],
-            'descripcion_corta'    => $data['descripcion_corta'] ?? null,
-            'precio'               => $data['precio'],
-            'photo_print_price'    => $data['photo_print_price'] ?? 0,
-            'stock'                => $data['stock'],
-            'sku'                  => $sku,
-            'category_id'          => $data['tipo_producto'],
-            'activo'               => $request->boolean('activo'),
-            'personalizable'       => $request->boolean('personalizable'),
-            'tiene_variantes'      => $request->boolean('tiene_variantes'),
-            'tipo_arreglo'         => $data['tipo_arreglo'] ?? null,
-            'plantilla_preview'    => $data['plantilla_preview'] ?? null,
-            'customization_zones'  => $this->getPreviewTemplate($data['plantilla_preview'] ?? null),
-            'slug'                 => $this->uniqueSlug($data['nombre']),
-            'fingreso'             => now()->toDateString(),
-            'imagen_principal'     => $imagePath,
-        ]);
-
-        $pivotIds = [];
-
-        if (!empty($data['ocasion_especial'])) {
-            $pivotIds[] = $data['ocasion_especial'];
-        }
-
-        $product->categories()->sync($pivotIds);
-
-        if ($product->tiene_variantes) {
-            return redirect()
-                ->route('admin.products.colors.index', $product->id)
-                ->with('success', 'Producto creado correctamente. Ahora agrega los colores disponibles.');
-        }
-
-        return redirect()
-            ->route('admin.products.index')
-            ->with('success', 'Producto creado correctamente');
+    if (!$mainCategory) {
+        return back()
+            ->withErrors(['tipo_producto' => 'Debe seleccionar una categoría válida.'])
+            ->withInput();
     }
 
+    if (!empty($data['ocasion_especial'])) {
+        $ocasionCategory = Category::where('id', $data['ocasion_especial'])
+            ->where('grupo', 'ocasion_especial')
+            ->first();
+
+        if (!$ocasionCategory) {
+            return back()
+                ->withErrors(['ocasion_especial' => 'Debe seleccionar una ocasión válida.'])
+                ->withInput();
+        }
+    }
+
+    $imagePath = null;
+
+    if ($request->hasFile('imagen_principal')) {
+        $file = $request->file('imagen_principal');
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        $fileName = Str::slug($data['nombre']) . '-' . now()->format('YmdHis') . '.' . $extension;
+
+        $imagePath = $file->storeAs('products', $fileName, 'public');
+    }
+
+    $sku = 'SD-' . strtoupper(Str::random(8));
+
+    while (Product::where('sku', $sku)->exists()) {
+        $sku = 'SD-' . strtoupper(Str::random(8));
+    }
+
+    $product = Product::create([
+        'nombre'               => $data['nombre'],
+        'descripcion_corta'    => $data['descripcion_corta'] ?? null,
+        'precio'               => $data['precio'],
+        'photo_print_price'    => $data['photo_print_price'] ?? 0,
+        'stock'                => $data['stock'],
+        'sku'                  => $sku,
+        'category_id'          => $data['tipo_producto'],
+        'activo'               => $request->boolean('activo'),
+        'personalizable'       => $request->boolean('personalizable'),
+        'tiene_variantes'      => $request->boolean('tiene_variantes'),
+        'tipo_arreglo'         => $data['tipo_arreglo'] ?? null,
+        'plantilla_preview'    => $data['plantilla_preview'] ?? null,
+        'customization_zones'  => $this->getPreviewTemplate($data['plantilla_preview'] ?? null),
+        'slug'                 => $this->uniqueSlug($data['nombre']),
+        'fingreso'             => now()->toDateString(),
+        'imagen_principal'     => $imagePath,
+    ]);
+
+    $pivotIds = [];
+
+    if (!empty($data['ocasion_especial'])) {
+        $pivotIds[] = $data['ocasion_especial'];
+    }
+
+    $product->categories()->sync($pivotIds);
+
+    if ($product->tiene_variantes) {
+        return redirect()
+            ->route('admin.products.colors.index', $product->id)
+            ->with('success', 'Producto creado correctamente. Ahora agrega los colores disponibles.');
+    }
+
+    return redirect()
+        ->route('admin.products.index')
+        ->with('success', 'Producto creado correctamente');
+}
     /*
     |--------------------------------------------------------------------------
     | EDIT
@@ -199,87 +204,94 @@ class ProductController extends Controller
     |--------------------------------------------------------------------------
     */
     public function update(Request $request, Product $product)
-    {
-        $data = $request->validate([
-            'nombre'             => 'required|string|max:255',
-            'descripcion_corta'  => 'nullable|string|max:255',
-            'precio'             => 'required|numeric|min:0',
-            'photo_print_price'  => 'nullable|numeric|min:0',
-            'stock'              => 'required|integer|min:0',
-            'tipo_producto'      => 'required|integer|exists:categories,id',
-            'ocasion_especial'   => 'nullable|integer|exists:categories,id',
-            'activo'             => 'required|boolean',
-            'personalizable'     => 'required|boolean',
-            'tiene_variantes'    => 'nullable|boolean',
-            'tipo_arreglo'       => 'nullable|string|max:50',
-            'plantilla_preview'  => 'nullable|string|max:50',
-            'imagen_principal'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
+{
+    $data = $request->validate([
+        'nombre'             => 'required|string|max:255',
+        'descripcion_corta'  => 'nullable|string|max:255',
+        'precio'             => 'required|numeric|min:0',
+        'photo_print_price'  => 'nullable|numeric|min:0',
+        'stock'              => 'required|integer|min:0',
+        'tipo_producto'      => 'required|integer|exists:categories,id',
+        'ocasion_especial'   => 'nullable|integer|exists:categories,id',
+        'activo'             => 'required|boolean',
+        'personalizable'     => 'required|boolean',
+        'tiene_variantes'    => 'nullable|boolean',
+        'tipo_arreglo'       => 'nullable|string|max:50',
+        'plantilla_preview'  => 'nullable|string|max:50',
+        'imagen_principal'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+    ]);
 
-        $mainCategory = Category::where('id', $data['tipo_producto'])
-            ->where('grupo', 'tipo_producto')
-            ->first();
+    $mainCategory = Category::where('id', $data['tipo_producto'])
+        ->where('grupo', 'tipo_producto')
+        ->first();
 
-        if (!$mainCategory) {
-            return back()
-                ->withErrors(['tipo_producto' => 'Debe seleccionar una categoría válida.'])
-                ->withInput();
-        }
-
-        if (!empty($data['ocasion_especial'])) {
-            $ocasionCategory = Category::where('id', $data['ocasion_especial'])
-                ->where('grupo', 'ocasion_especial')
-                ->first();
-
-            if (!$ocasionCategory) {
-                return back()
-                    ->withErrors(['ocasion_especial' => 'Debe seleccionar una ocasión válida.'])
-                    ->withInput();
-            }
-        }
-
-        $updateData = [
-            'nombre'               => $data['nombre'],
-            'descripcion_corta'    => $data['descripcion_corta'] ?? null,
-            'precio'               => $data['precio'],
-            'photo_print_price'    => $data['photo_print_price'] ?? 0,
-            'stock'                => $data['stock'],
-            'category_id'          => $data['tipo_producto'],
-            'activo'               => $request->boolean('activo'),
-            'personalizable'       => $request->boolean('personalizable'),
-            'tiene_variantes'      => $request->boolean('tiene_variantes'),
-            'tipo_arreglo'         => $data['tipo_arreglo'] ?? null,
-            'plantilla_preview'    => $data['plantilla_preview'] ?? null,
-            'customization_zones'  => $this->getPreviewTemplate($data['plantilla_preview'] ?? null),
-        ];
-
-        if ($product->nombre !== $data['nombre']) {
-            $updateData['slug'] = $this->uniqueSlug($data['nombre'], $product->id);
-        }
-
-        if ($request->hasFile('imagen_principal')) {
-            if (!empty($product->imagen_principal) && Storage::disk('public')->exists($product->imagen_principal)) {
-                Storage::disk('public')->delete($product->imagen_principal);
-            }
-
-            $updateData['imagen_principal'] = $request->file('imagen_principal')->store('products', 'public');
-        }
-
-        $product->update($updateData);
-
-        $pivotIds = [];
-
-        if (!empty($data['ocasion_especial'])) {
-            $pivotIds[] = $data['ocasion_especial'];
-        }
-
-        $product->categories()->sync($pivotIds);
-
-        return redirect()
-            ->route('admin.products.index')
-            ->with('success', 'Producto actualizado correctamente');
+    if (!$mainCategory) {
+        return back()
+            ->withErrors(['tipo_producto' => 'Debe seleccionar una categoría válida.'])
+            ->withInput();
     }
 
+    if (!empty($data['ocasion_especial'])) {
+        $ocasionCategory = Category::where('id', $data['ocasion_especial'])
+            ->where('grupo', 'ocasion_especial')
+            ->first();
+
+        if (!$ocasionCategory) {
+            return back()
+                ->withErrors(['ocasion_especial' => 'Debe seleccionar una ocasión válida.'])
+                ->withInput();
+        }
+    }
+
+    $updateData = [
+        'nombre'               => $data['nombre'],
+        'descripcion_corta'    => $data['descripcion_corta'] ?? null,
+        'precio'               => $data['precio'],
+        'photo_print_price'    => $data['photo_print_price'] ?? 0,
+        'stock'                => $data['stock'],
+        'category_id'          => $data['tipo_producto'],
+        'activo'               => $request->boolean('activo'),
+        'personalizable'       => $request->boolean('personalizable'),
+        'tiene_variantes'      => $request->boolean('tiene_variantes'),
+        'tipo_arreglo'         => $data['tipo_arreglo'] ?? null,
+        'plantilla_preview'    => $data['plantilla_preview'] ?? null,
+        'customization_zones'  => $this->getPreviewTemplate($data['plantilla_preview'] ?? null),
+    ];
+
+    if ($product->nombre !== $data['nombre']) {
+        $updateData['slug'] = $this->uniqueSlug($data['nombre'], $product->id);
+    }
+
+    if ($request->hasFile('imagen_principal')) {
+        if (
+            !empty($product->imagen_principal) &&
+            Storage::disk('public')->exists($product->imagen_principal)
+        ) {
+            Storage::disk('public')->delete($product->imagen_principal);
+        }
+
+        $file = $request->file('imagen_principal');
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        $fileName = Str::slug($data['nombre']) . '-' . now()->format('YmdHis') . '.' . $extension;
+
+        $updateData['imagen_principal'] = $file->storeAs('products', $fileName, 'public');
+    }
+
+    $product->update($updateData);
+
+    $pivotIds = [];
+
+    if (!empty($data['ocasion_especial'])) {
+        $pivotIds[] = $data['ocasion_especial'];
+    }
+
+    $product->categories()->sync($pivotIds);
+
+    return redirect()
+        ->route('admin.products.index')
+        ->with('success', 'Producto actualizado correctamente');
+}
     /*
     |--------------------------------------------------------------------------
     | PERSONALIZACIÓN - VISTA

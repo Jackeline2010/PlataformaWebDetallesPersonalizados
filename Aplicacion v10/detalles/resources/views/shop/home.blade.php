@@ -85,7 +85,7 @@
                 @forelse($products as $product)
                     <div class="product-item" data-categories="{{ $product->categories->pluck('id')->implode(',') }}">
                         <img class="h-auto max-w-full rounded-lg hover:scale-105 transition-transform duration-300"
-                             src="{{ $product->imagen_principal ? asset($product->imagen_principal) : asset('assets/images/producto_001.jpg') }}"
+                             src="{{ $product->imagen_principal ? asset('storage/' . $product->imagen_principal) : asset('assets/images/producto_001.jpg') }}"
                              alt="{{ $product->nombre }}"
                              title="{{ $product->nombre }}">
                         <div class="mt-2 text-center">
