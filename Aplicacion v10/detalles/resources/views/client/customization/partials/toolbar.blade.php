@@ -95,7 +95,7 @@
             >
 
             <p class="text-xs text-gray-400 mt-2">
-                Sube una imagen clara para verla en la vista previa.
+                 Sube una imagen clara para verla en la vista previa, medidas recomendadas 500x700 px.
             </p>
         </div>
     @endif

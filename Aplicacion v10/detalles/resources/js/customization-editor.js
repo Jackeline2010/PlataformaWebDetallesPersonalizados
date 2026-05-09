@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dedicatoriaInput = document.getElementById('input-dedicatoria');
     const destinatarioInput = document.getElementById('input-destinatario');
     const restoreCardBtn = document.getElementById('restore-card-btn');
+    const restorePhotoBtn = document.getElementById('restore-photo-btn');
 
     const extrasCount = document.getElementById('extras-count');
     const summaryMainText = document.getElementById('summary-main-text');
@@ -294,13 +295,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getReservedElementsForExtras() {
-        return [
-            document.getElementById('photo-frame-wrapper'),
-            document.getElementById('card-zone'),
-            document.getElementById('preview-card-wrapper'),
-        ].filter(Boolean);
+    const reserved = [];
+
+    const cardWrapper = document.getElementById('preview-card-wrapper');
+    const photoWrapper = document.getElementById('preview-photo-wrapper');
+
+    if (cardWrapper && cardWrapper.offsetParent !== null) {
+        reserved.push(cardWrapper);
     }
 
+    if (photoWrapper && photoWrapper.offsetParent !== null) {
+        reserved.push(photoWrapper);
+    }
+
+    return reserved;
+}
     function overlapsReservedZones(element) {
         return getReservedElementsForExtras().some((reserved) => isOverlapping(element, reserved));
     }
@@ -358,6 +367,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         el.addEventListener('mousedown', (e) => {
             if (e.target.closest('.remove-item')) return;
+            if (e.target.closest('.remove-photo')) return;
+            if (e.target.closest('.remove-card')) return;
 
             e.preventDefault();
             e.stopPropagation();
@@ -498,63 +509,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function makeCardDraggableInsideZone(el, zoneEl) {
-    let isDragging = false;
-    let offsetX = 0;
-    let offsetY = 0;
+        let isDragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
 
-    const onMouseMove = (e) => {
-        if (!isDragging) return;
+        const onMouseMove = (e) => {
+            if (!isDragging) return;
 
-        const zoneRect = zoneEl.getBoundingClientRect();
-        const elRect = el.getBoundingClientRect();
+            const zoneRect = zoneEl.getBoundingClientRect();
+            const elRect = el.getBoundingClientRect();
 
-        let left = e.clientX - zoneRect.left - offsetX;
-        let top = e.clientY - zoneRect.top - offsetY;
+            let left = e.clientX - zoneRect.left - offsetX;
+            let top = e.clientY - zoneRect.top - offsetY;
 
-        const maxLeft = Math.max(0, zoneEl.clientWidth - elRect.width);
-        const maxTop = Math.max(0, zoneEl.clientHeight - elRect.height);
+            const maxLeft = Math.max(0, zoneEl.clientWidth - elRect.width);
+            const maxTop = Math.max(0, zoneEl.clientHeight - elRect.height);
 
-        left = Math.max(0, Math.min(left, maxLeft));
-        top = Math.max(0, Math.min(top, maxTop));
+            left = Math.max(0, Math.min(left, maxLeft));
+            top = Math.max(0, Math.min(top, maxTop));
 
-        el.style.left = `${left}px`;
-        el.style.top = `${top}px`;
-    };
+            el.style.left = `${left}px`;
+            el.style.top = `${top}px`;
+        };
 
-    const onMouseUp = () => {
-        if (!isDragging) return;
+        const onMouseUp = () => {
+            if (!isDragging) return;
 
-        isDragging = false;
-        el.style.zIndex = el.dataset.baseZ || '35';
-        el.classList.remove('cursor-grabbing');
-        el.classList.add('cursor-grab');
+            isDragging = false;
+            el.style.zIndex = el.dataset.baseZ || '35';
+            el.classList.remove('cursor-grabbing');
+            el.classList.add('cursor-grab');
 
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
 
-        updateSummary();
-    };
+            updateSummary();
+        };
 
-    el.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.remove-card')) return;
+        el.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.remove-card')) return;
 
-        e.preventDefault();
-        e.stopPropagation();
+            e.preventDefault();
+            e.stopPropagation();
 
-        isDragging = true;
+            isDragging = true;
 
-        const rect = el.getBoundingClientRect();
-        offsetX = e.clientX - rect.left;
-        offsetY = e.clientY - rect.top;
+            const rect = el.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
 
-        el.style.zIndex = '80';
-        el.classList.remove('cursor-grab');
-        el.classList.add('cursor-grabbing');
+            el.style.zIndex = '80';
+            el.classList.remove('cursor-grab');
+            el.classList.add('cursor-grabbing');
 
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-    });
-}
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    }
 
     function renderCardTemplate() {
         if (!cardZone || !cardEnabled) return;
@@ -615,62 +626,63 @@ document.addEventListener('DOMContentLoaded', () => {
                         transform-origin: center center;
                     "
                 ></div>
-            </div>
 
-            <button
-    type="button"
-    class="remove-card absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center shadow pointer-events-auto"
-    aria-label="Quitar dedicatoria"
->
-    ×
-</button>
+                <button
+                    type="button"
+                    class="remove-card absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center shadow pointer-events-auto"
+                    aria-label="Quitar dedicatoria"
+                >
+                    ×
+                </button>
+            </div>
         `;
 
         cardZone.appendChild(cardWrapper);
         makeCardDraggableInsideZone(cardWrapper, cardZone);
         updateCardText();
+
         const removeCardBtn = cardWrapper.querySelector('.remove-card');
 
-if (removeCardBtn) {
-    removeCardBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+        if (removeCardBtn) {
+            removeCardBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
 
-        cardEnabled = false;
+                cardEnabled = false;
 
-        if (dedicatoriaInput) {
-            dedicatoriaInput.value = '';
+                if (dedicatoriaInput) {
+                    dedicatoriaInput.value = '';
+                }
+
+                if (saveDedicatoria) {
+                    saveDedicatoria.value = '';
+                }
+
+                cardWrapper.remove();
+                cardWrapper = null;
+
+                if (restoreCardBtn) {
+                    restoreCardBtn.classList.remove('hidden');
+                }
+
+                updateCounters();
+                updateEmptyState();
+                updateSummary();
+            });
         }
-
-        if (saveDedicatoria) {
-            saveDedicatoria.value = '';
-        }
-
-        cardWrapper.remove();
-        cardWrapper = null;
-
-        if (restoreCardBtn) {
-            restoreCardBtn.classList.remove('hidden');
-        }
-
-        updateCounters();
-        updateEmptyState();
-        updateSummary();
-    });
-}
     }
 
     function getPhotoFrameMetrics() {
         const configured = zoneToPx(zones.photo_zone);
 
         if (configured) {
-    return {
-        left: configured.left - (configured.width * 0.35),
-        top: configured.top - (configured.height * 0.25),
-        width: configured.width * 2.1,
-        height: configured.height * 2.1,
-    };
-}
+            return {
+                left: configured.left + (configured.width * 0.12),
+                top: configured.top + (configured.height * 0.10),
+                width: configured.width * 0.82,
+                height: configured.height * 0.70,
+            };
+        }
 
         if (photoGuideZone) {
             return {
@@ -722,37 +734,36 @@ if (removeCardBtn) {
             : (frameVertical || frameHorizontal);
     }
 
-    function getPhotoInset() {
-    if (photoState.orientation === 'horizontal') {
+  function getPhotoInset() {
+    return {
+        top: '12%',
+        right: '13%',
+        bottom: '24%',
+        left: '13%',
+        radius: '6px',
+    };
+
+
         return {
-            top: '12%',
-            right: '15%',
-            bottom: '27%',
-            left: '15%',
-            radius: '10px',
+            top: '7%',
+            right: '14%',
+            bottom: '22%',
+            left: '14%',
+            radius: '8px',
         };
     }
 
-   return {
-     top: '0%',
-    right: '20%',
-    bottom: '28%',
-    left: '20%',
-    radius: '10px',
-};
-}
-
     function getAdjustWindowByOrientation() {
-    const inset = getPhotoInset();
+        const inset = getPhotoInset();
 
-    return {
-        left: inset.left,
-        top: inset.top,
-        width: `calc(100% - ${inset.left} - ${inset.right})`,
-        height: `calc(100% - ${inset.top} - ${inset.bottom})`,
-        radius: inset.radius,
-    };
-}
+        return {
+            left: inset.left,
+            top: inset.top,
+            width: `calc(100% - ${inset.left} - ${inset.right})`,
+            height: `calc(100% - ${inset.top} - ${inset.bottom})`,
+            radius: inset.radius,
+        };
+    }
 
     function updateAdjustImageTransform() {
         if (!photoAdjustImage) return;
@@ -760,6 +771,23 @@ if (removeCardBtn) {
         photoAdjustImage.style.transform =
             `translate(calc(-50% + ${photoState.offsetX}px), calc(-50% + ${photoState.offsetY}px)) scale(${photoState.scale})`;
     }
+
+    function autoFitPhotoToFrame() {
+    if (!photoAdjustWindow || !photoAdjustImage) return;
+
+    photoState.scale = 1;
+    photoState.offsetX = 0;
+    photoState.offsetY = 0;
+
+    if (photoZoomRange) {
+        photoZoomRange.min = '1';
+        photoZoomRange.max = '4';
+        photoZoomRange.step = '0.01';
+        photoZoomRange.value = String(photoState.scale);
+    }
+
+    updateAdjustImageTransform();
+}
 
     function clampPhotoOffsets(container) {
         if (!container) return;
@@ -777,59 +805,66 @@ if (removeCardBtn) {
     }
 
     function syncAdjustStage() {
-    if (!photoAdjustWindow || !photoZoomRange) return;
+        if (!photoAdjustWindow || !photoZoomRange) return;
 
-    const frameWindow = getAdjustWindowByOrientation();
+        const frameWindow = getAdjustWindowByOrientation();
 
-    photoAdjustWindow.style.position = 'absolute';
-    photoAdjustWindow.style.left = frameWindow.left;
-    photoAdjustWindow.style.top = frameWindow.top;
-    photoAdjustWindow.style.width = frameWindow.width;
-    photoAdjustWindow.style.height = frameWindow.height;
-    photoAdjustWindow.style.borderRadius = frameWindow.radius;
-    photoAdjustWindow.style.overflow = 'hidden';
-    photoAdjustWindow.style.background = 'transparent';
-    photoAdjustWindow.style.zIndex = '5';
+        photoAdjustWindow.style.position = 'absolute';
+        photoAdjustWindow.style.left = frameWindow.left;
+        photoAdjustWindow.style.top = frameWindow.top;
+        photoAdjustWindow.style.width = frameWindow.width;
+        photoAdjustWindow.style.height = frameWindow.height;
+        photoAdjustWindow.style.borderRadius = frameWindow.radius;
+        photoAdjustWindow.style.overflow = 'hidden';
+        photoAdjustWindow.style.background = 'transparent';
+        photoAdjustWindow.style.zIndex = '5';
 
-    photoZoomRange.value = String(photoState.scale);
+        photoZoomRange.value = String(photoState.scale);
 
-    requestAnimationFrame(() => {
-        clampPhotoOffsets(photoAdjustWindow);
-        updateAdjustImageTransform();
-    });
-}
-
-   function openPhotoAdjustModal() {
-    if (!photoAdjustModal || !photoAdjustImage) return false;
-
-    photoAdjustImage.src = photoState.src || '';
-    photoAdjustImage.style.position = 'absolute';
-    photoAdjustImage.style.left = '50%';
-    photoAdjustImage.style.top = '50%';
-    photoAdjustImage.style.width = '100%';
-    photoAdjustImage.style.height = '100%';
-    photoAdjustImage.style.maxWidth = 'none';
-    photoAdjustImage.style.maxHeight = 'none';
-    photoAdjustImage.style.objectFit = 'cover';
-    photoAdjustImage.style.transformOrigin = 'center center';
-    photoAdjustImage.style.cursor = 'grab';
-    photoAdjustImage.style.userSelect = 'none';
-    photoAdjustImage.style.webkitUserDrag = 'none';
-
-    if (photoAdjustFrame) {
-        photoAdjustFrame.src = getFrameSrc() || photoAdjustFrame.src;
-        photoAdjustFrame.style.pointerEvents = 'none';
+        requestAnimationFrame(() => {
+            clampPhotoOffsets(photoAdjustWindow);
+            updateAdjustImageTransform();
+        });
     }
 
-    photoAdjustModal.classList.remove('hidden');
-    photoAdjustModal.classList.add('flex');
+    function openPhotoAdjustModal() {
+        if (!photoAdjustModal || !photoAdjustImage) return false;
 
-    requestAnimationFrame(() => {
-        syncAdjustStage();
-    });
+        photoAdjustImage.src = photoState.src || '';
+        photoAdjustImage.style.position = 'absolute';
+        photoAdjustImage.style.left = '50%';
+        photoAdjustImage.style.top = '50%';
+        photoAdjustImage.style.width = 'auto';
+        photoAdjustImage.style.height = 'auto';
+        photoAdjustImage.style.maxWidth = '100%';
+        photoAdjustImage.style.maxHeight = '100%';
+        photoAdjustImage.style.objectFit = 'cover';
+        photoAdjustImage.style.transformOrigin = 'center center';
+        photoAdjustImage.style.cursor = 'grab';
+        photoAdjustImage.style.userSelect = 'none';
+        photoAdjustImage.style.webkitUserDrag = 'none';
 
-    return true;
-}
+        if (photoAdjustFrame) {
+            photoAdjustFrame.src = getFrameSrc() || photoAdjustFrame.src;
+            photoAdjustFrame.style.pointerEvents = 'none';
+        }
+
+        photoAdjustModal.classList.remove('hidden');
+        photoAdjustModal.classList.add('flex');
+
+        requestAnimationFrame(() => {
+            syncAdjustStage();
+
+            setTimeout(() => {
+                autoFitPhotoToFrame();
+                clampPhotoOffsets(photoAdjustWindow);
+                updateAdjustImageTransform();
+            }, 120);
+        });
+
+        return true;
+    }
+
     function closeAdjustModal() {
         if (!photoAdjustModal) return;
 
@@ -879,6 +914,34 @@ if (removeCardBtn) {
             isDragging = false;
             img.style.cursor = 'grab';
         });
+    }
+
+    function removeCustomerPhoto() {
+        const oldPhoto = document.getElementById('photo-frame-wrapper');
+        if (oldPhoto) oldPhoto.remove();
+
+        if (photoInput) {
+            photoInput.value = '';
+        }
+
+        if (photoState.objectUrl) {
+            URL.revokeObjectURL(photoState.objectUrl);
+        }
+
+        photoState.src = '';
+        photoState.objectUrl = null;
+        photoState.offsetX = 0;
+        photoState.offsetY = 0;
+        photoState.scale = 1;
+        photoState.frameLeft = null;
+        photoState.frameTop = null;
+
+        if (restorePhotoBtn) {
+            restorePhotoBtn.classList.remove('hidden');
+        }
+
+        updateEmptyState();
+        updateSummary();
     }
 
     function renderPhotoFrame() {
@@ -947,6 +1010,7 @@ if (removeCardBtn) {
                         "
                     >
                 </div>
+
                 ${frameSrc ? `
                     <img
                         src="${frameSrc}"
@@ -955,10 +1019,28 @@ if (removeCardBtn) {
                         draggable="false"
                     >
                 ` : ''}
+
+                <button
+                    type="button"
+                    class="remove-photo absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white text-pink-600 border border-pink-200 shadow-md text-sm font-bold flex items-center justify-center z-50 pointer-events-auto hover:bg-pink-50"
+                    aria-label="Quitar foto"
+                >
+                    ×
+                </button>
             </div>
         `;
 
         photoLayer.appendChild(wrapper);
+
+        const removePhotoBtn = wrapper.querySelector('.remove-photo');
+
+        if (removePhotoBtn) {
+            removePhotoBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                removeCustomerPhoto();
+            });
+        }
 
         makeDraggableInMetrics(wrapper, getPhotoMoveMetrics, (el) => {
             photoState.frameLeft = parseFloat(el.style.left || '0');
@@ -1013,18 +1095,24 @@ if (removeCardBtn) {
         photoState.objectUrl = objectUrl;
         photoState.orientation = orientation;
         photoState.offsetX = 0;
-        photoState.offsetY = -30;
-        photoState.scale = orientation === 'horizontal' ? 1.35 : 1.45;
+        photoState.offsetY = 0;
+        photoState.scale = 1;
 
         const metrics = getPhotoFrameMetrics();
         photoState.frameLeft = metrics.left;
         photoState.frameTop = metrics.top;
+
+        if (restorePhotoBtn) {
+            restorePhotoBtn.classList.add('hidden');
+        }
 
         const modalOpened = openPhotoAdjustModal();
 
         if (!modalOpened) {
             renderPhotoFrame();
         }
+
+        updateSummary();
     }
 
     function renderTexts() {
@@ -1062,35 +1150,55 @@ if (removeCardBtn) {
     }
 
     function getDefaultSize(name) {
-        const value = (name || '').toLowerCase();
+    const nameLower = name.toLowerCase();
 
-        if (value.includes('globo')) {
-            return { width: 115, height: 115 };
-        }
-
-        if (value.includes('peluche')) {
-            return { width: 120, height: 120 };
-        }
-
-        if (value.includes('chocolate')) {
-            return { width: 105, height: 105 };
-        }
-
-        if (value.includes('foto')) {
-            return { width: 110, height: 110 };
-        }
-
-        return { width: 110, height: 110 };
+    if (
+        nameLower.includes('globo') ||
+        nameLower.includes('balloon') ||
+        nameLower.includes('burbuja')
+    ) {
+        return { width: 150, height: 150 };
     }
 
-    function getInitialExtraPosition(width, height) {
-        const metrics = getExtrasZoneMetrics();
-
-        const left = metrics.left + Math.max(0, (metrics.width - width) / 2);
-        const top = metrics.top + Math.max(0, (metrics.height - height) / 2);
-
-        return clampToMetrics(left, top, width, height, metrics);
+    if (
+        nameLower.includes('peluche') ||
+        nameLower.includes('oso') ||
+        nameLower.includes('teddy')
+    ) {
+        return { width: 130, height: 130 };
     }
+
+    if (
+        nameLower.includes('chocolate') ||
+        nameLower.includes('dulce')
+    ) {
+        return { width: 105, height: 105 };
+    }
+
+    return { width: 110, height: 110 };
+}
+
+    function getInitialExtraPosition(width, height, name = '') {
+    const zone = getExtrasZoneMetrics();
+    const nameLower = name.toLowerCase();
+
+    const isBalloon =
+        nameLower.includes('globo') ||
+        nameLower.includes('balloon') ||
+        nameLower.includes('burbuja');
+
+    if (isBalloon) {
+        return {
+            left: zone.left + (zone.width / 2) - (width / 2),
+            top: zone.top - 90
+        };
+    }
+
+    return {
+        left: zone.left + (zone.width / 2) - (width / 2),
+        top: zone.top + (zone.height / 2) - (height / 2)
+    };
+}
 
     function addExtra(btn) {
         const image = btn.dataset.extraImage || '';
@@ -1103,7 +1211,7 @@ if (removeCardBtn) {
         if (existing) return;
 
         const size = getDefaultSize(name);
-        const initial = getInitialExtraPosition(size.width, size.height);
+        const initial = getInitialExtraPosition(size.width, size.height, name);
 
         const wrapper = document.createElement('div');
         wrapper.className = 'design-item absolute select-none cursor-grab group';
@@ -1159,6 +1267,7 @@ if (removeCardBtn) {
         });
 
         const removeBtn = wrapper.querySelector('.remove-item');
+
         if (removeBtn) {
             removeBtn.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -1259,6 +1368,14 @@ if (removeCardBtn) {
         });
     }
 
+    if (restorePhotoBtn && photoInput) {
+        restorePhotoBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            photoInput.click();
+        });
+    }
+
     if (fraseInput) {
         fraseInput.addEventListener('input', renderTexts);
     }
@@ -1299,8 +1416,8 @@ if (removeCardBtn) {
     }
 
     if (photoZoomRange) {
-        photoZoomRange.min = '0.65';
-        photoZoomRange.max = '2.2';
+        photoZoomRange.min = '1';
+        photoZoomRange.max = '6';
         photoZoomRange.step = '0.01';
 
         photoZoomRange.addEventListener('input', () => {
@@ -1331,29 +1448,47 @@ if (removeCardBtn) {
             updateSummary();
         });
     }
+
     if (restoreCardBtn) {
-    restoreCardBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+        restoreCardBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
 
-        cardEnabled = true;
+            cardEnabled = true;
 
-        const oldZone = document.getElementById('card-zone');
-        if (oldZone) oldZone.remove();
+            const oldZone = document.getElementById('card-zone');
+            if (oldZone) oldZone.remove();
+
+            renderCardZone();
+            renderCardTemplate();
+            updateCardText();
+
+            restoreCardBtn.classList.add('hidden');
+
+            updateCounters();
+            updateEmptyState();
+            updateSummary();
+        });
+    }
+
+    window.addEventListener('resize', () => {
+        renderExtrasZone();
 
         renderCardZone();
-        renderCardTemplate();
-        updateCardText();
 
-        restoreCardBtn.classList.add('hidden');
+        if (cardEnabled) {
+            renderCardTemplate();
+            updateCardText();
+        }
 
-        updateCounters();
-        updateEmptyState();
-        updateSummary();
+        rebuildPhotoArea();
+        rebuildExtrasArea();
+
+        if (photoAdjustModal && !photoAdjustModal.classList.contains('hidden')) {
+            syncAdjustStage();
+        }
     });
-}
 
-   window.addEventListener('resize', () => {
     renderExtrasZone();
 
     renderCardZone();
@@ -1364,25 +1499,8 @@ if (removeCardBtn) {
     }
 
     rebuildPhotoArea();
-    rebuildExtrasArea();
-
-    if (photoAdjustModal && !photoAdjustModal.classList.contains('hidden')) {
-        syncAdjustStage();
-    }
-});
-
-renderExtrasZone();
-
-renderCardZone();
-
-if (cardEnabled) {
-    renderCardTemplate();
-    updateCardText();
-}
-
-rebuildPhotoArea();
-renderTexts();
-updateExtrasCount();
-updateEmptyState();
-updateSummary();
+    renderTexts();
+    updateExtrasCount();
+    updateEmptyState();
+    updateSummary();
 });
