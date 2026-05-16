@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -64,10 +65,24 @@ class OrderController extends Controller
         DB::transaction(function () use ($cart, $subtotal, &$order) {
             $user = Auth::user();
 
-            $clientId = null;
-            if (isset($user->client) && $user->client) {
-                $clientId = $user->client->id;
-            }
+            $client = $user->client;
+
+if (!$client) {
+    $client = Client::create([
+    'user_id' => $user->id,
+    'identificacion' => 'TEMP-' . $user->id,
+    'nombres' => $user->name ?? 'Cliente',
+    'apellidos' => '',
+    'email' => $user->email,
+    'telefono' => $user->telefono ?? null,
+    'fnacimiento' => null,
+    'genero' => null,
+    'fingreso' => now()->toDateString(),
+    'activo' => true,
+]);
+}
+
+$clientId = $client->id;
 
             $extrasResumen = [];
 

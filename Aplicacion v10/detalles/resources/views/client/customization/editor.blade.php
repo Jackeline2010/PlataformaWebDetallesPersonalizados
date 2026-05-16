@@ -60,64 +60,85 @@
         </div>
 
         {{-- LAYOUT PRINCIPAL DEL EDITOR --}}
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div class="grid grid-cols-1 xl:grid-cols-[260px_minmax(520px,1fr)_300px] 2xl:grid-cols-[280px_minmax(560px,1fr)_320px] gap-6 items-start">
 
             {{-- PANEL IZQUIERDO --}}
-            <div class="lg:col-span-3 space-y-6">
+            <div class="min-w-0 space-y-6">
 
                 {{-- RESUMEN DE COMPRA --}}
-                <div class="bg-white rounded-2xl border border-pink-100 shadow-sm p-4">
-                    <h3 class="text-base font-semibold text-gray-800 mb-4">
-                        Resumen de compra
-                    </h3>
+<div
+    class="bg-white rounded-2xl border border-pink-100 shadow-sm p-4"
+    id="purchase-summary"
+    data-base-price="{{ (float) $product->precio }}"
+    data-photo-price="{{ (float) ($product->photo_print_price ?? 0) }}"
+>
+    <h3 class="text-base font-semibold text-gray-800 mb-4">
+        Resumen de compra
+    </h3>
 
-                    <div class="space-y-3 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">Producto base</span>
-                            <span class="font-medium text-gray-800">
-                                ${{ number_format((float) $product->precio, 2) }}
-                            </span>
-                        </div>
+    <div class="space-y-3 text-sm">
+        <div class="flex justify-between gap-3">
+            <span class="text-gray-500">Producto base</span>
+            <span
+                id="base-total"
+                class="font-medium text-gray-800"
+                data-value="{{ (float) $product->precio }}"
+            >
+                ${{ number_format((float) $product->precio, 2) }}
+            </span>
+        </div>
 
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">Foto impresa</span>
-                            <span id="photo-total" class="font-medium text-gray-800">
-                                $0.00
-                            </span>
-                        </div>
+        <div class="flex justify-between gap-3">
+            <span class="text-gray-500">Foto impresa</span>
+            <span
+                id="photo-total"
+                class="font-medium text-gray-800"
+                data-value="0"
+            >
+                $0.00
+            </span>
+        </div>
 
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">Extras</span>
-                            <span id="extras-total" class="font-medium text-gray-800">
-                                $0.00
-                            </span>
-                        </div>
+        <div class="flex justify-between gap-3">
+            <span class="text-gray-500">Extras</span>
+            <span
+                id="extras-total"
+                class="font-medium text-gray-800"
+                data-value="0"
+            >
+                $0.00
+            </span>
+        </div>
 
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">Personalización</span>
-                            <span id="custom-total" class="font-medium text-gray-800">
-                                Gratis
-                            </span>
-                        </div>
+        <div class="flex justify-between gap-3">
+            <span class="text-gray-500">Personalización</span>
+            <span id="custom-total" class="font-medium text-gray-800">
+                Gratis
+            </span>
+        </div>
 
-                        <hr>
+        <hr>
 
-                        <div class="flex justify-between text-base font-bold">
-                            <span>Total</span>
-                            <span id="total-price" class="text-pink-600">
-                                ${{ number_format((float) $product->precio, 2) }}
-                            </span>
-                        </div>
-                    </div>
+        <div class="flex justify-between gap-3 text-base font-bold">
+            <span>Total</span>
+            <span
+                id="total-price"
+                class="text-pink-600"
+                data-value="{{ (float) $product->precio }}"
+            >
+                ${{ number_format((float) $product->precio, 2) }}
+            </span>
+        </div>
+    </div>
 
-                    <button
-                        id="btn-add-cart"
-                        type="submit"
-                        class="w-full mt-5 bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition shadow-md"
-                    >
-                        Agregar al carrito
-                    </button>
-                </div>
+    <button
+        id="btn-add-cart"
+        type="submit"
+        class="w-full mt-5 bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition shadow-md"
+    >
+        Agregar al carrito
+    </button>
+</div>
 
                 {{-- EXTRAS --}}
                 @if(isset($extras) && $extras->count())
@@ -190,14 +211,14 @@
             </div>
 
             {{-- CANVAS CENTRAL --}}
-            <div class="lg:col-span-6 flex justify-center">
-                <div class="w-full max-w-[520px]">
+            <div class="min-w-0 flex justify-center">
+                <div class="w-full max-w-[560px]">
                     @include('client.customization.partials.canvas', ['product' => $product])
                 </div>
             </div>
 
             {{-- PANEL DERECHO --}}
-            <div class="lg:col-span-3 space-y-6">
+            <div class="min-w-0 space-y-6">
 
                 {{-- DEDICATORIA --}}
                 @if(isset($dedicatoriaField) && $dedicatoriaField)
@@ -222,13 +243,13 @@
                             data-max-words="20"
                         >{{ old('dedicatoria') }}</textarea>
 
-                    <button
-                    type="button"
-                    id="restore-card-btn"
-                    class="hidden mt-3 w-full rounded-xl border border-pink-200 px-3 py-2 text-sm text-pink-600 hover:bg-pink-50"
-                      >
-                     Restaurar tarjeta de dedicatoria
-                    </button>
+                        <button
+                            type="button"
+                            id="restore-card-btn"
+                            class="hidden mt-3 w-full rounded-xl border border-pink-200 px-3 py-2 text-sm text-pink-600 hover:bg-pink-50"
+                        >
+                            Restaurar tarjeta de dedicatoria
+                        </button>
 
                         <div class="flex items-center justify-between mt-2">
                             <p class="text-xs text-gray-400">
@@ -300,9 +321,16 @@
                             accept="image/*"
                             class="w-full text-sm text-gray-600 file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-pink-600 file:text-white file:text-sm hover:file:bg-pink-700"
                         >
+              <button
+                    type="button"
+                    id="restore-photo-btn"
+                    class="hidden mt-2 w-full rounded-xl border border-pink-200 bg-pink-50 px-4 py-2 text-sm font-semibold text-pink-600 hover:bg-pink-100 transition"
+                    >
+                    Agregar foto nuevamente
+              </button>
 
                         <p class="text-xs text-gray-400 mt-2">
-                            Sube una imagen clara para verla en la vista previa.
+                            Sube una imagen clara para verla en la vista previa, medidas recomendadas 500 x 700px.
                             @if(!empty($product->photo_print_price) && (float)$product->photo_print_price > 0)
                                 Esta opción tiene un costo adicional de ${{ number_format((float) $product->photo_print_price, 2) }}.
                             @endif
@@ -421,12 +449,22 @@
         </div>
 
         <div class="p-5">
-          <div class="relative w-full max-w-[360px] aspect-[3/4] max-h-[60vh] mx-auto rounded-2xl bg-gray-100 overflow-hidden border border-pink-100">
+            <div
+    id="photo-adjust-stage"
+    class="relative w-full max-w-[360px] mx-auto rounded-2xl bg-gray-100 overflow-hidden border border-pink-100"
+    style="aspect-ratio: 1 / 1;"
+>
                 <div
-                    id="photo-adjust-window"
-                    class="absolute overflow-hidden"
-                    style="left: 20%; top: 7%; width: 60%; height: 64%; border-radius: 12px;"
-                >
+                id="photo-adjust-window"
+                class="absolute overflow-hidden"
+                style="
+                left: 18%;
+                top: 14%;
+                width: 64%;
+                height: 52%;
+                border-radius: 10px;
+                "
+            >
                     <img
                         id="photo-adjust-image"
                         alt="Ajuste de foto"
@@ -448,12 +486,11 @@
                 id="photo-zoom-range"
                 type="range"
                 min="0.65"
-                max="2.2"
+                max="5"
                 step="0.01"
                 value="1"
                 class="w-full mt-4"
             >
-
             <button
                 type="button"
                 id="save-photo-adjust"
@@ -489,6 +526,8 @@
             const photoTotalEl = document.getElementById('photo-total');
             const totalPriceEl = document.getElementById('total-price');
             const customTotalEl = document.getElementById('custom-total');
+
+            const restorePhotoBtn = document.getElementById('restore-photo-btn');
 
             const inputFoto = document.getElementById('input-foto');
             const inputDedicatoria = document.getElementById('input-dedicatoria');
@@ -632,7 +671,19 @@
                 });
             });
 
-            inputFoto?.addEventListener('change', calculateTotals);
+            inputFoto?.addEventListener('change', () => {
+          // Oculta el botón de restaurar si ya hay foto
+           if (inputFoto.files && inputFoto.files.length > 0) {
+        restorePhotoBtn?.classList.add('hidden');
+         }
+
+         calculateTotals();
+        });
+
+        restorePhotoBtn?.addEventListener('click', () => {
+        inputFoto?.click();
+        });
+
             inputDedicatoria?.addEventListener('input', updateDedicatoriaCounter);
             inputDestinatario?.addEventListener('input', updateDestinatarioCounter);
 

@@ -269,6 +269,9 @@
         <option value="round_top" {{ old('plantilla_preview') == 'round_top' ? 'selected' : '' }}>
             Foto arriba + extras alrededor
         </option>
+        <option value="photo_top_extras_top" {{ old('plantilla_preview') == 'photo_top_extras_top' ? 'selected' : '' }}>
+            Foto arriba + extras arriba
+        </option>
         <option value="teddy_center" {{ old('plantilla_preview') == 'teddy_center' ? 'selected' : '' }}>
             Foto lateral + extras sin cubrir peluche
         </option>

@@ -11,7 +11,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const photoGuideZone = document.getElementById('photo-guide-zone');
 
     const config = window.productConfig || {};
-    const zones = config.zones || {};
+
+    let zones = {};
+
+    try {
+        zones = JSON.parse(designArea?.dataset.zones || '{}');
+
+        if (typeof zones === 'string') {
+            zones = JSON.parse(zones);
+        }
+    } catch (error) {
+        console.error('Error leyendo customization_zones:', error);
+        zones = config.zones || {};
+    }
+
+    if (!zones || Object.keys(zones).length === 0) {
+        zones = config.zones || {};
+    }
+
+    const productLayout = designArea?.dataset.layout || 'free_layout';
 
     const addButtons = document.querySelectorAll('.add-extra-btn');
     const colorButtons = document.querySelectorAll('.color-swatch');
@@ -20,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dedicatoriaInput = document.getElementById('input-dedicatoria');
     const destinatarioInput = document.getElementById('input-destinatario');
     const restoreCardBtn = document.getElementById('restore-card-btn');
+    const restorePhotoBtn = document.getElementById('restore-photo-btn');
 
     const extrasCount = document.getElementById('extras-count');
     const summaryMainText = document.getElementById('summary-main-text');
@@ -69,10 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
         (designArea && designArea.dataset.frameHorizontal) ||
         (editorWrapper && editorWrapper.dataset.frameHorizontal) ||
         frameVertical;
-
+    let selectedExtras = [];
     let selectedColor = '';
     const originalBaseImage = baseProductImage ? baseProductImage.getAttribute('src') : '';
-
+    const MAX_EXTRAS = 2;
     let cardZone = null;
     let cardWrapper = null;
     let cardEnabled = true;
@@ -172,10 +191,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateExtrasCount() {
-        if (extrasCount) {
-            extrasCount.textContent = itemsLayer.querySelectorAll('.design-item').length;
-        }
-    }
+    if (!extrasCount) return;
+
+    extrasCount.textContent = selectedExtras.length;
+}
 
     function updateCounters() {
         if (countFrase && fraseInput) {
@@ -241,43 +260,81 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateSummary() {
-        const mainText =
-            (fraseInput && fraseInput.value.trim()) ||
-            (destinatarioInput && destinatarioInput.value.trim()) ||
-            '—';
+    const mainText =
+        (fraseInput && fraseInput.value.trim()) ||
+        (destinatarioInput && destinatarioInput.value.trim()) ||
+        '—';
 
-        if (summaryMainText) {
-            summaryMainText.textContent = mainText;
-        }
-
-        if (summaryColor) {
-            summaryColor.textContent = selectedColor || 'Original';
-        }
-
-        if (selectedColorLabel) {
-            selectedColorLabel.textContent = selectedColor || 'Original';
-        }
-
-        if (saveFrase && fraseInput) {
-            saveFrase.value = fraseInput.value;
-        }
-
-        if (saveDedicatoria && dedicatoriaInput) {
-            saveDedicatoria.value = dedicatoriaInput.value;
-        }
-
-        if (saveDestinatario && destinatarioInput) {
-            saveDestinatario.value = destinatarioInput.value;
-        }
-
-        if (saveColor) {
-            saveColor.value = selectedColor;
-        }
-
-        if (saveDesignJson) {
-            saveDesignJson.value = JSON.stringify(exportDesignState());
-        }
+    if (summaryMainText) {
+        summaryMainText.textContent = mainText;
     }
+
+    if (summaryColor) {
+        summaryColor.textContent = selectedColor || 'Original';
+    }
+
+    if (selectedColorLabel) {
+        selectedColorLabel.textContent = selectedColor || 'Original';
+    }
+
+    if (saveFrase && fraseInput) {
+        saveFrase.value = fraseInput.value;
+    }
+
+    if (saveDedicatoria && dedicatoriaInput) {
+        saveDedicatoria.value = dedicatoriaInput.value;
+    }
+
+    if (saveDestinatario && destinatarioInput) {
+        saveDestinatario.value = destinatarioInput.value;
+    }
+
+    if (saveColor) {
+        saveColor.value = selectedColor;
+    }
+
+    if (saveDesignJson) {
+        saveDesignJson.value = JSON.stringify(exportDesignState());
+    }
+
+    updatePricesSummary();
+}
+    function updatePricesSummary() {
+    const summary = document.getElementById('purchase-summary');
+
+    if (!summary) return;
+
+    const basePrice = parseFloat(summary.dataset.basePrice || 0);
+    const photoPriceValue = parseFloat(summary.dataset.photoPrice || 0);
+
+    const hasPhoto = photoState && photoState.src;
+    const photoTotal = hasPhoto ? photoPriceValue : 0;
+
+    const extrasTotal = selectedExtras.reduce((sum, extra) => {
+        return sum + (parseFloat(extra.price) || 0);
+    }, 0);
+
+    const total = basePrice + photoTotal + extrasTotal;
+
+    const photoTotalEl = document.getElementById('photo-total');
+    const extrasTotalEl = document.getElementById('extras-total');
+    const totalPriceEl = document.getElementById('total-price');
+
+    if (photoTotalEl) {
+        photoTotalEl.textContent = `$${photoTotal.toFixed(2)}`;
+        photoTotalEl.dataset.value = photoTotal;
+    }
+
+    if (extrasTotalEl) {
+        extrasTotalEl.textContent = `$${extrasTotal.toFixed(2)}`;
+        extrasTotalEl.dataset.value = extrasTotal;
+    }
+
+    if (totalPriceEl) {
+        totalPriceEl.textContent = `$${total.toFixed(2)}`;
+        totalPriceEl.dataset.value = total;
+    }
+}
 
     function isOverlapping(el1, el2) {
         if (!el1 || !el2) return false;
@@ -294,26 +351,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getReservedElementsForExtras() {
-        return [
-            document.getElementById('photo-frame-wrapper'),
-            document.getElementById('card-zone'),
-            document.getElementById('preview-card-wrapper'),
-        ].filter(Boolean);
+    const reserved = [];
+
+    const cardWrapper = document.getElementById('preview-card-wrapper');
+    const photoWrapper = document.getElementById('preview-photo-wrapper');
+
+    if (cardWrapper && cardWrapper.offsetParent !== null) {
+        reserved.push(cardWrapper);
     }
 
+    if (photoWrapper && photoWrapper.offsetParent !== null) {
+        reserved.push(photoWrapper);
+    }
+
+    return reserved;
+}
     function overlapsReservedZones(element) {
         return getReservedElementsForExtras().some((reserved) => isOverlapping(element, reserved));
     }
 
     function clampToMetrics(left, top, elWidth, elHeight, metrics) {
-        const maxLeft = Math.max(metrics.left, metrics.left + metrics.width - elWidth);
-        const maxTop = Math.max(metrics.top, metrics.top + metrics.height - elHeight);
+    const maxLeft = Math.max(metrics.left, metrics.left + metrics.width - elWidth);
+    const maxTop = Math.max(metrics.top, metrics.top + metrics.height - elHeight);
 
-        return {
-            left: Math.max(metrics.left, Math.min(left, maxLeft)),
-            top: Math.max(metrics.top, Math.min(top, maxTop)),
-        };
-    }
+    return {
+        left: Math.max(metrics.left, Math.min(left, maxLeft)),
+        top: Math.max(metrics.top, Math.min(top, maxTop)),
+    };
+}
 
     function makeDraggableInMetrics(el, getMetrics, onMoveEnd = null) {
         let isDragging = false;
@@ -358,6 +423,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         el.addEventListener('mousedown', (e) => {
             if (e.target.closest('.remove-item')) return;
+            if (e.target.closest('.remove-photo')) return;
+            if (e.target.closest('.remove-card')) return;
 
             e.preventDefault();
             e.stopPropagation();
@@ -446,6 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+
     function renderExtrasZone() {
         const oldZone = document.getElementById('extras-zone');
         if (oldZone) oldZone.remove();
@@ -498,63 +566,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function makeCardDraggableInsideZone(el, zoneEl) {
-    let isDragging = false;
-    let offsetX = 0;
-    let offsetY = 0;
+        let isDragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
 
-    const onMouseMove = (e) => {
-        if (!isDragging) return;
+        const onMouseMove = (e) => {
+            if (!isDragging) return;
 
-        const zoneRect = zoneEl.getBoundingClientRect();
-        const elRect = el.getBoundingClientRect();
+            const zoneRect = zoneEl.getBoundingClientRect();
+            const elRect = el.getBoundingClientRect();
 
-        let left = e.clientX - zoneRect.left - offsetX;
-        let top = e.clientY - zoneRect.top - offsetY;
+            let left = e.clientX - zoneRect.left - offsetX;
+            let top = e.clientY - zoneRect.top - offsetY;
 
-        const maxLeft = Math.max(0, zoneEl.clientWidth - elRect.width);
-        const maxTop = Math.max(0, zoneEl.clientHeight - elRect.height);
+            const maxLeft = Math.max(0, zoneEl.clientWidth - elRect.width);
+            const maxTop = Math.max(0, zoneEl.clientHeight - elRect.height);
 
-        left = Math.max(0, Math.min(left, maxLeft));
-        top = Math.max(0, Math.min(top, maxTop));
+            left = Math.max(0, Math.min(left, maxLeft));
+            top = Math.max(0, Math.min(top, maxTop));
 
-        el.style.left = `${left}px`;
-        el.style.top = `${top}px`;
-    };
+            el.style.left = `${left}px`;
+            el.style.top = `${top}px`;
+        };
 
-    const onMouseUp = () => {
-        if (!isDragging) return;
+        const onMouseUp = () => {
+            if (!isDragging) return;
 
-        isDragging = false;
-        el.style.zIndex = el.dataset.baseZ || '35';
-        el.classList.remove('cursor-grabbing');
-        el.classList.add('cursor-grab');
+            isDragging = false;
+            el.style.zIndex = el.dataset.baseZ || '35';
+            el.classList.remove('cursor-grabbing');
+            el.classList.add('cursor-grab');
 
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
 
-        updateSummary();
-    };
+            updateSummary();
+        };
 
-    el.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.remove-card')) return;
+        el.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.remove-card')) return;
 
-        e.preventDefault();
-        e.stopPropagation();
+            e.preventDefault();
+            e.stopPropagation();
 
-        isDragging = true;
+            isDragging = true;
 
-        const rect = el.getBoundingClientRect();
-        offsetX = e.clientX - rect.left;
-        offsetY = e.clientY - rect.top;
+            const rect = el.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
 
-        el.style.zIndex = '80';
-        el.classList.remove('cursor-grab');
-        el.classList.add('cursor-grabbing');
+            el.style.zIndex = '80';
+            el.classList.remove('cursor-grab');
+            el.classList.add('cursor-grabbing');
 
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-    });
-}
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    }
 
     function renderCardTemplate() {
         if (!cardZone || !cardEnabled) return;
@@ -615,67 +683,68 @@ document.addEventListener('DOMContentLoaded', () => {
                         transform-origin: center center;
                     "
                 ></div>
-            </div>
 
-            <button
-    type="button"
-    class="remove-card absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center shadow pointer-events-auto"
-    aria-label="Quitar dedicatoria"
->
-    ×
-</button>
+                <button
+                    type="button"
+                    class="remove-card absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center shadow pointer-events-auto"
+                    aria-label="Quitar dedicatoria"
+                >
+                    ×
+                </button>
+            </div>
         `;
 
         cardZone.appendChild(cardWrapper);
         makeCardDraggableInsideZone(cardWrapper, cardZone);
         updateCardText();
+
         const removeCardBtn = cardWrapper.querySelector('.remove-card');
 
-if (removeCardBtn) {
-    removeCardBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+        if (removeCardBtn) {
+            removeCardBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
 
-        cardEnabled = false;
+                cardEnabled = false;
 
-        if (dedicatoriaInput) {
-            dedicatoriaInput.value = '';
+                if (dedicatoriaInput) {
+                    dedicatoriaInput.value = '';
+                }
+
+                if (saveDedicatoria) {
+                    saveDedicatoria.value = '';
+                }
+
+                cardWrapper.remove();
+                cardWrapper = null;
+
+                if (restoreCardBtn) {
+                    restoreCardBtn.classList.remove('hidden');
+                }
+
+                updateCounters();
+                updateEmptyState();
+                updateSummary();
+            });
         }
-
-        if (saveDedicatoria) {
-            saveDedicatoria.value = '';
-        }
-
-        cardWrapper.remove();
-        cardWrapper = null;
-
-        if (restoreCardBtn) {
-            restoreCardBtn.classList.remove('hidden');
-        }
-
-        updateCounters();
-        updateEmptyState();
-        updateSummary();
-    });
-}
     }
 
     function getPhotoFrameMetrics() {
         const configured = zoneToPx(zones.photo_zone);
 
-       if (configured) {
-    return {
-        left: configured.left + (configured.width * 0.04),
-        top: configured.top + (configured.height * 0.04),
-        width: configured.width * 1.15,
-        height: configured.height * 1.15,
-    };
-}
+        if (configured) {
+            return {
+                left: configured.left + (configured.width * 0.12),
+                top: configured.top - (configured.height * 0.10),
+                width: configured.width * 0.82,
+                height: configured.height * 0.70,
+            };
+        }
 
         if (photoGuideZone) {
             return {
                 left: photoGuideZone.offsetLeft - (photoGuideZone.offsetWidth * 0.06),
-                top: photoGuideZone.offsetTop - (photoGuideZone.offsetHeight * 0.10),
+                top: photoGuideZone.offsetTop - (photoGuideZone.offsetHeight * 0.20),
                 width: photoGuideZone.offsetWidth * 1.55,
                 height: photoGuideZone.offsetHeight * 1.70,
             };
@@ -686,11 +755,49 @@ if (removeCardBtn) {
 
         return {
             left: width * 0.60,
-            top: height * 0.03,
+            top: height * 0.01,
             width: width * 0.18,
             height: height * 0.36,
         };
     }
+
+    function isBalloonExtra(name = '') {
+    const nameLower = name.toLowerCase();
+
+    return (
+        nameLower.includes('globo') ||
+        nameLower.includes('balloon') ||
+        nameLower.includes('burbuja')
+    );
+}
+
+function getBalloonZoneMetrics() {
+    const configured = zoneToPx(zones.balloon_zone);
+
+    if (configured) {
+        return configured;
+    }
+
+    const base = getExtrasZoneMetrics();
+
+    return {
+        left: base.left,
+        top: base.top - 60,
+        width: base.width,
+        height: 110
+    };
+}
+function getNormalExtraZoneMetrics() {
+    return getExtrasZoneMetrics();
+}
+
+function getExtraZoneByName(name = '') {
+    if (isBalloonExtra(name)) {
+        return getBalloonZoneMetrics();
+    }
+
+    return getNormalExtraZoneMetrics();
+}
 
     function getPhotoMoveMetrics() {
         return expandMetrics(getPhotoFrameMetrics(), 0.08);
@@ -722,37 +829,36 @@ if (removeCardBtn) {
             : (frameVertical || frameHorizontal);
     }
 
-    function getPhotoInset() {
-    if (photoState.orientation === 'horizontal') {
+  function getPhotoInset() {
+    return {
+        top: '12%',
+        right: '13%',
+        bottom: '24%',
+        left: '13%',
+        radius: '6px',
+    };
+
+
         return {
-            top: '10%',
-            right: '22%',
-            bottom: '30%',
-            left: '22%',
-            radius: '10px',
+            top: '7%',
+            right: '14%',
+            bottom: '22%',
+            left: '14%',
+            radius: '8px',
         };
     }
 
-   return {
-    top: '6%',
-    right: '22%',
-    bottom: '20%',
-    left: '22%',
-    radius: '10px',
-    };
-}
-
     function getAdjustWindowByOrientation() {
-    const inset = getPhotoInset();
+        const inset = getPhotoInset();
 
-    return {
-        left: inset.left,
-        top: inset.top,
-        width: `calc(100% - ${inset.left} - ${inset.right})`,
-        height: `calc(100% - ${inset.top} - ${inset.bottom})`,
-        radius: inset.radius,
-    };
-}
+        return {
+            left: inset.left,
+            top: inset.top,
+            width: `calc(100% - ${inset.left} - ${inset.right})`,
+            height: `calc(100% - ${inset.top} - ${inset.bottom})`,
+            radius: inset.radius,
+        };
+    }
 
     function updateAdjustImageTransform() {
         if (!photoAdjustImage) return;
@@ -760,6 +866,23 @@ if (removeCardBtn) {
         photoAdjustImage.style.transform =
             `translate(calc(-50% + ${photoState.offsetX}px), calc(-50% + ${photoState.offsetY}px)) scale(${photoState.scale})`;
     }
+
+    function autoFitPhotoToFrame() {
+    if (!photoAdjustWindow || !photoAdjustImage) return;
+
+    photoState.scale = 1;
+    photoState.offsetX = 0;
+    photoState.offsetY = 0;
+
+    if (photoZoomRange) {
+        photoZoomRange.min = '1';
+        photoZoomRange.max = '4';
+        photoZoomRange.step = '0.01';
+        photoZoomRange.value = String(photoState.scale);
+    }
+
+    updateAdjustImageTransform();
+}
 
     function clampPhotoOffsets(container) {
         if (!container) return;
@@ -777,59 +900,66 @@ if (removeCardBtn) {
     }
 
     function syncAdjustStage() {
-    if (!photoAdjustWindow || !photoZoomRange) return;
+        if (!photoAdjustWindow || !photoZoomRange) return;
 
-    const frameWindow = getAdjustWindowByOrientation();
+        const frameWindow = getAdjustWindowByOrientation();
 
-    photoAdjustWindow.style.position = 'absolute';
-    photoAdjustWindow.style.left = frameWindow.left;
-    photoAdjustWindow.style.top = frameWindow.top;
-    photoAdjustWindow.style.width = frameWindow.width;
-    photoAdjustWindow.style.height = frameWindow.height;
-    photoAdjustWindow.style.borderRadius = frameWindow.radius;
-    photoAdjustWindow.style.overflow = 'hidden';
-    photoAdjustWindow.style.background = 'transparent';
-    photoAdjustWindow.style.zIndex = '5';
+        photoAdjustWindow.style.position = 'absolute';
+        photoAdjustWindow.style.left = frameWindow.left;
+        photoAdjustWindow.style.top = frameWindow.top;
+        photoAdjustWindow.style.width = frameWindow.width;
+        photoAdjustWindow.style.height = frameWindow.height;
+        photoAdjustWindow.style.borderRadius = frameWindow.radius;
+        photoAdjustWindow.style.overflow = 'hidden';
+        photoAdjustWindow.style.background = 'transparent';
+        photoAdjustWindow.style.zIndex = '5';
 
-    photoZoomRange.value = String(photoState.scale);
+        photoZoomRange.value = String(photoState.scale);
 
-    requestAnimationFrame(() => {
-        clampPhotoOffsets(photoAdjustWindow);
-        updateAdjustImageTransform();
-    });
-}
-
-   function openPhotoAdjustModal() {
-    if (!photoAdjustModal || !photoAdjustImage) return false;
-
-    photoAdjustImage.src = photoState.src || '';
-    photoAdjustImage.style.position = 'absolute';
-    photoAdjustImage.style.left = '50%';
-    photoAdjustImage.style.top = '50%';
-    photoAdjustImage.style.width = '100%';
-    photoAdjustImage.style.height = '100%';
-    photoAdjustImage.style.maxWidth = 'none';
-    photoAdjustImage.style.maxHeight = 'none';
-    photoAdjustImage.style.objectFit = 'cover';
-    photoAdjustImage.style.transformOrigin = 'center center';
-    photoAdjustImage.style.cursor = 'grab';
-    photoAdjustImage.style.userSelect = 'none';
-    photoAdjustImage.style.webkitUserDrag = 'none';
-
-    if (photoAdjustFrame) {
-        photoAdjustFrame.src = getFrameSrc() || photoAdjustFrame.src;
-        photoAdjustFrame.style.pointerEvents = 'none';
+        requestAnimationFrame(() => {
+            clampPhotoOffsets(photoAdjustWindow);
+            updateAdjustImageTransform();
+        });
     }
 
-    photoAdjustModal.classList.remove('hidden');
-    photoAdjustModal.classList.add('flex');
+    function openPhotoAdjustModal() {
+        if (!photoAdjustModal || !photoAdjustImage) return false;
 
-    requestAnimationFrame(() => {
-        syncAdjustStage();
-    });
+        photoAdjustImage.src = photoState.src || '';
+        photoAdjustImage.style.position = 'absolute';
+        photoAdjustImage.style.left = '50%';
+        photoAdjustImage.style.top = '50%';
+        photoAdjustImage.style.width = 'auto';
+        photoAdjustImage.style.height = 'auto';
+        photoAdjustImage.style.maxWidth = '100%';
+        photoAdjustImage.style.maxHeight = '100%';
+        photoAdjustImage.style.objectFit = 'cover';
+        photoAdjustImage.style.transformOrigin = 'center center';
+        photoAdjustImage.style.cursor = 'grab';
+        photoAdjustImage.style.userSelect = 'none';
+        photoAdjustImage.style.webkitUserDrag = 'none';
 
-    return true;
-}
+        if (photoAdjustFrame) {
+            photoAdjustFrame.src = getFrameSrc() || photoAdjustFrame.src;
+            photoAdjustFrame.style.pointerEvents = 'none';
+        }
+
+        photoAdjustModal.classList.remove('hidden');
+        photoAdjustModal.classList.add('flex');
+
+        requestAnimationFrame(() => {
+            syncAdjustStage();
+
+            setTimeout(() => {
+                autoFitPhotoToFrame();
+                clampPhotoOffsets(photoAdjustWindow);
+                updateAdjustImageTransform();
+            }, 120);
+        });
+
+        return true;
+    }
+
     function closeAdjustModal() {
         if (!photoAdjustModal) return;
 
@@ -879,6 +1009,34 @@ if (removeCardBtn) {
             isDragging = false;
             img.style.cursor = 'grab';
         });
+    }
+
+    function removeCustomerPhoto() {
+        const oldPhoto = document.getElementById('photo-frame-wrapper');
+        if (oldPhoto) oldPhoto.remove();
+
+        if (photoInput) {
+            photoInput.value = '';
+        }
+
+        if (photoState.objectUrl) {
+            URL.revokeObjectURL(photoState.objectUrl);
+        }
+
+        photoState.src = '';
+        photoState.objectUrl = null;
+        photoState.offsetX = 0;
+        photoState.offsetY = 0;
+        photoState.scale = 1;
+        photoState.frameLeft = null;
+        photoState.frameTop = null;
+
+        if (restorePhotoBtn) {
+            restorePhotoBtn.classList.remove('hidden');
+        }
+
+        updateEmptyState();
+        updateSummary();
     }
 
     function renderPhotoFrame() {
@@ -947,6 +1105,7 @@ if (removeCardBtn) {
                         "
                     >
                 </div>
+
                 ${frameSrc ? `
                     <img
                         src="${frameSrc}"
@@ -955,10 +1114,28 @@ if (removeCardBtn) {
                         draggable="false"
                     >
                 ` : ''}
+
+                <button
+                    type="button"
+                    class="remove-photo absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white text-pink-600 border border-pink-200 shadow-md text-sm font-bold flex items-center justify-center z-50 pointer-events-auto hover:bg-pink-50"
+                    aria-label="Quitar foto"
+                >
+                    ×
+                </button>
             </div>
         `;
 
         photoLayer.appendChild(wrapper);
+
+        const removePhotoBtn = wrapper.querySelector('.remove-photo');
+
+        if (removePhotoBtn) {
+            removePhotoBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                removeCustomerPhoto();
+            });
+        }
 
         makeDraggableInMetrics(wrapper, getPhotoMoveMetrics, (el) => {
             photoState.frameLeft = parseFloat(el.style.left || '0');
@@ -978,106 +1155,60 @@ if (removeCardBtn) {
         updateSummary();
     }
 
-    function detectImageInfo(file) {
-    return new Promise((resolve) => {
-        const tempUrl = URL.createObjectURL(file);
-        const img = new Image();
+    function detectImageOrientation(file) {
+        return new Promise((resolve) => {
+            const tempUrl = URL.createObjectURL(file);
+            const img = new Image();
 
-        img.onload = () => {
-            const orientation = img.width >= img.height ? 'horizontal' : 'vertical';
+            img.onload = () => {
+                const orientation = img.width >= img.height ? 'horizontal' : 'vertical';
+                URL.revokeObjectURL(tempUrl);
+                resolve(orientation);
+            };
 
-            resolve({
-                orientation,
-                width: img.width,
-                height: img.height,
-            });
+            img.onerror = () => {
+                URL.revokeObjectURL(tempUrl);
+                resolve('vertical');
+            };
 
-            URL.revokeObjectURL(tempUrl);
-        };
+            img.src = tempUrl;
+        });
+    }
 
-        img.onerror = () => {
-            URL.revokeObjectURL(tempUrl);
+    async function handlePhotoChange(file) {
+        if (!file || !photoLayer) return;
 
-            resolve({
-                orientation: 'vertical',
-                width: 1,
-                height: 1,
-            });
-        };
+        if (photoState.objectUrl) {
+            URL.revokeObjectURL(photoState.objectUrl);
+            photoState.objectUrl = null;
+        }
 
-        img.src = tempUrl;
-    });
-}
-
-        function handlePhotoChange(file) {
-    return new Promise(async (resolve) => {
-
-        const imageInfo = await detectImageInfo(file);
+        const orientation = await detectImageOrientation(file);
         const objectUrl = URL.createObjectURL(file);
 
         photoState.src = objectUrl;
         photoState.objectUrl = objectUrl;
-        photoState.orientation = imageInfo.orientation;
-
+        photoState.orientation = orientation;
         photoState.offsetX = 0;
         photoState.offsetY = 0;
+        photoState.scale = 1;
 
-        // 🔥 AUTO-FIT REAL
-        photoState.scale = 4;
+        const metrics = getPhotoFrameMetrics();
+        photoState.frameLeft = metrics.left;
+        photoState.frameTop = metrics.top;
+
+        if (restorePhotoBtn) {
+            restorePhotoBtn.classList.add('hidden');
+        }
 
         const modalOpened = openPhotoAdjustModal();
 
-        if (modalOpened) {
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-
-                    const autoScale = calculatePhotoAutoFitScale(
-                        imageInfo.width,
-                        imageInfo.height
-                    );
-
-                    photoState.scale = Math.max(autoScale, 3);
-
-                    if (photoZoomRange) {
-                        photoZoomRange.value = String(photoState.scale);
-                    }
-
-                    clampPhotoOffsets(photoAdjustWindow);
-                    updateAdjustImageTransform();
-                });
-            });
-        } else {
+        if (!modalOpened) {
             renderPhotoFrame();
         }
 
-        resolve();
-    });
-}
-
-       function calculatePhotoAutoFitScale(imageWidth, imageHeight) {
-    if (!photoAdjustWindow) return 3;
-
-    const containerRect = photoAdjustWindow.getBoundingClientRect();
-
-    if (!containerRect.width || !containerRect.height) {
-        return 3;
+        updateSummary();
     }
-
-    const imageRatio = imageWidth / imageHeight;
-    const containerRatio = containerRect.width / containerRect.height;
-
-    let scale;
-
-    if (imageRatio > containerRatio) {
-        scale = (containerRect.height / containerRect.width) * imageRatio;
-    } else {
-        scale = (containerRect.width / containerRect.height) / imageRatio;
-    }
-
-    // 🔥 MÁS AGRESIVO para llenar el marco
-    return Math.max(3, Math.min(scale * 2.2, 6));
-}
-
 
     function renderTexts() {
         const fraseEl = createTextElement(
@@ -1114,118 +1245,155 @@ if (removeCardBtn) {
     }
 
     function getDefaultSize(name) {
-        const value = (name || '').toLowerCase();
+    const nameLower = name.toLowerCase();
 
-        if (value.includes('globo')) {
-            return { width: 115, height: 115 };
-        }
-
-        if (value.includes('peluche')) {
-            return { width: 120, height: 120 };
-        }
-
-        if (value.includes('chocolate')) {
-            return { width: 105, height: 105 };
-        }
-
-        if (value.includes('foto')) {
-            return { width: 110, height: 110 };
-        }
-
-        return { width: 110, height: 110 };
+    if (
+        nameLower.includes('globo') ||
+        nameLower.includes('balloon') ||
+        nameLower.includes('burbuja')
+    ) {
+        return { width: 150, height: 150 };
     }
 
-    function getInitialExtraPosition(width, height) {
-        const metrics = getExtrasZoneMetrics();
-
-        const left = metrics.left + Math.max(0, (metrics.width - width) / 2);
-        const top = metrics.top + Math.max(0, (metrics.height - height) / 2);
-
-        return clampToMetrics(left, top, width, height, metrics);
+    if (
+        nameLower.includes('peluche') ||
+        nameLower.includes('oso') ||
+        nameLower.includes('teddy')
+    ) {
+        return { width: 130, height: 130 };
     }
+
+    if (
+        nameLower.includes('chocolate') ||
+        nameLower.includes('dulce')
+    ) {
+        return { width: 105, height: 105 };
+    }
+
+    return { width: 110, height: 110 };
+}
+
+   function getInitialExtraPosition(width, height, name = '') {
+    const zone = getExtraZoneByName(name);
+
+    return {
+        left: zone.left + (zone.width / 2) - (width / 2),
+        top: zone.top + (zone.height / 2) - (height / 2)
+    };
+}
 
     function addExtra(btn) {
-        const image = btn.dataset.extraImage || '';
-        const name = btn.dataset.extraName || 'Extra';
-        const extraId = btn.dataset.extraId || '';
+    const image = btn.dataset.extraImage || '';
+    const name = btn.dataset.extraName || 'Extra';
+    const extraId = btn.dataset.extraId || '';
 
-        if (!image) return;
+    if (!image) return;
 
-        const existing = itemsLayer.querySelector(`.design-item[data-extra-id="${extraId}"]`);
-        if (existing) return;
+    const currentExtras = itemsLayer.querySelectorAll('.design-item').length;
 
-        const size = getDefaultSize(name);
-        const initial = getInitialExtraPosition(size.width, size.height);
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'design-item absolute select-none cursor-grab group';
-        wrapper.dataset.extraId = extraId;
-        wrapper.dataset.extraName = name;
-        wrapper.dataset.baseZ = '20';
-        wrapper.dataset.lastValidLeft = `${initial.left}px`;
-        wrapper.dataset.lastValidTop = `${initial.top}px`;
-        wrapper.style.left = `${initial.left}px`;
-        wrapper.style.top = `${initial.top}px`;
-        wrapper.style.width = `${size.width}px`;
-        wrapper.style.height = `${size.height}px`;
-        wrapper.style.zIndex = '20';
-        wrapper.style.pointerEvents = 'auto';
-
-        wrapper.innerHTML = `
-            <div class="relative w-full h-full">
-                <img
-                    src="${image}"
-                    alt="${name}"
-                    class="w-full h-full object-contain pointer-events-none select-none"
-                    draggable="false"
-                >
-                <button
-                    type="button"
-                    class="remove-item absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs hidden group-hover:flex items-center justify-center shadow pointer-events-auto"
-                    aria-label="Eliminar"
-                >
-                    ×
-                </button>
-            </div>
-        `;
-
-        itemsLayer.appendChild(wrapper);
-
-        if (overlapsReservedZones(wrapper)) {
-            const metrics = getExtrasZoneMetrics();
-            wrapper.style.left = `${metrics.left}px`;
-            wrapper.style.top = `${metrics.top}px`;
-            wrapper.dataset.lastValidLeft = wrapper.style.left;
-            wrapper.dataset.lastValidTop = wrapper.style.top;
-        }
-
-        makeDraggableInMetrics(wrapper, getExtrasZoneMetrics, (el) => {
-            if (overlapsReservedZones(el)) {
-                el.style.left = el.dataset.lastValidLeft || el.style.left;
-                el.style.top = el.dataset.lastValidTop || el.style.top;
-                return;
-            }
-
-            el.dataset.lastValidLeft = el.style.left;
-            el.dataset.lastValidTop = el.style.top;
-        });
-
-        const removeBtn = wrapper.querySelector('.remove-item');
-        if (removeBtn) {
-            removeBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                wrapper.remove();
-                updateExtrasCount();
-                updateEmptyState();
-                updateSummary();
-            });
-        }
-
-        updateExtrasCount();
-        updateEmptyState();
-        updateSummary();
+    if (currentExtras >= MAX_EXTRAS) {
+    alert(`Solo puedes agregar máximo ${MAX_EXTRAS} productos extras para no recargar el diseño.`);
+    return;
     }
+
+    const existing = itemsLayer.querySelector(`.design-item[data-extra-id="${extraId}"]`);
+    if (existing) return;
+
+    const size = getDefaultSize(name);
+    const initial = getInitialExtraPosition(size.width, size.height, name);
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'design-item absolute select-none cursor-grab group overflow-visible';
+    wrapper.dataset.extraId = extraId;
+    wrapper.dataset.extraName = name;
+    wrapper.dataset.baseZ = '20';
+    wrapper.dataset.lastValidLeft = `${initial.left}px`;
+    wrapper.dataset.lastValidTop = `${initial.top}px`;
+
+    wrapper.style.left = `${initial.left}px`;
+    wrapper.style.top = `${initial.top}px`;
+    wrapper.style.width = `${size.width}px`;
+    wrapper.style.height = `${size.height}px`;
+    wrapper.style.zIndex = '20';
+    wrapper.style.pointerEvents = 'auto';
+
+    wrapper.innerHTML = `
+        <div class="relative w-full h-full">
+            <img
+                src="${image}"
+                alt="${name}"
+                class="w-full h-full object-contain pointer-events-none select-none"
+                draggable="false"
+            >
+            <button
+                type="button"
+                class="remove-item absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs hidden group-hover:flex items-center justify-center shadow pointer-events-auto z-50"
+                aria-label="Eliminar"
+            >
+                ×
+            </button>
+        </div>
+    `;
+
+    itemsLayer.appendChild(wrapper);
+
+    selectedExtras.push({
+        id: extraId,
+        name: name,
+        price: parseFloat(btn.dataset.extraPrice || 0),
+    });
+
+    if (overlapsReservedZones(wrapper)) {
+        const metrics = getExtraZoneByName(name);
+
+        wrapper.style.left = `${metrics.left + 10}px`;
+        wrapper.style.top = `${metrics.top + (metrics.height / 2) - (size.height / 2)}px`;
+
+        wrapper.dataset.lastValidLeft = wrapper.style.left;
+        wrapper.dataset.lastValidTop = wrapper.style.top;
+    }
+
+    makeDraggableInMetrics(wrapper, () => getExtraZoneByName(name), (el) => {
+        if (overlapsReservedZones(el)) {
+            el.style.left = el.dataset.lastValidLeft || el.style.left;
+            el.style.top = el.dataset.lastValidTop || el.style.top;
+            return;
+        }
+
+        el.dataset.lastValidLeft = el.style.left;
+        el.dataset.lastValidTop = el.style.top;
+    });
+
+    const removeBtn = wrapper.querySelector('.remove-item');
+
+    if (removeBtn) {
+        removeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            wrapper.remove();
+
+            selectedExtras = selectedExtras.filter((extra) => {
+                return String(extra.id) !== String(extraId);
+            });
+
+            const panelBtn = document.querySelector(
+    `.add-extra-btn[data-extra-id="${extraId}"]`
+);
+
+if (panelBtn) {
+    panelBtn.textContent = 'Agregar';
+}
+            updateExtrasCount();
+            updateEmptyState();
+            updateSummary();
+        });
+    }
+
+    updateExtrasCount();
+    updateEmptyState();
+    updateSummary();
+}
 
     function applyColor(color, imageUrl = '') {
         selectedColor = color || '';
@@ -1253,6 +1421,9 @@ if (removeCardBtn) {
 
         updateSummary();
     }
+
+
+
 
     function rebuildCardArea() {
         renderCardZone();
@@ -1285,15 +1456,39 @@ if (removeCardBtn) {
         });
     }
 
-    addButtons.forEach((btn) => {
-        btn.addEventListener('click', () => {
-            const alreadyInCanvas = itemsLayer.querySelector(`.design-item[data-extra-id="${btn.dataset.extraId || ''}"]`);
+   addButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
 
-            if (!alreadyInCanvas) {
-                addExtra(btn);
-            }
-        });
+        const extraId = btn.dataset.extraId || '';
+
+        const alreadyInCanvas = itemsLayer.querySelector(
+            `.design-item[data-extra-id="${extraId}"]`
+        );
+
+        if (alreadyInCanvas) {
+
+            alreadyInCanvas.remove();
+
+            selectedExtras = selectedExtras.filter((extra) => {
+                return String(extra.id) !== String(extraId);
+            });
+
+            btn.textContent = 'Agregar';
+
+            updateExtrasCount();
+            updateEmptyState();
+            updateSummary();
+
+            return;
+        }
+
+        addExtra(btn);
+
+        btn.textContent = 'Quitar';
+
+        updateSummary();
     });
+});
 
     colorButtons.forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -1308,6 +1503,14 @@ if (removeCardBtn) {
             const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
             if (!file) return;
             await handlePhotoChange(file);
+        });
+    }
+
+    if (restorePhotoBtn && photoInput) {
+        restorePhotoBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            photoInput.click();
         });
     }
 
@@ -1352,7 +1555,7 @@ if (removeCardBtn) {
 
     if (photoZoomRange) {
         photoZoomRange.min = '1';
-        photoZoomRange.max = '5';
+        photoZoomRange.max = '6';
         photoZoomRange.step = '0.01';
 
         photoZoomRange.addEventListener('input', () => {
@@ -1383,29 +1586,47 @@ if (removeCardBtn) {
             updateSummary();
         });
     }
+
     if (restoreCardBtn) {
-    restoreCardBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+        restoreCardBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
 
-        cardEnabled = true;
+            cardEnabled = true;
 
-        const oldZone = document.getElementById('card-zone');
-        if (oldZone) oldZone.remove();
+            const oldZone = document.getElementById('card-zone');
+            if (oldZone) oldZone.remove();
+
+            renderCardZone();
+            renderCardTemplate();
+            updateCardText();
+
+            restoreCardBtn.classList.add('hidden');
+
+            updateCounters();
+            updateEmptyState();
+            updateSummary();
+        });
+    }
+
+    window.addEventListener('resize', () => {
+        renderExtrasZone();
 
         renderCardZone();
-        renderCardTemplate();
-        updateCardText();
 
-        restoreCardBtn.classList.add('hidden');
+        if (cardEnabled) {
+            renderCardTemplate();
+            updateCardText();
+        }
 
-        updateCounters();
-        updateEmptyState();
-        updateSummary();
+        rebuildPhotoArea();
+        rebuildExtrasArea();
+
+        if (photoAdjustModal && !photoAdjustModal.classList.contains('hidden')) {
+            syncAdjustStage();
+        }
     });
-}
 
-   window.addEventListener('resize', () => {
     renderExtrasZone();
 
     renderCardZone();
@@ -1416,25 +1637,8 @@ if (removeCardBtn) {
     }
 
     rebuildPhotoArea();
-    rebuildExtrasArea();
-
-    if (photoAdjustModal && !photoAdjustModal.classList.contains('hidden')) {
-        syncAdjustStage();
-    }
-});
-
-renderExtrasZone();
-
-renderCardZone();
-
-if (cardEnabled) {
-    renderCardTemplate();
-    updateCardText();
-}
-
-rebuildPhotoArea();
-renderTexts();
-updateExtrasCount();
-updateEmptyState();
-updateSummary();
+    renderTexts();
+    updateExtrasCount();
+    updateEmptyState();
+    updateSummary();
 });

@@ -33,9 +33,9 @@
         <label class="text-xs font-semibold text-gray-600">Estado</label>
         <select name="estado"
                 class="mt-1 w-full rounded-xl border border-pink-200 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-pink-300">
-          <option value="activos" @selected(request('estado', 'activos') === 'activos')>Activos</option>
+          <option value="todos" @selected(request('estado', 'todos') === 'todos')>Todos</option>
+          <option value="activos" @selected(request('estado') === 'activos')>Activos</option>
           <option value="borrador" @selected(request('estado') === 'borrador')>Inactivos</option>
-          <option value="todos" @selected(request('estado') === 'todos')>Todos</option>
         </select>
       </div>
 
@@ -95,6 +95,7 @@
       <table class="min-w-full">
         <thead class="bg-white">
           <tr class="text-left text-sm text-gray-600">
+            <th class="p-4 font-semibold">Imagen</th>
             <th class="p-4 font-semibold">Nombre</th>
             <th class="p-4 font-semibold">SKU</th>
             <th class="p-4 font-semibold">Precio</th>
@@ -106,11 +107,40 @@
 
         <tbody class="divide-y divide-pink-100">
           @forelse($products as $product)
+           @php
+            $image = $product->imagen_principal;
+            $imageUrl = null;
+
+            if ($image) {
+             if (str_starts_with($image, 'storage/')) {
+            $imageUrl = asset($image);
+            } elseif (str_starts_with($image, 'products/')) {
+            $imageUrl = asset('storage/' . $image);
+            } elseif (str_starts_with($image, 'assets/')) {
+            $imageUrl = asset($image);
+         }
+    }
+
+    if (!$imageUrl) {
+        $imageUrl = asset('assets/images/producto_001.jpg');
+    }
+@endphp
+
             <tr class="hover:bg-pink-50/50">
-              <td class="p-4 font-medium text-gray-800">{{ $product->nombre }}</td>
+              <td class="p-4">
+                <img src="{{ $imageUrl }}"
+                alt="{{ $product->nombre }}"
+                class="w-16 h-16 object-cover rounded-xl border border-pink-100 bg-white">
+              </td>
+
+              <td class="p-4 font-medium text-gray-800">
+                {{ $product->nombre }}
+              </td>
+
               <td class="p-4 text-gray-700">{{ $product->sku ?? '—' }}</td>
               <td class="p-4 text-gray-700">${{ number_format((float) $product->precio, 2) }}</td>
               <td class="p-4 text-gray-700">{{ $product->stock }}</td>
+
               <td class="p-4">
                 @if($product->activo)
                   <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
@@ -156,7 +186,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="6" class="p-6 text-gray-600">
+              <td colspan="7" class="p-6 text-gray-600">
                 No hay productos con esos filtros.
               </td>
             </tr>

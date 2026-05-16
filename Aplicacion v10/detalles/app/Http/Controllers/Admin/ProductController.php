@@ -71,99 +71,94 @@ class ProductController extends Controller
     |--------------------------------------------------------------------------
     */
     public function store(Request $request)
-{
-    $data = $request->validate([
-        'nombre'             => 'required|string|max:255',
-        'descripcion_corta'  => 'nullable|string|max:255',
-        'precio'             => 'required|numeric|min:0',
-        'photo_print_price'  => 'nullable|numeric|min:0',
-        'stock'              => 'required|integer|min:0',
-        'tipo_producto'      => 'required|integer|exists:categories,id',
-        'ocasion_especial'   => 'nullable|integer|exists:categories,id',
-        'activo'             => 'required|boolean',
-        'personalizable'     => 'required|boolean',
-        'tiene_variantes'    => 'nullable|boolean',
-        'tipo_arreglo'       => 'nullable|string|max:50',
-        'plantilla_preview'  => 'nullable|string|max:50',
-        'imagen_principal'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-    ]);
+    {
+        $data = $request->validate([
+            'nombre'             => 'required|string|max:255',
+            'descripcion_corta'  => 'nullable|string|max:255',
+            'precio'             => 'required|numeric|min:0',
+            'photo_print_price'  => 'nullable|numeric|min:0',
+            'stock'              => 'required|integer|min:0',
+            'tipo_producto'      => 'required|integer|exists:categories,id',
+            'ocasion_especial'   => 'nullable|integer|exists:categories,id',
+            'activo'             => 'required|boolean',
+            'personalizable'     => 'required|boolean',
+            'tiene_variantes'    => 'nullable|boolean',
+            'tipo_arreglo'       => 'nullable|string|max:50',
+            'plantilla_preview'  => 'nullable|string|max:50',
+            'imagen_principal'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
 
-    $mainCategory = Category::where('id', $data['tipo_producto'])
-        ->where('grupo', 'tipo_producto')
-        ->first();
-
-    if (!$mainCategory) {
-        return back()
-            ->withErrors(['tipo_producto' => 'Debe seleccionar una categoría válida.'])
-            ->withInput();
-    }
-
-    if (!empty($data['ocasion_especial'])) {
-        $ocasionCategory = Category::where('id', $data['ocasion_especial'])
-            ->where('grupo', 'ocasion_especial')
+        $mainCategory = Category::where('id', $data['tipo_producto'])
+            ->where('grupo', 'tipo_producto')
             ->first();
 
-        if (!$ocasionCategory) {
+        if (!$mainCategory) {
             return back()
-                ->withErrors(['ocasion_especial' => 'Debe seleccionar una ocasión válida.'])
+                ->withErrors(['tipo_producto' => 'Debe seleccionar una categoría válida.'])
                 ->withInput();
         }
-    }
 
-    $imagePath = null;
+        if (!empty($data['ocasion_especial'])) {
+            $ocasionCategory = Category::where('id', $data['ocasion_especial'])
+                ->where('grupo', 'ocasion_especial')
+                ->first();
 
-    if ($request->hasFile('imagen_principal')) {
-        $file = $request->file('imagen_principal');
-        $extension = strtolower($file->getClientOriginalExtension());
+            if (!$ocasionCategory) {
+                return back()
+                    ->withErrors(['ocasion_especial' => 'Debe seleccionar una ocasión válida.'])
+                    ->withInput();
+            }
+        }
 
-        $fileName = Str::slug($data['nombre']) . '-' . now()->format('YmdHis') . '.' . $extension;
+        $imagePath = null;
 
-        $imagePath = $file->storeAs('products', $fileName, 'public');
-    }
+        if ($request->hasFile('imagen_principal')) {
+            $imagePath = $request->file('imagen_principal')->store('products', 'public');
+        }
 
-    $sku = 'SD-' . strtoupper(Str::random(8));
-
-    while (Product::where('sku', $sku)->exists()) {
         $sku = 'SD-' . strtoupper(Str::random(8));
-    }
+        while (Product::where('sku', $sku)->exists()) {
+            $sku = 'SD-' . strtoupper(Str::random(8));
+        }
 
-    $product = Product::create([
-        'nombre'               => $data['nombre'],
-        'descripcion_corta'    => $data['descripcion_corta'] ?? null,
-        'precio'               => $data['precio'],
-        'photo_print_price'    => $data['photo_print_price'] ?? 0,
-        'stock'                => $data['stock'],
-        'sku'                  => $sku,
-        'category_id'          => $data['tipo_producto'],
-        'activo'               => $request->boolean('activo'),
-        'personalizable'       => $request->boolean('personalizable'),
-        'tiene_variantes'      => $request->boolean('tiene_variantes'),
-        'tipo_arreglo'         => $data['tipo_arreglo'] ?? null,
-        'plantilla_preview'    => $data['plantilla_preview'] ?? null,
-        'customization_zones'  => $this->getPreviewTemplate($data['plantilla_preview'] ?? null),
-        'slug'                 => $this->uniqueSlug($data['nombre']),
-        'fingreso'             => now()->toDateString(),
-        'imagen_principal'     => $imagePath,
-    ]);
+        $product = Product::create([
+            'nombre'               => $data['nombre'],
+            'descripcion_corta'    => $data['descripcion_corta'] ?? null,
+            'precio'               => $data['precio'],
+            'photo_print_price'    => $data['photo_print_price'] ?? 0,
+            'stock'                => $data['stock'],
+            'sku'                  => $sku,
+            'category_id'          => $data['tipo_producto'],
+            'activo'               => $request->boolean('activo'),
+            'personalizable'       => $request->boolean('personalizable'),
+            'tiene_variantes'      => $request->boolean('tiene_variantes'),
+            'tipo_arreglo'         => $data['tipo_arreglo'] ?? null,
+            'plantilla_preview'    => $data['plantilla_preview'] ?? null,
+            'customization_zones' => $this->getPreviewTemplate($data['plantilla_preview'] ?? null, $data['tipo_arreglo'] ?? null),
+            'slug'                 => $this->uniqueSlug($data['nombre']),
+            'fingreso'             => now()->toDateString(),
+            'imagen_principal'     => $imagePath,
+        ]);
 
-    $pivotIds = [];
+        $pivotIds = [];
 
-    if (!empty($data['ocasion_especial'])) {
-        $pivotIds[] = $data['ocasion_especial'];
-    }
+        if (!empty($data['ocasion_especial'])) {
+            $pivotIds[] = $data['ocasion_especial'];
+        }
 
-    $product->categories()->sync($pivotIds);
+        $product->categories()->sync($pivotIds);
 
-    if ($product->tiene_variantes) {
+        if ($product->tiene_variantes) {
+            return redirect()
+                ->route('admin.products.colors.index', $product->id)
+                ->with('success', 'Producto creado correctamente. Ahora agrega los colores disponibles.');
+        }
+
         return redirect()
-            ->route('admin.products.colors.index', $product->id)
-            ->with('success', 'Producto creado correctamente. Ahora agrega los colores disponibles.');
+            ->route('admin.products.index')
+            ->with('success', 'Producto creado correctamente');
     }
 
-    return redirect()
-        ->route('admin.products.index')
-        ->with('success', 'Producto creado correctamente');
-}
     /*
     |--------------------------------------------------------------------------
     | EDIT
@@ -204,94 +199,87 @@ class ProductController extends Controller
     |--------------------------------------------------------------------------
     */
     public function update(Request $request, Product $product)
-{
-    $data = $request->validate([
-        'nombre'             => 'required|string|max:255',
-        'descripcion_corta'  => 'nullable|string|max:255',
-        'precio'             => 'required|numeric|min:0',
-        'photo_print_price'  => 'nullable|numeric|min:0',
-        'stock'              => 'required|integer|min:0',
-        'tipo_producto'      => 'required|integer|exists:categories,id',
-        'ocasion_especial'   => 'nullable|integer|exists:categories,id',
-        'activo'             => 'required|boolean',
-        'personalizable'     => 'required|boolean',
-        'tiene_variantes'    => 'nullable|boolean',
-        'tipo_arreglo'       => 'nullable|string|max:50',
-        'plantilla_preview'  => 'nullable|string|max:50',
-        'imagen_principal'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-    ]);
+    {
+        $data = $request->validate([
+            'nombre'             => 'required|string|max:255',
+            'descripcion_corta'  => 'nullable|string|max:255',
+            'precio'             => 'required|numeric|min:0',
+            'photo_print_price'  => 'nullable|numeric|min:0',
+            'stock'              => 'required|integer|min:0',
+            'tipo_producto'      => 'required|integer|exists:categories,id',
+            'ocasion_especial'   => 'nullable|integer|exists:categories,id',
+            'activo'             => 'required|boolean',
+            'personalizable'     => 'required|boolean',
+            'tiene_variantes'    => 'nullable|boolean',
+            'tipo_arreglo'       => 'nullable|string|max:50',
+            'plantilla_preview'  => 'nullable|string|max:50',
+            'imagen_principal'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
 
-    $mainCategory = Category::where('id', $data['tipo_producto'])
-        ->where('grupo', 'tipo_producto')
-        ->first();
-
-    if (!$mainCategory) {
-        return back()
-            ->withErrors(['tipo_producto' => 'Debe seleccionar una categoría válida.'])
-            ->withInput();
-    }
-
-    if (!empty($data['ocasion_especial'])) {
-        $ocasionCategory = Category::where('id', $data['ocasion_especial'])
-            ->where('grupo', 'ocasion_especial')
+        $mainCategory = Category::where('id', $data['tipo_producto'])
+            ->where('grupo', 'tipo_producto')
             ->first();
 
-        if (!$ocasionCategory) {
+        if (!$mainCategory) {
             return back()
-                ->withErrors(['ocasion_especial' => 'Debe seleccionar una ocasión válida.'])
+                ->withErrors(['tipo_producto' => 'Debe seleccionar una categoría válida.'])
                 ->withInput();
         }
-    }
 
-    $updateData = [
-        'nombre'               => $data['nombre'],
-        'descripcion_corta'    => $data['descripcion_corta'] ?? null,
-        'precio'               => $data['precio'],
-        'photo_print_price'    => $data['photo_print_price'] ?? 0,
-        'stock'                => $data['stock'],
-        'category_id'          => $data['tipo_producto'],
-        'activo'               => $request->boolean('activo'),
-        'personalizable'       => $request->boolean('personalizable'),
-        'tiene_variantes'      => $request->boolean('tiene_variantes'),
-        'tipo_arreglo'         => $data['tipo_arreglo'] ?? null,
-        'plantilla_preview'    => $data['plantilla_preview'] ?? null,
-        'customization_zones'  => $this->getPreviewTemplate($data['plantilla_preview'] ?? null),
-    ];
+        if (!empty($data['ocasion_especial'])) {
+            $ocasionCategory = Category::where('id', $data['ocasion_especial'])
+                ->where('grupo', 'ocasion_especial')
+                ->first();
 
-    if ($product->nombre !== $data['nombre']) {
-        $updateData['slug'] = $this->uniqueSlug($data['nombre'], $product->id);
-    }
-
-    if ($request->hasFile('imagen_principal')) {
-        if (
-            !empty($product->imagen_principal) &&
-            Storage::disk('public')->exists($product->imagen_principal)
-        ) {
-            Storage::disk('public')->delete($product->imagen_principal);
+            if (!$ocasionCategory) {
+                return back()
+                    ->withErrors(['ocasion_especial' => 'Debe seleccionar una ocasión válida.'])
+                    ->withInput();
+            }
         }
 
-        $file = $request->file('imagen_principal');
-        $extension = strtolower($file->getClientOriginalExtension());
+        $updateData = [
+            'nombre'               => $data['nombre'],
+            'descripcion_corta'    => $data['descripcion_corta'] ?? null,
+            'precio'               => $data['precio'],
+            'photo_print_price'    => $data['photo_print_price'] ?? 0,
+            'stock'                => $data['stock'],
+            'category_id'          => $data['tipo_producto'],
+            'activo'               => $request->boolean('activo'),
+            'personalizable'       => $request->boolean('personalizable'),
+            'tiene_variantes'      => $request->boolean('tiene_variantes'),
+            'tipo_arreglo'         => $data['tipo_arreglo'] ?? null,
+            'plantilla_preview'    => $data['plantilla_preview'] ?? null,
+            'customization_zones' => $this->getPreviewTemplate($data['plantilla_preview'] ?? null,$data['tipo_arreglo'] ?? null),
+        ];
 
-        $fileName = Str::slug($data['nombre']) . '-' . now()->format('YmdHis') . '.' . $extension;
+        if ($product->nombre !== $data['nombre']) {
+            $updateData['slug'] = $this->uniqueSlug($data['nombre'], $product->id);
+        }
 
-        $updateData['imagen_principal'] = $file->storeAs('products', $fileName, 'public');
+        if ($request->hasFile('imagen_principal')) {
+            if (!empty($product->imagen_principal) && Storage::disk('public')->exists($product->imagen_principal)) {
+                Storage::disk('public')->delete($product->imagen_principal);
+            }
+
+            $updateData['imagen_principal'] = $request->file('imagen_principal')->store('products', 'public');
+        }
+
+        $product->update($updateData);
+
+        $pivotIds = [];
+
+        if (!empty($data['ocasion_especial'])) {
+            $pivotIds[] = $data['ocasion_especial'];
+        }
+
+        $product->categories()->sync($pivotIds);
+
+        return redirect()
+            ->route('admin.products.index')
+            ->with('success', 'Producto actualizado correctamente');
     }
 
-    $product->update($updateData);
-
-    $pivotIds = [];
-
-    if (!empty($data['ocasion_especial'])) {
-        $pivotIds[] = $data['ocasion_especial'];
-    }
-
-    $product->categories()->sync($pivotIds);
-
-    return redirect()
-        ->route('admin.products.index')
-        ->with('success', 'Producto actualizado correctamente');
-}
     /*
     |--------------------------------------------------------------------------
     | PERSONALIZACIÓN - VISTA
@@ -768,51 +756,77 @@ class ProductController extends Controller
     | PLANTILLAS DE VISTA PREVIA
     |--------------------------------------------------------------------------
     */
-    private function getPreviewTemplate(?string $template): array
-    {
-        $templates = [
-            'bouquet_right' => [
-                'photo_zone' => ['x' => 60, 'y' => 18, 'width' => 20, 'height' => 26],
-                'card_zone' => ['x' => 22, 'y' => 76, 'width' => 34, 'height' => 14],
-                'extras_zone' => ['x' => 8, 'y' => 10, 'width' => 84, 'height' => 45],
-            ],
-            'bouquet_left' => [
-                'photo_zone' => ['x' => 20, 'y' => 18, 'width' => 20, 'height' => 26],
-                'card_zone' => ['x' => 22, 'y' => 76, 'width' => 34, 'height' => 14],
-                'extras_zone' => ['x' => 8, 'y' => 10, 'width' => 84, 'height' => 45],
-            ],
-            'balloon_top' => [
-                'photo_zone' => ['x' => 30, 'y' => 25, 'width' => 22, 'height' => 28],
-                'card_zone' => ['x' => 22, 'y' => 78, 'width' => 34, 'height' => 12],
-                'extras_zone' => ['x' => 10, 'y' => 45, 'width' => 80, 'height' => 30],
-            ],
-            'heart_center' => [
-                'photo_zone' => ['x' => 50, 'y' => 28, 'width' => 18, 'height' => 24],
-                'card_zone' => ['x' => 20, 'y' => 80, 'width' => 32, 'height' => 10],
-                'extras_zone' => ['x' => 10, 'y' => 10, 'width' => 80, 'height' => 35],
-            ],
-            'round_top' => [
-                'photo_zone' => ['x' => 40, 'y' => 22, 'width' => 20, 'height' => 25],
-                'card_zone' => ['x' => 25, 'y' => 78, 'width' => 30, 'height' => 12],
-                'extras_zone' => ['x' => 10, 'y' => 10, 'width' => 80, 'height' => 40],
-            ],
-            'teddy_center' => [
-                'photo_zone' => ['x' => 60, 'y' => 25, 'width' => 18, 'height' => 24],
-                'card_zone' => ['x' => 22, 'y' => 78, 'width' => 34, 'height' => 12],
-                'extras_zone' => ['x' => 8, 'y' => 10, 'width' => 50, 'height' => 45],
-            ],
-            'box_center' => [
-                'photo_zone' => ['x' => 55, 'y' => 22, 'width' => 18, 'height' => 22],
-                'card_zone' => ['x' => 25, 'y' => 78, 'width' => 30, 'height' => 12],
-                'extras_zone' => ['x' => 10, 'y' => 12, 'width' => 80, 'height' => 45],
-            ],
-            'free_layout' => [
-                'photo_zone' => ['x' => 50, 'y' => 25, 'width' => 20, 'height' => 25],
-                'card_zone' => ['x' => 22, 'y' => 80, 'width' => 34, 'height' => 10],
-                'extras_zone' => ['x' => 5, 'y' => 10, 'width' => 90, 'height' => 50],
-            ],
-        ];
+  private function getPreviewTemplate($template, $tipo = null)
+{
+    $zones = [
+        'photo_zone' => ['x' => 60, 'y' => 10, 'width' => 24, 'height' => 42],
+        'extras_zone' => ['x' => 18, 'y' => 48, 'width' => 64, 'height' => 18],
+        'balloon_zone' => ['x' => 10, 'y' => 6, 'width' => 80, 'height' => 14],
+        'card_zone' => ['x' => 22, 'y' => 76, 'width' => 56, 'height' => 12],
+    ];
 
-        return $templates[$template] ?? $templates['free_layout'];
+    switch ($template) {
+        case 'bouquet_right':
+            $zones['photo_zone'] = ['x' => 62, 'y' => 8, 'width' => 24, 'height' => 42];
+            $zones['extras_zone'] = ['x' => 16, 'y' => 48, 'width' => 46, 'height' => 18];
+            $zones['balloon_zone'] = ['x' => 10, 'y' => 7, 'width' => 80, 'height' => 14];
+            $zones['card_zone'] = ['x' => 20, 'y' => 76, 'width' => 58, 'height' => 12];
+            break;
+
+        case 'bouquet_left':
+            $zones['photo_zone'] = ['x' => 14, 'y' => 8, 'width' => 24, 'height' => 42];
+            $zones['extras_zone'] = ['x' => 40, 'y' => 48, 'width' => 46, 'height' => 18];
+            $zones['balloon_zone'] = ['x' => 10, 'y' => 7, 'width' => 80, 'height' => 14];
+            $zones['card_zone'] = ['x' => 20, 'y' => 76, 'width' => 58, 'height' => 12];
+            break;
+
+        case 'balloon_top':
+            $zones['photo_zone'] = ['x' => 38, 'y' => 12, 'width' => 26, 'height' => 38];
+            $zones['extras_zone'] = ['x' => 18, 'y' => 60, 'width' => 64, 'height' => 14];
+            $zones['balloon_zone'] = ['x' => 8, 'y' => 4, 'width' => 84, 'height' => 14];
+            $zones['card_zone'] = ['x' => 22, 'y' => 78, 'width' => 56, 'height' => 10];
+            break;
+
+        case 'heart_center':
+            $zones['photo_zone'] = ['x' => 38, 'y' => 14, 'width' => 26, 'height' => 38];
+            $zones['extras_zone'] = ['x' => 18, 'y' => 50, 'width' => 64, 'height' => 16];
+            $zones['balloon_zone'] = ['x' => 10, 'y' => 6, 'width' => 80, 'height' => 14];
+            $zones['card_zone'] = ['x' => 22, 'y' => 78, 'width' => 56, 'height' => 10];
+            break;
+
+        case 'round_top':
+            $zones['photo_zone'] = ['x' => 38, 'y' => 8, 'width' => 26, 'height' => 36];
+            $zones['extras_zone'] = ['x' => 14, 'y' => 48, 'width' => 72, 'height' => 18];
+            $zones['balloon_zone'] = ['x' => 8, 'y' => 5, 'width' => 84, 'height' => 14];
+            $zones['card_zone'] = ['x' => 22, 'y' => 78, 'width' => 56, 'height' => 10];
+            break;
+
+        case 'teddy_center':
+            $zones['photo_zone'] = ['x' => 62, 'y' => 10, 'width' => 24, 'height' => 38];
+            $zones['extras_zone'] = ['x' => 14, 'y' => 54, 'width' => 42, 'height' => 14];
+            $zones['balloon_zone'] = ['x' => 10, 'y' => 6, 'width' => 80, 'height' => 14];
+            $zones['card_zone'] = ['x' => 22, 'y' => 78, 'width' => 56, 'height' => 10];
+            break;
+
+        case 'box_center':
+            $zones['photo_zone'] = ['x' => 62, 'y' => 12, 'width' => 24, 'height' => 38];
+            $zones['extras_zone'] = ['x' => 18, 'y' => 28, 'width' => 64, 'height' =>36];
+            $zones['balloon_zone'] = ['x' => 10, 'y' => 6, 'width' => 80, 'height' => 14];
+            $zones['card_zone'] = ['x' => 22, 'y' => 78, 'width' => 56, 'height' => 10];
+            break;
+
+        case 'photo_top_extras_top':
+             $zones['photo_zone'] = ['x' => 38,'y' => 4,'width' => 26,'height' => 30 ];
+             $zones['extras_zone'] = ['x' => 18,  'y' => 22, 'width' => 64,'height' => 14 ];
+             $zones['balloon_zone'] = ['x' => 8,'y' => 2,'width' => 84,'height' => 10];
+             $zones['card_zone'] = ['x' => 22,'y' => 78,'width' => 56,'height' => 10];
+             break;
+        case 'free_layout':
+        default:
+            break;
     }
+
+    return $zones;
+}
+
 }
