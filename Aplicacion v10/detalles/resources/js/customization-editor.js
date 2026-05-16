@@ -11,7 +11,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const photoGuideZone = document.getElementById('photo-guide-zone');
 
     const config = window.productConfig || {};
-    const zones = config.zones || {};
+
+    let zones = {};
+
+    try {
+        zones = JSON.parse(designArea?.dataset.zones || '{}');
+
+        if (typeof zones === 'string') {
+            zones = JSON.parse(zones);
+        }
+    } catch (error) {
+        console.error('Error leyendo customization_zones:', error);
+        zones = config.zones || {};
+    }
+
+    if (!zones || Object.keys(zones).length === 0) {
+        zones = config.zones || {};
+    }
+
+    const productLayout = designArea?.dataset.layout || 'free_layout';
 
     const addButtons = document.querySelectorAll('.add-extra-btn');
     const colorButtons = document.querySelectorAll('.color-swatch');
@@ -70,10 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
         (designArea && designArea.dataset.frameHorizontal) ||
         (editorWrapper && editorWrapper.dataset.frameHorizontal) ||
         frameVertical;
-
+    let selectedExtras = [];
     let selectedColor = '';
     const originalBaseImage = baseProductImage ? baseProductImage.getAttribute('src') : '';
-
+    const MAX_EXTRAS = 2;
     let cardZone = null;
     let cardWrapper = null;
     let cardEnabled = true;
@@ -173,10 +191,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateExtrasCount() {
-        if (extrasCount) {
-            extrasCount.textContent = itemsLayer.querySelectorAll('.design-item').length;
-        }
-    }
+    if (!extrasCount) return;
+
+    extrasCount.textContent = selectedExtras.length;
+}
 
     function updateCounters() {
         if (countFrase && fraseInput) {
@@ -242,43 +260,81 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateSummary() {
-        const mainText =
-            (fraseInput && fraseInput.value.trim()) ||
-            (destinatarioInput && destinatarioInput.value.trim()) ||
-            '—';
+    const mainText =
+        (fraseInput && fraseInput.value.trim()) ||
+        (destinatarioInput && destinatarioInput.value.trim()) ||
+        '—';
 
-        if (summaryMainText) {
-            summaryMainText.textContent = mainText;
-        }
-
-        if (summaryColor) {
-            summaryColor.textContent = selectedColor || 'Original';
-        }
-
-        if (selectedColorLabel) {
-            selectedColorLabel.textContent = selectedColor || 'Original';
-        }
-
-        if (saveFrase && fraseInput) {
-            saveFrase.value = fraseInput.value;
-        }
-
-        if (saveDedicatoria && dedicatoriaInput) {
-            saveDedicatoria.value = dedicatoriaInput.value;
-        }
-
-        if (saveDestinatario && destinatarioInput) {
-            saveDestinatario.value = destinatarioInput.value;
-        }
-
-        if (saveColor) {
-            saveColor.value = selectedColor;
-        }
-
-        if (saveDesignJson) {
-            saveDesignJson.value = JSON.stringify(exportDesignState());
-        }
+    if (summaryMainText) {
+        summaryMainText.textContent = mainText;
     }
+
+    if (summaryColor) {
+        summaryColor.textContent = selectedColor || 'Original';
+    }
+
+    if (selectedColorLabel) {
+        selectedColorLabel.textContent = selectedColor || 'Original';
+    }
+
+    if (saveFrase && fraseInput) {
+        saveFrase.value = fraseInput.value;
+    }
+
+    if (saveDedicatoria && dedicatoriaInput) {
+        saveDedicatoria.value = dedicatoriaInput.value;
+    }
+
+    if (saveDestinatario && destinatarioInput) {
+        saveDestinatario.value = destinatarioInput.value;
+    }
+
+    if (saveColor) {
+        saveColor.value = selectedColor;
+    }
+
+    if (saveDesignJson) {
+        saveDesignJson.value = JSON.stringify(exportDesignState());
+    }
+
+    updatePricesSummary();
+}
+    function updatePricesSummary() {
+    const summary = document.getElementById('purchase-summary');
+
+    if (!summary) return;
+
+    const basePrice = parseFloat(summary.dataset.basePrice || 0);
+    const photoPriceValue = parseFloat(summary.dataset.photoPrice || 0);
+
+    const hasPhoto = photoState && photoState.src;
+    const photoTotal = hasPhoto ? photoPriceValue : 0;
+
+    const extrasTotal = selectedExtras.reduce((sum, extra) => {
+        return sum + (parseFloat(extra.price) || 0);
+    }, 0);
+
+    const total = basePrice + photoTotal + extrasTotal;
+
+    const photoTotalEl = document.getElementById('photo-total');
+    const extrasTotalEl = document.getElementById('extras-total');
+    const totalPriceEl = document.getElementById('total-price');
+
+    if (photoTotalEl) {
+        photoTotalEl.textContent = `$${photoTotal.toFixed(2)}`;
+        photoTotalEl.dataset.value = photoTotal;
+    }
+
+    if (extrasTotalEl) {
+        extrasTotalEl.textContent = `$${extrasTotal.toFixed(2)}`;
+        extrasTotalEl.dataset.value = extrasTotal;
+    }
+
+    if (totalPriceEl) {
+        totalPriceEl.textContent = `$${total.toFixed(2)}`;
+        totalPriceEl.dataset.value = total;
+    }
+}
 
     function isOverlapping(el1, el2) {
         if (!el1 || !el2) return false;
@@ -315,14 +371,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function clampToMetrics(left, top, elWidth, elHeight, metrics) {
-        const maxLeft = Math.max(metrics.left, metrics.left + metrics.width - elWidth);
-        const maxTop = Math.max(metrics.top, metrics.top + metrics.height - elHeight);
+    const maxLeft = Math.max(metrics.left, metrics.left + metrics.width - elWidth);
+    const maxTop = Math.max(metrics.top, metrics.top + metrics.height - elHeight);
 
-        return {
-            left: Math.max(metrics.left, Math.min(left, maxLeft)),
-            top: Math.max(metrics.top, Math.min(top, maxTop)),
-        };
-    }
+    return {
+        left: Math.max(metrics.left, Math.min(left, maxLeft)),
+        top: Math.max(metrics.top, Math.min(top, maxTop)),
+    };
+}
 
     function makeDraggableInMetrics(el, getMetrics, onMoveEnd = null) {
         let isDragging = false;
@@ -456,6 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
             height: height * 0.45,
         };
     }
+
 
     function renderExtrasZone() {
         const oldZone = document.getElementById('extras-zone');
@@ -678,7 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (configured) {
             return {
                 left: configured.left + (configured.width * 0.12),
-                top: configured.top + (configured.height * 0.10),
+                top: configured.top - (configured.height * 0.10),
                 width: configured.width * 0.82,
                 height: configured.height * 0.70,
             };
@@ -687,7 +744,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (photoGuideZone) {
             return {
                 left: photoGuideZone.offsetLeft - (photoGuideZone.offsetWidth * 0.06),
-                top: photoGuideZone.offsetTop - (photoGuideZone.offsetHeight * 0.10),
+                top: photoGuideZone.offsetTop - (photoGuideZone.offsetHeight * 0.20),
                 width: photoGuideZone.offsetWidth * 1.55,
                 height: photoGuideZone.offsetHeight * 1.70,
             };
@@ -698,11 +755,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return {
             left: width * 0.60,
-            top: height * 0.03,
+            top: height * 0.01,
             width: width * 0.18,
             height: height * 0.36,
         };
     }
+
+    function isBalloonExtra(name = '') {
+    const nameLower = name.toLowerCase();
+
+    return (
+        nameLower.includes('globo') ||
+        nameLower.includes('balloon') ||
+        nameLower.includes('burbuja')
+    );
+}
+
+function getBalloonZoneMetrics() {
+    const configured = zoneToPx(zones.balloon_zone);
+
+    if (configured) {
+        return configured;
+    }
+
+    const base = getExtrasZoneMetrics();
+
+    return {
+        left: base.left,
+        top: base.top - 60,
+        width: base.width,
+        height: 110
+    };
+}
+function getNormalExtraZoneMetrics() {
+    return getExtrasZoneMetrics();
+}
+
+function getExtraZoneByName(name = '') {
+    if (isBalloonExtra(name)) {
+        return getBalloonZoneMetrics();
+    }
+
+    return getNormalExtraZoneMetrics();
+}
 
     function getPhotoMoveMetrics() {
         return expandMetrics(getPhotoFrameMetrics(), 0.08);
@@ -1178,21 +1273,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return { width: 110, height: 110 };
 }
 
-    function getInitialExtraPosition(width, height, name = '') {
-    const zone = getExtrasZoneMetrics();
-    const nameLower = name.toLowerCase();
-
-    const isBalloon =
-        nameLower.includes('globo') ||
-        nameLower.includes('balloon') ||
-        nameLower.includes('burbuja');
-
-    if (isBalloon) {
-        return {
-            left: zone.left + (zone.width / 2) - (width / 2),
-            top: zone.top - 90
-        };
-    }
+   function getInitialExtraPosition(width, height, name = '') {
+    const zone = getExtraZoneByName(name);
 
     return {
         left: zone.left + (zone.width / 2) - (width / 2),
@@ -1201,88 +1283,117 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 
     function addExtra(btn) {
-        const image = btn.dataset.extraImage || '';
-        const name = btn.dataset.extraName || 'Extra';
-        const extraId = btn.dataset.extraId || '';
+    const image = btn.dataset.extraImage || '';
+    const name = btn.dataset.extraName || 'Extra';
+    const extraId = btn.dataset.extraId || '';
 
-        if (!image) return;
+    if (!image) return;
 
-        const existing = itemsLayer.querySelector(`.design-item[data-extra-id="${extraId}"]`);
-        if (existing) return;
+    const currentExtras = itemsLayer.querySelectorAll('.design-item').length;
 
-        const size = getDefaultSize(name);
-        const initial = getInitialExtraPosition(size.width, size.height, name);
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'design-item absolute select-none cursor-grab group';
-        wrapper.dataset.extraId = extraId;
-        wrapper.dataset.extraName = name;
-        wrapper.dataset.baseZ = '20';
-        wrapper.dataset.lastValidLeft = `${initial.left}px`;
-        wrapper.dataset.lastValidTop = `${initial.top}px`;
-        wrapper.style.left = `${initial.left}px`;
-        wrapper.style.top = `${initial.top}px`;
-        wrapper.style.width = `${size.width}px`;
-        wrapper.style.height = `${size.height}px`;
-        wrapper.style.zIndex = '20';
-        wrapper.style.pointerEvents = 'auto';
-
-        wrapper.innerHTML = `
-            <div class="relative w-full h-full">
-                <img
-                    src="${image}"
-                    alt="${name}"
-                    class="w-full h-full object-contain pointer-events-none select-none"
-                    draggable="false"
-                >
-                <button
-                    type="button"
-                    class="remove-item absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs hidden group-hover:flex items-center justify-center shadow pointer-events-auto"
-                    aria-label="Eliminar"
-                >
-                    ×
-                </button>
-            </div>
-        `;
-
-        itemsLayer.appendChild(wrapper);
-
-        if (overlapsReservedZones(wrapper)) {
-            const metrics = getExtrasZoneMetrics();
-            wrapper.style.left = `${metrics.left}px`;
-            wrapper.style.top = `${metrics.top}px`;
-            wrapper.dataset.lastValidLeft = wrapper.style.left;
-            wrapper.dataset.lastValidTop = wrapper.style.top;
-        }
-
-        makeDraggableInMetrics(wrapper, getExtrasZoneMetrics, (el) => {
-            if (overlapsReservedZones(el)) {
-                el.style.left = el.dataset.lastValidLeft || el.style.left;
-                el.style.top = el.dataset.lastValidTop || el.style.top;
-                return;
-            }
-
-            el.dataset.lastValidLeft = el.style.left;
-            el.dataset.lastValidTop = el.style.top;
-        });
-
-        const removeBtn = wrapper.querySelector('.remove-item');
-
-        if (removeBtn) {
-            removeBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                wrapper.remove();
-                updateExtrasCount();
-                updateEmptyState();
-                updateSummary();
-            });
-        }
-
-        updateExtrasCount();
-        updateEmptyState();
-        updateSummary();
+    if (currentExtras >= MAX_EXTRAS) {
+    alert(`Solo puedes agregar máximo ${MAX_EXTRAS} productos extras para no recargar el diseño.`);
+    return;
     }
+
+    const existing = itemsLayer.querySelector(`.design-item[data-extra-id="${extraId}"]`);
+    if (existing) return;
+
+    const size = getDefaultSize(name);
+    const initial = getInitialExtraPosition(size.width, size.height, name);
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'design-item absolute select-none cursor-grab group overflow-visible';
+    wrapper.dataset.extraId = extraId;
+    wrapper.dataset.extraName = name;
+    wrapper.dataset.baseZ = '20';
+    wrapper.dataset.lastValidLeft = `${initial.left}px`;
+    wrapper.dataset.lastValidTop = `${initial.top}px`;
+
+    wrapper.style.left = `${initial.left}px`;
+    wrapper.style.top = `${initial.top}px`;
+    wrapper.style.width = `${size.width}px`;
+    wrapper.style.height = `${size.height}px`;
+    wrapper.style.zIndex = '20';
+    wrapper.style.pointerEvents = 'auto';
+
+    wrapper.innerHTML = `
+        <div class="relative w-full h-full">
+            <img
+                src="${image}"
+                alt="${name}"
+                class="w-full h-full object-contain pointer-events-none select-none"
+                draggable="false"
+            >
+            <button
+                type="button"
+                class="remove-item absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs hidden group-hover:flex items-center justify-center shadow pointer-events-auto z-50"
+                aria-label="Eliminar"
+            >
+                ×
+            </button>
+        </div>
+    `;
+
+    itemsLayer.appendChild(wrapper);
+
+    selectedExtras.push({
+        id: extraId,
+        name: name,
+        price: parseFloat(btn.dataset.extraPrice || 0),
+    });
+
+    if (overlapsReservedZones(wrapper)) {
+        const metrics = getExtraZoneByName(name);
+
+        wrapper.style.left = `${metrics.left + 10}px`;
+        wrapper.style.top = `${metrics.top + (metrics.height / 2) - (size.height / 2)}px`;
+
+        wrapper.dataset.lastValidLeft = wrapper.style.left;
+        wrapper.dataset.lastValidTop = wrapper.style.top;
+    }
+
+    makeDraggableInMetrics(wrapper, () => getExtraZoneByName(name), (el) => {
+        if (overlapsReservedZones(el)) {
+            el.style.left = el.dataset.lastValidLeft || el.style.left;
+            el.style.top = el.dataset.lastValidTop || el.style.top;
+            return;
+        }
+
+        el.dataset.lastValidLeft = el.style.left;
+        el.dataset.lastValidTop = el.style.top;
+    });
+
+    const removeBtn = wrapper.querySelector('.remove-item');
+
+    if (removeBtn) {
+        removeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            wrapper.remove();
+
+            selectedExtras = selectedExtras.filter((extra) => {
+                return String(extra.id) !== String(extraId);
+            });
+
+            const panelBtn = document.querySelector(
+    `.add-extra-btn[data-extra-id="${extraId}"]`
+);
+
+if (panelBtn) {
+    panelBtn.textContent = 'Agregar';
+}
+            updateExtrasCount();
+            updateEmptyState();
+            updateSummary();
+        });
+    }
+
+    updateExtrasCount();
+    updateEmptyState();
+    updateSummary();
+}
 
     function applyColor(color, imageUrl = '') {
         selectedColor = color || '';
@@ -1310,6 +1421,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateSummary();
     }
+
+
+
 
     function rebuildCardArea() {
         renderCardZone();
@@ -1342,15 +1456,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    addButtons.forEach((btn) => {
-        btn.addEventListener('click', () => {
-            const alreadyInCanvas = itemsLayer.querySelector(`.design-item[data-extra-id="${btn.dataset.extraId || ''}"]`);
+   addButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
 
-            if (!alreadyInCanvas) {
-                addExtra(btn);
-            }
-        });
+        const extraId = btn.dataset.extraId || '';
+
+        const alreadyInCanvas = itemsLayer.querySelector(
+            `.design-item[data-extra-id="${extraId}"]`
+        );
+
+        if (alreadyInCanvas) {
+
+            alreadyInCanvas.remove();
+
+            selectedExtras = selectedExtras.filter((extra) => {
+                return String(extra.id) !== String(extraId);
+            });
+
+            btn.textContent = 'Agregar';
+
+            updateExtrasCount();
+            updateEmptyState();
+            updateSummary();
+
+            return;
+        }
+
+        addExtra(btn);
+
+        btn.textContent = 'Quitar';
+
+        updateSummary();
     });
+});
 
     colorButtons.forEach((btn) => {
         btn.addEventListener('click', () => {

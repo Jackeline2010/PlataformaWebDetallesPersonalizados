@@ -50,4 +50,9 @@ class User extends Authenticatable
     {
         return (bool) $this->activo;
     }
-}
+
+    public function client()
+    {
+    return $this->hasOne(\App\Models\Client::class, 'user_id');
+    }
+    }

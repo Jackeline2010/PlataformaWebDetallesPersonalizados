@@ -13,29 +13,20 @@ class Client extends Model
     protected $table = 'clients';
 
     protected $fillable = [
-        // ✅ Relación con usuario (si existe en tu tabla)
+        //  Relación con usuario (si existe en tu tabla)
         'user_id',
 
-        // ✅ Datos personales (soporta ambos nombres)
-        'nombre',
-        'apellido',
-        'nombres',
-        'apellidos',
-
-        //Otros campos comunes que estás usando en la vista / controller
-        'identificacion',
-        'genero',
-        'email',
-        'telefono',
-        'direccion',
-        'ciudad',
-        'provincia',
-        'codigo_postal',
-        'fnacimiento',
-        'fingreso',
-        'activo',
-    ];
-
+        //  Datos personales (soporta ambos nombres)
+    'identificacion',
+    'nombres',
+    'apellidos',
+    'email',
+    'telefono',
+    'fnacimiento',
+    'genero',
+    'fingreso',
+    'activo',
+];
     protected $casts = [
         'fnacimiento' => 'date',
         'activo' => 'boolean',
@@ -59,5 +50,9 @@ class Client extends Model
     public function scopeActive($query)
     {
         return $query->where('activo', true);
+    }
+    public function user()
+    {
+    return $this->belongsTo(\App\Models\User::class, 'user_id');
     }
 }

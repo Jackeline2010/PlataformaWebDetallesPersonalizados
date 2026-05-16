@@ -756,56 +756,73 @@ class ProductController extends Controller
     | PLANTILLAS DE VISTA PREVIA
     |--------------------------------------------------------------------------
     */
-   private function getPreviewTemplate($template, $tipo = null)
+  private function getPreviewTemplate($template, $tipo = null)
 {
-    // Valores por defecto
     $zones = [
-        'photo_zone' => ['x' => 60, 'y' => 18, 'width' => 22, 'height' => 40],
-        'extras_zone' => ['x' => 18, 'y' => 10, 'width' => 64, 'height' => 40],
-        'card_zone' => ['x' => 22, 'y' => 72, 'width' => 34, 'height' => 18],
+        'photo_zone' => ['x' => 60, 'y' => 10, 'width' => 24, 'height' => 42],
+        'extras_zone' => ['x' => 18, 'y' => 48, 'width' => 64, 'height' => 18],
+        'balloon_zone' => ['x' => 10, 'y' => 6, 'width' => 80, 'height' => 14],
+        'card_zone' => ['x' => 22, 'y' => 76, 'width' => 56, 'height' => 12],
     ];
 
     switch ($template) {
-
-        case 'foto_derecha':
-            $zones['photo_zone'] = ['x' => 65, 'y' => 20, 'width' => 20, 'height' => 35];
+        case 'bouquet_right':
+            $zones['photo_zone'] = ['x' => 62, 'y' => 8, 'width' => 24, 'height' => 42];
+            $zones['extras_zone'] = ['x' => 16, 'y' => 48, 'width' => 46, 'height' => 18];
+            $zones['balloon_zone'] = ['x' => 10, 'y' => 7, 'width' => 80, 'height' => 14];
+            $zones['card_zone'] = ['x' => 20, 'y' => 76, 'width' => 58, 'height' => 12];
             break;
 
-        case 'foto_izquierda':
-            $zones['photo_zone'] = ['x' => 15, 'y' => 20, 'width' => 20, 'height' => 35];
+        case 'bouquet_left':
+            $zones['photo_zone'] = ['x' => 14, 'y' => 8, 'width' => 24, 'height' => 42];
+            $zones['extras_zone'] = ['x' => 40, 'y' => 48, 'width' => 46, 'height' => 18];
+            $zones['balloon_zone'] = ['x' => 10, 'y' => 7, 'width' => 80, 'height' => 14];
+            $zones['card_zone'] = ['x' => 20, 'y' => 76, 'width' => 58, 'height' => 12];
             break;
 
-        case 'foto_centrada':
-            $zones['photo_zone'] = ['x' => 40, 'y' => 20, 'width' => 22, 'height' => 38];
+        case 'balloon_top':
+            $zones['photo_zone'] = ['x' => 38, 'y' => 12, 'width' => 26, 'height' => 38];
+            $zones['extras_zone'] = ['x' => 18, 'y' => 60, 'width' => 64, 'height' => 14];
+            $zones['balloon_zone'] = ['x' => 8, 'y' => 4, 'width' => 84, 'height' => 14];
+            $zones['card_zone'] = ['x' => 22, 'y' => 78, 'width' => 56, 'height' => 10];
             break;
 
-        case 'foto_arriba':
-            $zones['photo_zone'] = ['x' => 40, 'y' => 10, 'width' => 22, 'height' => 30];
+        case 'heart_center':
+            $zones['photo_zone'] = ['x' => 38, 'y' => 14, 'width' => 26, 'height' => 38];
+            $zones['extras_zone'] = ['x' => 18, 'y' => 50, 'width' => 64, 'height' => 16];
+            $zones['balloon_zone'] = ['x' => 10, 'y' => 6, 'width' => 80, 'height' => 14];
+            $zones['card_zone'] = ['x' => 22, 'y' => 78, 'width' => 56, 'height' => 10];
             break;
 
-        case 'foto_lateral':
-            $zones['photo_zone'] = ['x' => 65, 'y' => 25, 'width' => 18, 'height' => 30];
-            break;
-    }
-
-    // 🔥 AJUSTE SEGÚN TIPO DE ARREGLO
-    switch ($tipo) {
-
-        case 'Arreglo con peluche':
-            $zones['photo_zone']['y'] += 10; // baja la foto
-            $zones['extras_zone']['y'] = 5;  // sube peluche
+        case 'round_top':
+            $zones['photo_zone'] = ['x' => 38, 'y' => 8, 'width' => 26, 'height' => 36];
+            $zones['extras_zone'] = ['x' => 14, 'y' => 48, 'width' => 72, 'height' => 18];
+            $zones['balloon_zone'] = ['x' => 8, 'y' => 5, 'width' => 84, 'height' => 14];
+            $zones['card_zone'] = ['x' => 22, 'y' => 78, 'width' => 56, 'height' => 10];
             break;
 
-        case 'Caja corazón':
-            $zones['photo_zone'] = ['x' => 58, 'y' => 18, 'width' => 24, 'height' => 42];
+        case 'teddy_center':
+            $zones['photo_zone'] = ['x' => 62, 'y' => 10, 'width' => 24, 'height' => 38];
+            $zones['extras_zone'] = ['x' => 14, 'y' => 54, 'width' => 42, 'height' => 14];
+            $zones['balloon_zone'] = ['x' => 10, 'y' => 6, 'width' => 80, 'height' => 14];
+            $zones['card_zone'] = ['x' => 22, 'y' => 78, 'width' => 56, 'height' => 10];
             break;
 
-        case 'Bouquet':
-            $zones['photo_zone']['y'] -= 5;
+        case 'box_center':
+            $zones['photo_zone'] = ['x' => 62, 'y' => 12, 'width' => 24, 'height' => 38];
+            $zones['extras_zone'] = ['x' => 18, 'y' => 28, 'width' => 64, 'height' =>36];
+            $zones['balloon_zone'] = ['x' => 10, 'y' => 6, 'width' => 80, 'height' => 14];
+            $zones['card_zone'] = ['x' => 22, 'y' => 78, 'width' => 56, 'height' => 10];
             break;
 
-        case 'Arreglo con globos':
-            $zones['extras_zone']['y'] -= 5;
+        case 'photo_top_extras_top':
+             $zones['photo_zone'] = ['x' => 38,'y' => 4,'width' => 26,'height' => 30 ];
+             $zones['extras_zone'] = ['x' => 18,  'y' => 22, 'width' => 64,'height' => 14 ];
+             $zones['balloon_zone'] = ['x' => 8,'y' => 2,'width' => 84,'height' => 10];
+             $zones['card_zone'] = ['x' => 22,'y' => 78,'width' => 56,'height' => 10];
+             break;
+        case 'free_layout':
+        default:
             break;
     }
 

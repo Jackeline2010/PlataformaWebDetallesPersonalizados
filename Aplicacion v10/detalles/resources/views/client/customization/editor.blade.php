@@ -66,58 +66,79 @@
             <div class="min-w-0 space-y-6">
 
                 {{-- RESUMEN DE COMPRA --}}
-                <div class="bg-white rounded-2xl border border-pink-100 shadow-sm p-4">
-                    <h3 class="text-base font-semibold text-gray-800 mb-4">
-                        Resumen de compra
-                    </h3>
+<div
+    class="bg-white rounded-2xl border border-pink-100 shadow-sm p-4"
+    id="purchase-summary"
+    data-base-price="{{ (float) $product->precio }}"
+    data-photo-price="{{ (float) ($product->photo_print_price ?? 0) }}"
+>
+    <h3 class="text-base font-semibold text-gray-800 mb-4">
+        Resumen de compra
+    </h3>
 
-                    <div class="space-y-3 text-sm">
-                        <div class="flex justify-between gap-3">
-                            <span class="text-gray-500">Producto base</span>
-                            <span class="font-medium text-gray-800">
-                                ${{ number_format((float) $product->precio, 2) }}
-                            </span>
-                        </div>
+    <div class="space-y-3 text-sm">
+        <div class="flex justify-between gap-3">
+            <span class="text-gray-500">Producto base</span>
+            <span
+                id="base-total"
+                class="font-medium text-gray-800"
+                data-value="{{ (float) $product->precio }}"
+            >
+                ${{ number_format((float) $product->precio, 2) }}
+            </span>
+        </div>
 
-                        <div class="flex justify-between gap-3">
-                            <span class="text-gray-500">Foto impresa</span>
-                            <span id="photo-total" class="font-medium text-gray-800">
-                                $0.00
-                            </span>
-                        </div>
+        <div class="flex justify-between gap-3">
+            <span class="text-gray-500">Foto impresa</span>
+            <span
+                id="photo-total"
+                class="font-medium text-gray-800"
+                data-value="0"
+            >
+                $0.00
+            </span>
+        </div>
 
-                        <div class="flex justify-between gap-3">
-                            <span class="text-gray-500">Extras</span>
-                            <span id="extras-total" class="font-medium text-gray-800">
-                                $0.00
-                            </span>
-                        </div>
+        <div class="flex justify-between gap-3">
+            <span class="text-gray-500">Extras</span>
+            <span
+                id="extras-total"
+                class="font-medium text-gray-800"
+                data-value="0"
+            >
+                $0.00
+            </span>
+        </div>
 
-                        <div class="flex justify-between gap-3">
-                            <span class="text-gray-500">Personalización</span>
-                            <span id="custom-total" class="font-medium text-gray-800">
-                                Gratis
-                            </span>
-                        </div>
+        <div class="flex justify-between gap-3">
+            <span class="text-gray-500">Personalización</span>
+            <span id="custom-total" class="font-medium text-gray-800">
+                Gratis
+            </span>
+        </div>
 
-                        <hr>
+        <hr>
 
-                        <div class="flex justify-between gap-3 text-base font-bold">
-                            <span>Total</span>
-                            <span id="total-price" class="text-pink-600">
-                                ${{ number_format((float) $product->precio, 2) }}
-                            </span>
-                        </div>
-                    </div>
+        <div class="flex justify-between gap-3 text-base font-bold">
+            <span>Total</span>
+            <span
+                id="total-price"
+                class="text-pink-600"
+                data-value="{{ (float) $product->precio }}"
+            >
+                ${{ number_format((float) $product->precio, 2) }}
+            </span>
+        </div>
+    </div>
 
-                    <button
-                        id="btn-add-cart"
-                        type="submit"
-                        class="w-full mt-5 bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition shadow-md"
-                    >
-                        Agregar al carrito
-                    </button>
-                </div>
+    <button
+        id="btn-add-cart"
+        type="submit"
+        class="w-full mt-5 bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition shadow-md"
+    >
+        Agregar al carrito
+    </button>
+</div>
 
                 {{-- EXTRAS --}}
                 @if(isset($extras) && $extras->count())

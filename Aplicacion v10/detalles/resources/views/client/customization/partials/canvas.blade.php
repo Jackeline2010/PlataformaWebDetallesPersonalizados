@@ -40,6 +40,8 @@
             <div
                 id="design-area"
                 class="absolute inset-[8%] rounded-xl border-2 border-dashed border-pink-300 z-[5]"
+                data-zones='@json($product->customization_zones ?? [])'
+                data-layout="{{ $product->plantilla_preview ?? 'free_layout' }}"
                 data-card-template="{{ asset('storage/cards/tarjeta-base.png') }}"
                 data-frame-vertical="{{ asset('storage/frames/portarretrato-vertical.png') }}"
                 data-frame-horizontal="{{ asset('storage/frames/portarretrato-horizontal.png') }}"
