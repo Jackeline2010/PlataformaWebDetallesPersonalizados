@@ -26,6 +26,7 @@
                 <img
                     id="base-product-image"
                     src="{{ asset('storage/' . $product->imagen_principal) }}"
+                    crossorigin="anonymous"
                     alt="{{ $product->nombre }}"
                     class="absolute inset-0 w-full h-full object-contain pointer-events-none select-none z-[1]"
                     draggable="false"

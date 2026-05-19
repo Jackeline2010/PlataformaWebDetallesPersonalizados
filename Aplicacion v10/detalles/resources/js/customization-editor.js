@@ -8,7 +8,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const emptyState = document.getElementById('empty-state');
     const baseProductImage = document.getElementById('base-product-image');
     const editorWrapper = document.getElementById('editor-wrapper');
+    const customizationForm = document.getElementById('customization-form');
+    const previewImageInput = document.getElementById('preview-image-input');
     const photoGuideZone = document.getElementById('photo-guide-zone');
+
 
     const config = window.productConfig || {};
 
@@ -208,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (countDestinatario && destinatarioInput) {
-            countDestinatario.textContent = `${destinatarioInput.value.length}/30`;
+            countDestinatario.textContent = `${destinatarioInput.value.length}/150`;
         }
     }
 
@@ -1609,9 +1612,150 @@ if (panelBtn) {
         });
     }
 
-    window.addEventListener('resize', () => {
-        renderExtrasZone();
+   async function imageToBase64(src) {
+    try {
+        if (!src || src.startsWith('data:')) return src;
 
+        const response = await fetch(src);
+        const blob = await response.blob();
+
+        return await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+        });
+    } catch (error) {
+        console.error('No se pudo convertir imagen:', src, error);
+        return src;
+    }
+}
+
+async function prepareImagesForCapture() {
+    const captureTarget = editorWrapper || designArea;
+    const images = Array.from(captureTarget.querySelectorAll('img'));
+    const backups = [];
+
+    for (const img of images) {
+        const originalSrc = img.getAttribute('src');
+
+        if (!originalSrc) continue;
+
+        backups.push({
+            img,
+            src: originalSrc,
+        });
+
+        const absoluteSrc = img.src;
+        img.src = await imageToBase64(absoluteSrc);
+    }
+
+    await Promise.all(
+        images.map(img => {
+            if (img.complete && img.naturalWidth > 0) {
+                return Promise.resolve();
+            }
+
+            return new Promise(resolve => {
+                img.onload = resolve;
+                img.onerror = resolve;
+            });
+        })
+    );
+
+    return backups;
+}
+
+function restoreImagesAfterCapture(backups) {
+    backups.forEach(item => {
+        item.img.src = item.src;
+    });
+}
+
+if (customizationForm && previewImageInput && designArea) {
+    customizationForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        document.querySelectorAll('.extra-hidden-input').forEach(input => input.remove());
+
+        selectedExtras.forEach(extra => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'extras[]';
+            input.value = extra.id;
+            input.className = 'extra-hidden-input';
+            customizationForm.appendChild(input);
+        });
+
+        if (saveDesignJson) {
+            saveDesignJson.value = JSON.stringify(exportDesignState());
+        }
+
+        localStorage.setItem(
+            'sandy_customization_' + (config.id || 'product'),
+            JSON.stringify(exportDesignState())
+        );
+
+        if (typeof html2canvas !== 'undefined') {
+            const backups = await prepareImagesForCapture();
+
+            const captureTarget = editorWrapper || designArea;
+
+            const canvas = await html2canvas(captureTarget, {
+            backgroundColor: '#fff4f8',
+            scale: 2,
+            useCORS: true,
+            allowTaint: true
+            });
+
+            previewImageInput.value = canvas.toDataURL('image/png');
+
+            restoreImagesAfterCapture(backups);
+        }
+
+        customizationForm.submit();
+    });
+}
+
+    function restoreSavedCustomization() {
+    const saved = localStorage.getItem('sandy_customization_' + (config.id || 'product'));
+
+    if (!saved) return;
+
+    try {
+        const state = JSON.parse(saved);
+
+        if (dedicatoriaInput && state.dedicatoria) {
+            dedicatoriaInput.value = state.dedicatoria;
+        }
+
+        if (destinatarioInput && state.destinatario) {
+            destinatarioInput.value = state.destinatario;
+        }
+
+        if (fraseInput && state.frase) {
+            fraseInput.value = state.frase;
+        }
+
+        if (state.color) {
+            const colorBtn = Array.from(colorButtons).find(btn => {
+                return (btn.dataset.color || '') === state.color;
+            });
+
+            if (colorBtn) {
+                applyColor(colorBtn.dataset.color || '', colorBtn.dataset.image || '');
+            }
+        }
+
+        updateCounters();
+        updateSummary();
+        renderTexts();
+    } catch (error) {
+        console.error('No se pudo restaurar la personalización:', error);
+    }
+}
+
+      window.addEventListener('resize', () => {
+        renderExtrasZone();
         renderCardZone();
 
         if (cardEnabled) {
@@ -1626,6 +1770,8 @@ if (panelBtn) {
             syncAdjustStage();
         }
     });
+
+    restoreSavedCustomization();
 
     renderExtrasZone();
 

@@ -10,14 +10,8 @@ use Illuminate\Support\Str;
 
 class CartController extends Controller
 {
-    /**
-     * Límite automático de palabras para la dedicatoria.
-     */
     private const DEDICATION_MAX_WORDS = 20;
 
-    /**
-     * Mostrar carrito
-     */
     public function index()
     {
         $cart = session()->get('cart', []);
@@ -29,9 +23,6 @@ class CartController extends Controller
         return view('client.cart.index', compact('cart', 'subtotal'));
     }
 
-    /**
-     * Agregar producto al carrito sin personalización
-     */
     public function buyAsIs(Request $request, Product $product)
     {
         if (!$product->activo) {
@@ -45,7 +36,9 @@ class CartController extends Controller
 
         if (isset($cart[$productId]) && empty($cart[$productId]['is_customized'])) {
             $cart[$productId]['quantity'] += 1;
-            $cart[$productId]['total'] = (float) $cart[$productId]['unit_price'] * (int) $cart[$productId]['quantity'];
+            $cart[$productId]['total'] =
+                (float) $cart[$productId]['unit_price'] *
+                (int) $cart[$productId]['quantity'];
         } else {
             $cart[$productId] = [
                 'id' => $productId,
@@ -53,6 +46,7 @@ class CartController extends Controller
                 'name' => $product->nombre,
                 'slug' => $product->slug,
                 'image' => $product->imagen_principal,
+                'preview_image' => null,
                 'quantity' => 1,
                 'base_price' => $basePrice,
                 'photo_price' => 0,
@@ -80,9 +74,6 @@ class CartController extends Controller
             ->with('success', 'Producto agregado al carrito correctamente.');
     }
 
-    /**
-     * Agregar producto personalizado al carrito
-     */
     public function add(Request $request, Product $product)
     {
         if (!$product->activo) {
@@ -91,6 +82,7 @@ class CartController extends Controller
 
         $validated = $request->validate([
             'quantity' => ['nullable', 'integer', 'min:1'],
+
             'dedicatoria' => [
                 'nullable',
                 'string',
@@ -102,14 +94,20 @@ class CartController extends Controller
                     }
                 },
             ],
+
             'destinatario' => ['nullable', 'string', 'max:100'],
             'frase' => ['nullable', 'string', 'max:255'],
             'selected_color' => ['nullable', 'string', 'max:100'],
             'color' => ['nullable', 'string', 'max:100'],
+
+            'preview_image' => ['nullable', 'string'],
             'design_json' => ['nullable', 'string'],
-            'customer_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+
+            'customer_photo' => ['nullable', 'file', 'max:10240'],
+
             'extras' => ['nullable', 'array'],
             'extras.*' => ['integer', 'exists:extras,id'],
+
             'custom_fields' => ['nullable', 'array'],
         ]);
 
@@ -155,6 +153,7 @@ class CartController extends Controller
             'name' => $product->nombre,
             'slug' => $product->slug,
             'image' => $product->imagen_principal,
+            'preview_image' => $validated['preview_image'] ?? null,
             'quantity' => $quantity,
             'base_price' => $basePrice,
             'photo_price' => $photoPrice,
@@ -171,6 +170,7 @@ class CartController extends Controller
             'photo' => $photoPath,
             'custom_fields' => $validated['custom_fields'] ?? [],
             'design_json' => $validated['design_json'] ?? null,
+
             'extras' => $selectedExtras->map(function ($extra) {
                 return [
                     'id' => $extra->id,
@@ -188,9 +188,19 @@ class CartController extends Controller
             ->with('success', 'Producto personalizado agregado al carrito correctamente.');
     }
 
-    /**
-     * Cuenta palabras ignorando espacios repetidos.
-     */
+    public function remove(string $itemId)
+{
+    $cart = session()->get('cart', []);
+
+    if (isset($cart[$itemId])) {
+        unset($cart[$itemId]);
+        session()->put('cart', $cart);
+    }
+
+    return redirect()
+        ->route('client.cart.index')
+        ->with('success', 'Producto eliminado del carrito.');
+}
     private function countWords(?string $text): int
     {
         $text = $this->normalizeSpaces($text);
@@ -202,9 +212,6 @@ class CartController extends Controller
         return count(preg_split('/\s+/', $text, -1, PREG_SPLIT_NO_EMPTY));
     }
 
-    /**
-     * Limpia espacios dobles y extremos.
-     */
     private function normalizeSpaces(?string $text): ?string
     {
         if ($text === null) {

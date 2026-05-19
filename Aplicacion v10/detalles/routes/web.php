@@ -65,6 +65,7 @@ Route::get('gallery', function () {
 Route::get('cart', [CartController::class, 'index'])->name('cart');
 Route::post('cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
 
+
 /*
 |--------------------------------------------------------------------------
 | CLIENTE (AUTENTICADO)
@@ -130,7 +131,8 @@ Route::middleware(['auth'])
 
         Route::post('carrito/agregar/{product}', [CartController::class, 'add'])
             ->name('cart.add');
-
+        Route::delete('carrito/eliminar/{itemId}', [CartController::class, 'remove'])
+    ->name('cart.remove');
         /*
         |--------------------------------------------------------------------------
         | PERSONALIZACIÓN VISUAL DEL PRODUCTO
