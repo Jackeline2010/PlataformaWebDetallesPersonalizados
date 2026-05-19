@@ -22,13 +22,14 @@
     </div>
 
     <form
-        id="add-to-cart-form"
+        id="customization-form"
         action="{{ route('client.cart.add', $product->id) }}"
         method="POST"
         enctype="multipart/form-data"
     >
         @csrf
 
+        <input type="hidden" name="preview_image" id="preview-image-input">
         <input type="hidden" name="quantity" value="1">
         <input type="hidden" id="selected-color" name="selected_color" value="">
         <input type="hidden" id="save-frase" name="frase" value="">
@@ -66,79 +67,79 @@
             <div class="min-w-0 space-y-6">
 
                 {{-- RESUMEN DE COMPRA --}}
-<div
-    class="bg-white rounded-2xl border border-pink-100 shadow-sm p-4"
-    id="purchase-summary"
-    data-base-price="{{ (float) $product->precio }}"
-    data-photo-price="{{ (float) ($product->photo_print_price ?? 0) }}"
->
-    <h3 class="text-base font-semibold text-gray-800 mb-4">
-        Resumen de compra
-    </h3>
+                <div
+                    class="bg-white rounded-2xl border border-pink-100 shadow-sm p-4"
+                    id="purchase-summary"
+                    data-base-price="{{ (float) $product->precio }}"
+                    data-photo-price="{{ (float) ($product->photo_print_price ?? 0) }}"
+                >
+                    <h3 class="text-base font-semibold text-gray-800 mb-4">
+                        Resumen de compra
+                    </h3>
 
-    <div class="space-y-3 text-sm">
-        <div class="flex justify-between gap-3">
-            <span class="text-gray-500">Producto base</span>
-            <span
-                id="base-total"
-                class="font-medium text-gray-800"
-                data-value="{{ (float) $product->precio }}"
-            >
-                ${{ number_format((float) $product->precio, 2) }}
-            </span>
-        </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between gap-3">
+                            <span class="text-gray-500">Producto base</span>
+                            <span
+                                id="base-total"
+                                class="font-medium text-gray-800"
+                                data-value="{{ (float) $product->precio }}"
+                            >
+                                ${{ number_format((float) $product->precio, 2) }}
+                            </span>
+                        </div>
 
-        <div class="flex justify-between gap-3">
-            <span class="text-gray-500">Foto impresa</span>
-            <span
-                id="photo-total"
-                class="font-medium text-gray-800"
-                data-value="0"
-            >
-                $0.00
-            </span>
-        </div>
+                        <div class="flex justify-between gap-3">
+                            <span class="text-gray-500">Foto impresa</span>
+                            <span
+                                id="photo-total"
+                                class="font-medium text-gray-800"
+                                data-value="0"
+                            >
+                                $0.00
+                            </span>
+                        </div>
 
-        <div class="flex justify-between gap-3">
-            <span class="text-gray-500">Extras</span>
-            <span
-                id="extras-total"
-                class="font-medium text-gray-800"
-                data-value="0"
-            >
-                $0.00
-            </span>
-        </div>
+                        <div class="flex justify-between gap-3">
+                            <span class="text-gray-500">Extras</span>
+                            <span
+                                id="extras-total"
+                                class="font-medium text-gray-800"
+                                data-value="0"
+                            >
+                                $0.00
+                            </span>
+                        </div>
 
-        <div class="flex justify-between gap-3">
-            <span class="text-gray-500">Personalización</span>
-            <span id="custom-total" class="font-medium text-gray-800">
-                Gratis
-            </span>
-        </div>
+                        <div class="flex justify-between gap-3">
+                            <span class="text-gray-500">Personalización</span>
+                            <span id="custom-total" class="font-medium text-gray-800">
+                                Gratis
+                            </span>
+                        </div>
 
-        <hr>
+                        <hr>
 
-        <div class="flex justify-between gap-3 text-base font-bold">
-            <span>Total</span>
-            <span
-                id="total-price"
-                class="text-pink-600"
-                data-value="{{ (float) $product->precio }}"
-            >
-                ${{ number_format((float) $product->precio, 2) }}
-            </span>
-        </div>
-    </div>
+                        <div class="flex justify-between gap-3 text-base font-bold">
+                            <span>Total</span>
+                            <span
+                                id="total-price"
+                                class="text-pink-600"
+                                data-value="{{ (float) $product->precio }}"
+                            >
+                                ${{ number_format((float) $product->precio, 2) }}
+                            </span>
+                        </div>
+                    </div>
 
-    <button
-        id="btn-add-cart"
-        type="submit"
-        class="w-full mt-5 bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition shadow-md"
-    >
-        Agregar al carrito
-    </button>
-</div>
+                    <button
+                        id="btn-add-cart"
+                        type="submit"
+                        class="w-full mt-5 bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition shadow-md"
+                    >
+                        Agregar al carrito
+                    </button>
+                </div>
 
                 {{-- EXTRAS --}}
                 @if(isset($extras) && $extras->count())
@@ -321,13 +322,14 @@
                             accept="image/*"
                             class="w-full text-sm text-gray-600 file:mr-3 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-pink-600 file:text-white file:text-sm hover:file:bg-pink-700"
                         >
-              <button
-                    type="button"
-                    id="restore-photo-btn"
-                    class="hidden mt-2 w-full rounded-xl border border-pink-200 bg-pink-50 px-4 py-2 text-sm font-semibold text-pink-600 hover:bg-pink-100 transition"
-                    >
-                    Agregar foto nuevamente
-              </button>
+
+                        <button
+                            type="button"
+                            id="restore-photo-btn"
+                            class="hidden mt-2 w-full rounded-xl border border-pink-200 bg-pink-50 px-4 py-2 text-sm font-semibold text-pink-600 hover:bg-pink-100 transition"
+                        >
+                            Agregar foto nuevamente
+                        </button>
 
                         <p class="text-xs text-gray-400 mt-2">
                             Sube una imagen clara para verla en la vista previa, medidas recomendadas 500 x 700px.
@@ -404,100 +406,107 @@
                     </div>
                 @endif
 
-                {{-- DESTINATARIO --}}
+                {{-- INDICACIONES ADICIONALES --}}
                 <div class="bg-white rounded-2xl border border-pink-100 shadow-sm p-4">
-                    <h3 class="text-base font-semibold text-gray-800 mb-3">
-                        Destinatario
-                    </h3>
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-semibold text-gray-800">
+                            Indicaciones adicionales
+                        </h3>
+
+                        <span class="text-xs text-pink-500">
+                            Opcional
+                        </span>
+                    </div>
 
                     <input
                         type="text"
                         id="input-destinatario"
-                        maxlength="30"
+                        maxlength="150"
                         class="w-full rounded-xl border border-pink-100 px-3 py-2 focus:border-pink-300 focus:ring focus:ring-pink-100"
-                        placeholder="Ejemplo: Para María"
+                        placeholder="Ejemplo: Deseo el lazo dorado o una nota especial"
                     >
 
                     <div class="flex justify-end mt-2">
-                        <span id="count-destinatario" class="text-xs text-gray-400">0/30</span>
+                        <span id="count-destinatario" class="text-xs text-gray-400">0/150</span>
                     </div>
                 </div>
             </div>
         </div>
     </form>
-</div>
 
-{{-- MODAL AJUSTE DE FOTO --}}
-<div
-    id="photo-adjust-modal"
-    class="fixed inset-0 z-[999] hidden items-center justify-center bg-black/70 px-4"
->
-    <div class="w-full max-w-xl rounded-2xl bg-white shadow-2xl overflow-hidden">
-        <div class="flex items-center justify-between px-5 py-4 border-b border-pink-100">
-            <div>
-                <h3 class="text-lg font-semibold text-gray-800">Ajusta tu foto dentro del marco</h3>
-                <p class="text-sm text-gray-500 mt-1">Muévela y acércala o aléjala hasta que quede como deseas.</p>
+    {{-- MODAL AJUSTE DE FOTO --}}
+    <div
+        id="photo-adjust-modal"
+        class="fixed inset-0 z-[999] hidden items-center justify-center bg-black/70 px-4"
+    >
+        <div class="w-full max-w-xl rounded-2xl bg-white shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-pink-100">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800">Ajusta tu foto dentro del marco</h3>
+                    <p class="text-sm text-gray-500 mt-1">Muévela y acércala o aléjala hasta que quede como deseas.</p>
+                </div>
+
+                <button
+                    type="button"
+                    id="close-photo-adjust-modal"
+                    class="w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 text-xl leading-none"
+                >
+                    ×
+                </button>
             </div>
 
-            <button
-                type="button"
-                id="close-photo-adjust-modal"
-                class="w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 text-xl leading-none"
-            >
-                ×
-            </button>
-        </div>
-
-        <div class="p-5">
-            <div
-    id="photo-adjust-stage"
-    class="relative w-full max-w-[360px] mx-auto rounded-2xl bg-gray-100 overflow-hidden border border-pink-100"
-    style="aspect-ratio: 1 / 1;"
->
+            <div class="p-5">
                 <div
-                id="photo-adjust-window"
-                class="absolute overflow-hidden"
-                style="
-                left: 18%;
-                top: 14%;
-                width: 64%;
-                height: 52%;
-                border-radius: 10px;
-                "
-            >
+                    id="photo-adjust-stage"
+                    class="relative w-full max-w-[360px] mx-auto rounded-2xl bg-gray-100 overflow-hidden border border-pink-100"
+                    style="aspect-ratio: 1 / 1;"
+                >
+                    <div
+                        id="photo-adjust-window"
+                        class="absolute overflow-hidden"
+                        style="
+                            left: 18%;
+                            top: 14%;
+                            width: 64%;
+                            height: 52%;
+                            border-radius: 10px;
+                        "
+                    >
+                        <img
+                            id="photo-adjust-image"
+                            alt="Ajuste de foto"
+                            class="select-none"
+                            draggable="false"
+                        >
+                    </div>
+
                     <img
-                        id="photo-adjust-image"
-                        alt="Ajuste de foto"
-                        class="select-none"
+                        id="photo-adjust-frame"
+                        src="{{ asset('storage/frames/portarretrato-vertical.png') }}"
+                        alt="Marco de foto"
+                        class="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
                         draggable="false"
                     >
                 </div>
 
-                <img
-                    id="photo-adjust-frame"
-                    src="{{ asset('storage/frames/portarretrato-vertical.png') }}"
-                    alt="Marco de foto"
-                    class="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
-                    draggable="false"
+                <input
+                    id="photo-zoom-range"
+                    type="range"
+                    min="0.65"
+                    max="5"
+                    step="0.01"
+                    value="1"
+                    class="w-full mt-4"
                 >
-            </div>
 
-            <input
-                id="photo-zoom-range"
-                type="range"
-                min="0.65"
-                max="5"
-                step="0.01"
-                value="1"
-                class="w-full mt-4"
-            >
-            <button
-                type="button"
-                id="save-photo-adjust"
-                class="w-full mt-5 bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
-            >
-                Guardar
-            </button>
+                <button
+                    type="button"
+                    id="save-photo-adjust"
+                    class="w-full mt-5 bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
+                >
+                    Guardar
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -515,182 +524,7 @@
         };
     </script>
 
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
     @vite('resources/js/customization-editor.js')
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const basePrice = {{ (float) $product->precio }};
-            const photoPrintPrice = {{ (float) ($product->photo_print_price ?? 0) }};
-
-            const extrasTotalEl = document.getElementById('extras-total');
-            const photoTotalEl = document.getElementById('photo-total');
-            const totalPriceEl = document.getElementById('total-price');
-            const customTotalEl = document.getElementById('custom-total');
-
-            const restorePhotoBtn = document.getElementById('restore-photo-btn');
-
-            const inputFoto = document.getElementById('input-foto');
-            const inputDedicatoria = document.getElementById('input-dedicatoria');
-            const inputDestinatario = document.getElementById('input-destinatario');
-            const hiddenDedicatoria = document.getElementById('save-dedicatoria');
-            const hiddenDestinatario = document.getElementById('save-destinatario');
-            const hiddenColor = document.getElementById('selected-color');
-            const saveColor = document.getElementById('save-color');
-            const extrasInputsContainer = document.getElementById('selected-extras-inputs');
-            const selectedColorLabel = document.getElementById('selected-color-label');
-
-            const countDedicatoria = document.getElementById('count-dedicatoria');
-            const countDestinatario = document.getElementById('count-destinatario');
-
-            const extraButtons = document.querySelectorAll('.add-extra-btn');
-            const colorButtons = document.querySelectorAll('.color-swatch');
-
-            const selectedExtras = new Map();
-
-            function formatMoney(value) {
-                return '$' + Number(value).toFixed(2);
-            }
-
-            function syncHiddenExtras() {
-                if (!extrasInputsContainer) return;
-
-                extrasInputsContainer.innerHTML = '';
-
-                selectedExtras.forEach((extra, id) => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'extras[]';
-                    input.value = id;
-                    extrasInputsContainer.appendChild(input);
-                });
-            }
-
-            function calculateTotals() {
-                let extrasTotal = 0;
-
-                selectedExtras.forEach((extra) => {
-                    extrasTotal += Number(extra.price || 0);
-                });
-
-                const photoTotal = (inputFoto && inputFoto.files && inputFoto.files.length > 0)
-                    ? photoPrintPrice
-                    : 0;
-
-                const total = basePrice + extrasTotal + photoTotal;
-
-                if (extrasTotalEl) extrasTotalEl.textContent = formatMoney(extrasTotal);
-                if (photoTotalEl) photoTotalEl.textContent = formatMoney(photoTotal);
-                if (customTotalEl) customTotalEl.textContent = 'Gratis';
-                if (totalPriceEl) totalPriceEl.textContent = formatMoney(total);
-            }
-
-            function countWords(text) {
-                return ((text || '').match(/\S+/g) || []).length;
-            }
-
-            function trimToMaxWords(text, maxWords) {
-                const words = (text || '').match(/\S+/g) || [];
-                if (words.length <= maxWords) return text;
-                return words.slice(0, maxWords).join(' ');
-            }
-
-            function updateDedicatoriaCounter() {
-                if (!inputDedicatoria || !countDedicatoria) return;
-
-                const maxWords = parseInt(inputDedicatoria.dataset.maxWords || '20', 10);
-                const currentValue = inputDedicatoria.value || '';
-                const words = currentValue.match(/\S+/g) || [];
-
-                if (words.length > maxWords) {
-                    inputDedicatoria.value = trimToMaxWords(currentValue, maxWords);
-                }
-
-                const totalWords = countWords(inputDedicatoria.value);
-                countDedicatoria.textContent = `${totalWords}/${maxWords} palabras`;
-
-                if (hiddenDedicatoria) {
-                    hiddenDedicatoria.value = inputDedicatoria.value;
-                }
-            }
-
-            function updateDestinatarioCounter() {
-                if (!inputDestinatario || !countDestinatario) return;
-                const max = inputDestinatario.getAttribute('maxlength') || 30;
-                countDestinatario.textContent = `${inputDestinatario.value.length}/${max}`;
-                if (hiddenDestinatario) hiddenDestinatario.value = inputDestinatario.value;
-            }
-
-            extraButtons.forEach((button) => {
-                button.addEventListener('click', () => {
-                    const extraId = button.dataset.extraId;
-                    const extraName = button.dataset.extraName || '';
-                    const extraPrice = parseFloat(button.dataset.extraPrice || '0');
-                    const extraImage = button.dataset.extraImage || '';
-                    const isSelected = button.dataset.selected === '1';
-
-                    if (isSelected) {
-                        button.dataset.selected = '0';
-                        button.textContent = 'Agregar';
-                        button.classList.remove('bg-gray-700');
-                        button.classList.add('bg-pink-600', 'hover:bg-pink-700');
-                        selectedExtras.delete(extraId);
-                    } else {
-                        button.dataset.selected = '1';
-                        button.textContent = 'Quitar';
-                        button.classList.remove('bg-pink-600', 'hover:bg-pink-700');
-                        button.classList.add('bg-gray-700');
-                        selectedExtras.set(extraId, {
-                            id: extraId,
-                            name: extraName,
-                            price: extraPrice,
-                            image: extraImage
-                        });
-                    }
-
-                    syncHiddenExtras();
-                    calculateTotals();
-                });
-            });
-
-            colorButtons.forEach((button) => {
-                button.addEventListener('click', () => {
-                    const color = button.dataset.color || '';
-
-                    if (hiddenColor) hiddenColor.value = color;
-                    if (saveColor) saveColor.value = color;
-
-                    if (selectedColorLabel) {
-                        selectedColorLabel.textContent = color && color.trim() !== '' ? color : 'Original';
-                    }
-
-                    colorButtons.forEach((btn) => {
-                        btn.classList.remove('ring-2', 'ring-pink-400', 'bg-pink-50', 'text-pink-700');
-                    });
-
-                    button.classList.add('ring-2', 'ring-pink-400', 'bg-pink-50', 'text-pink-700');
-                });
-            });
-
-            inputFoto?.addEventListener('change', () => {
-          // Oculta el botón de restaurar si ya hay foto
-           if (inputFoto.files && inputFoto.files.length > 0) {
-        restorePhotoBtn?.classList.add('hidden');
-         }
-
-         calculateTotals();
-        });
-
-        restorePhotoBtn?.addEventListener('click', () => {
-        inputFoto?.click();
-        });
-
-            inputDedicatoria?.addEventListener('input', updateDedicatoriaCounter);
-            inputDestinatario?.addEventListener('input', updateDestinatarioCounter);
-
-            updateDedicatoriaCounter();
-            updateDestinatarioCounter();
-            syncHiddenExtras();
-            calculateTotals();
-        });
-    </script>
 @endpush
