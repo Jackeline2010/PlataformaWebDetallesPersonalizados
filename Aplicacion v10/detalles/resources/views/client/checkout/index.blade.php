@@ -34,9 +34,7 @@
             <div class="lg:col-span-2 space-y-5">
 
                 <div class="bg-white rounded-2xl border border-pink-100 shadow-sm p-5 space-y-4">
-                    <h2 class="text-lg font-bold text-gray-800">
-                        Forma de entrega
-                    </h2>
+                    <h2 class="text-lg font-bold text-gray-800">Forma de entrega</h2>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <label class="cursor-pointer rounded-2xl border border-pink-100 bg-pink-50 p-4 flex gap-3 items-start">
@@ -48,7 +46,7 @@
                             <div>
                                 <p class="font-semibold text-gray-800">Entrega a domicilio</p>
                                 <p class="text-sm text-gray-500">
-                                    El pedido será entregado en la dirección indicada.
+                                    Solo disponible dentro de la ciudad.
                                 </p>
                             </div>
                         </label>
@@ -70,9 +68,7 @@
                 </div>
 
                 <div class="bg-white rounded-2xl border border-pink-100 shadow-sm p-5 space-y-4">
-                    <h2 class="text-lg font-bold text-gray-800">
-                        Datos de entrega
-                    </h2>
+                    <h2 class="text-lg font-bold text-gray-800">Datos de entrega</h2>
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-1">
@@ -97,6 +93,30 @@
                                placeholder="Ejemplo: 0999999999">
                     </div>
 
+                    <div id="zona-entrega-wrapper">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">
+                            Zona de entrega
+                        </label>
+
+                        <select name="zona_entrega"
+                                id="zona_entrega"
+                                class="w-full rounded-xl border border-pink-100 px-4 py-2 focus:border-pink-300 focus:ring focus:ring-pink-100">
+                            <option value="centro" {{ old('zona_entrega', 'centro') === 'centro' ? 'selected' : '' }}>
+                                Centro de la ciudad - $3.00
+                            </option>
+                            <option value="urbana" {{ old('zona_entrega') === 'urbana' ? 'selected' : '' }}>
+                                Zona urbana dentro de la ciudad - $4.00
+                            </option>
+                            <option value="lejana" {{ old('zona_entrega') === 'lejana' ? 'selected' : '' }}>
+                                Zona lejana dentro de la ciudad - $5.00
+                            </option>
+                        </select>
+
+                        <p class="text-xs text-gray-500 mt-1">
+                            No se realizan entregas fuera de la ciudad.
+                        </p>
+                    </div>
+
                     <div id="direccion-entrega-wrapper">
                         <label class="block text-sm font-semibold text-gray-700 mb-1">
                             Dirección de entrega
@@ -109,7 +129,7 @@
                     </div>
 
                     <div id="retiro-tienda-info" class="hidden rounded-xl bg-pink-50 border border-pink-100 p-4 text-sm text-gray-600">
-                        Has seleccionado retiro en tienda física. No necesitas ingresar dirección de entrega.
+                        Has seleccionado retiro en tienda física. No necesitas ingresar dirección ni zona de entrega.
                     </div>
 
                     <div>
@@ -191,16 +211,16 @@
                     </div>
 
                     <div class="flex justify-between text-sm text-gray-600 mb-3">
-                        <span>Envío</span>
-                        <span>$0.00</span>
+                        <span id="shipping-label">Envío a domicilio</span>
+                        <span id="shipping-value">${{ number_format((float) $shipping, 2) }}</span>
                     </div>
 
                     <div class="border-t border-pink-100 my-4"></div>
 
                     <div class="flex justify-between text-base font-bold text-gray-800 mb-4">
                         <span>Total</span>
-                        <span class="text-pink-600">
-                            ${{ number_format((float) $subtotal, 2) }}
+                        <span id="total-value" class="text-pink-600">
+                            ${{ number_format((float) $total, 2) }}
                         </span>
                     </div>
 
@@ -225,28 +245,76 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const SHIPPING_COSTS = {
+            centro: 2.00,
+            urbana: 3.00,
+            lejana: 4.00
+        };
+
         const radios = document.querySelectorAll('input[name="tipo_entrega"]');
+        const zonaEntregaWrapper = document.getElementById('zona-entrega-wrapper');
+        const zonaEntregaInput = document.getElementById('zona_entrega');
+
         const direccionWrapper = document.getElementById('direccion-entrega-wrapper');
         const direccionInput = document.getElementById('direccion_entrega');
         const retiroInfo = document.getElementById('retiro-tienda-info');
 
+        const shippingLabel = document.getElementById('shipping-label');
+        const shippingValue = document.getElementById('shipping-value');
+        const totalValue = document.getElementById('total-value');
+
+        const subtotal = {{ (float) $subtotal }};
+
+        function formatMoney(value) {
+            return '$' + Number(value).toFixed(2);
+        }
+
+        function getSelectedDeliveryType() {
+            return document.querySelector('input[name="tipo_entrega"]:checked')?.value || 'domicilio';
+        }
+
+        function getSelectedZoneCost() {
+            const zone = zonaEntregaInput?.value || 'centro';
+            return SHIPPING_COSTS[zone] ?? SHIPPING_COSTS.centro;
+        }
+
         function updateDeliveryType() {
-            const selected = document.querySelector('input[name="tipo_entrega"]:checked')?.value || 'domicilio';
+            const selected = getSelectedDeliveryType();
 
             if (selected === 'retiro_tienda') {
+                zonaEntregaWrapper.classList.add('hidden');
                 direccionWrapper.classList.add('hidden');
                 retiroInfo.classList.remove('hidden');
+
+                zonaEntregaInput.removeAttribute('required');
                 direccionInput.removeAttribute('required');
-            } else {
-                direccionWrapper.classList.remove('hidden');
-                retiroInfo.classList.add('hidden');
-                direccionInput.setAttribute('required', 'required');
+
+                shippingLabel.textContent = 'Retiro en tienda';
+                shippingValue.textContent = '$0.00';
+                totalValue.textContent = formatMoney(subtotal);
+
+                return;
             }
+
+            zonaEntregaWrapper.classList.remove('hidden');
+            direccionWrapper.classList.remove('hidden');
+            retiroInfo.classList.add('hidden');
+
+            zonaEntregaInput.setAttribute('required', 'required');
+            direccionInput.setAttribute('required', 'required');
+
+            const shipping = getSelectedZoneCost();
+
+            shippingLabel.textContent = 'Envío a domicilio';
+            shippingValue.textContent = formatMoney(shipping);
+            totalValue.textContent = formatMoney(subtotal + shipping);
         }
 
         radios.forEach(function (radio) {
             radio.addEventListener('change', updateDeliveryType);
         });
+
+        zonaEntregaInput.addEventListener('change', updateDeliveryType);
 
         updateDeliveryType();
     });

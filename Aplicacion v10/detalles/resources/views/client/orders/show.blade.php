@@ -203,6 +203,12 @@
                         <span>Impuestos</span>
                         <span>${{ number_format((float) ($impuesto ?? $order->impuesto ?? 0), 2) }}</span>
                     </div>
+
+                    <div class="flex justify-between text-gray-600">
+                    <span>Costo de entrega</span>
+                    <span>${{ number_format((float) ($costoEntrega ?? $order->costo_entrega ?? 0), 2) }}</span>
+                    </div>
+
                 </div>
 
                 <div class="border-t border-pink-100 pt-4 mt-4 flex justify-between text-lg font-bold text-pink-600">
@@ -210,6 +216,12 @@
                     <span>${{ number_format((float) ($total ?? $order->total ?? 0), 2) }}</span>
                 </div>
 
+                @if(($order->estado_pago ?? 'PENDIENTE') !== 'PAGADO')
+                <a href="{{ route('client.payment.index', $order) }}"
+               class="mb-3 w-full inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition">
+                Proceder al pago
+                 </a>
+            @endif
                 <a href="{{ route('client.orders') }}"
                    class="mt-6 w-full inline-flex items-center justify-center bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition">
                     Ver mis pedidos
