@@ -11,64 +11,64 @@ use Illuminate\Support\Str;
 class CartController extends Controller
 {
     private const DEDICATION_MAX_WORDS = 20;
+    private const COSTO_ENTREGA_DOMICILIO = 2.00;
 
     public function index()
-{
-    $cart = session()->get('cart', []);
-
-    $subtotal = collect($cart)->sum(function ($item) {
-        return (float) ($item['total'] ?? 0);
-    });
-
-    $productsCount = collect($cart)->sum(function ($item) {
-        return (int) ($item['quantity'] ?? 1);
-    });
-
-    $shipping = 0;
-    $discount = 0;
-
-    $total = $subtotal + $shipping - $discount;
-
-    return view('client.cart.index', compact(
-        'cart',
-        'subtotal',
-        'productsCount',
-        'shipping',
-        'discount',
-        'total'
-    ));
-}
-  public function checkout()
     {
-    $cart = session()->get('cart', []);
+        $cart = session()->get('cart', []);
 
-    if (empty($cart)) {
-        return redirect()
-            ->route('client.cart.index')
-            ->with('error', 'Tu carrito está vacío.');
+        $subtotal = collect($cart)->sum(function ($item) {
+            return (float) ($item['total'] ?? 0);
+        });
+
+        $productsCount = collect($cart)->sum(function ($item) {
+            return (int) ($item['quantity'] ?? 1);
+        });
+
+        $shipping = 0;
+        $discount = 0;
+        $total = $subtotal + $shipping - $discount;
+
+        return view('client.cart.index', compact(
+            'cart',
+            'subtotal',
+            'productsCount',
+            'shipping',
+            'discount',
+            'total'
+        ));
     }
 
-    $subtotal = collect($cart)->sum(function ($item) {
-        return (float) ($item['total'] ?? 0);
-    });
+    public function checkout()
+    {
+        $cart = session()->get('cart', []);
 
-    $productsCount = collect($cart)->sum(function ($item) {
-        return (int) ($item['quantity'] ?? 1);
-    });
+        if (empty($cart)) {
+            return redirect()
+                ->route('client.cart.index')
+                ->with('error', 'Tu carrito está vacío.');
+        }
 
-    $shipping = 0;
-    $discount = 0;
+        $subtotal = collect($cart)->sum(function ($item) {
+            return (float) ($item['total'] ?? 0);
+        });
 
-    $total = $subtotal + $shipping - $discount;
+        $productsCount = collect($cart)->sum(function ($item) {
+            return (int) ($item['quantity'] ?? 1);
+        });
 
-    return view('client.checkout.index', compact(
-        'cart',
-        'subtotal',
-        'productsCount',
-        'shipping',
-        'discount',
-        'total'
-    ));
+        $shipping = self::COSTO_ENTREGA_DOMICILIO;
+        $discount = 0;
+        $total = $subtotal + $shipping - $discount;
+
+        return view('client.checkout.index', compact(
+            'cart',
+            'subtotal',
+            'productsCount',
+            'shipping',
+            'discount',
+            'total'
+        ));
     }
 
     public function buyAsIs(Request $request, Product $product)
@@ -237,39 +237,36 @@ class CartController extends Controller
     }
 
     public function remove(string $itemId)
-{
-    $cart = session()->get('cart', []);
+    {
+        $cart = session()->get('cart', []);
 
-    if (isset($cart[$itemId])) {
-        unset($cart[$itemId]);
-        session()->put('cart', $cart);
+        if (isset($cart[$itemId])) {
+            unset($cart[$itemId]);
+            session()->put('cart', $cart);
+        }
+
+        return redirect()
+            ->route('client.cart.index')
+            ->with('success', 'Producto eliminado del carrito.');
     }
-
-    return redirect()
-        ->route('client.cart.index')
-        ->with('success', 'Producto eliminado del carrito.');
-    }
-
 
     public function updateQuantity(Request $request, string $itemId)
-{
-    $cart = session()->get('cart', []);
+    {
+        $cart = session()->get('cart', []);
 
-    if (!isset($cart[$itemId])) {
-        return back();
+        if (!isset($cart[$itemId])) {
+            return back();
+        }
+
+        $quantity = max(1, (int) $request->quantity);
+
+        $cart[$itemId]['quantity'] = $quantity;
+        $cart[$itemId]['total'] = (float) $cart[$itemId]['unit_price'] * $quantity;
+
+        session()->put('cart', $cart);
+
+        return back()->with('success', 'Cantidad actualizada.');
     }
-
-    $quantity = max(1, (int) $request->quantity);
-
-    $cart[$itemId]['quantity'] = $quantity;
-
-    $cart[$itemId]['total'] =
-        (float) $cart[$itemId]['unit_price'] * $quantity;
-
-    session()->put('cart', $cart);
-
-    return back()->with('success', 'Cantidad actualizada.');
-}
 
     private function countWords(?string $text): int
     {

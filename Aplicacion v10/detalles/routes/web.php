@@ -71,10 +71,10 @@ Route::post('cart/add/{product}', [CartController::class, 'add'])->name('cart.ad
 | CLIENTE (AUTENTICADO)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])
-    ->prefix('cliente')
-    ->name('client.')
-    ->group(function () {
+        Route::middleware(['auth'])
+         ->prefix('cliente')
+         ->name('client.')
+         ->group(function () {
 
         Route::get('dashboard', [\App\Http\Controllers\Client\DashboardController::class, 'index'])
             ->name('dashboard');
@@ -92,10 +92,16 @@ Route::middleware(['auth'])
             ->name('profile.update');
 
         Route::get('checkout', [CartController::class, 'checkout'])
-        ->name('checkout');
+            ->name('checkout');
 
         Route::post('checkout/confirm', [\App\Http\Controllers\Client\OrderController::class, 'store'])
-        ->name('checkout.store');
+            ->name('checkout.store');
+
+        Route::get('orders/{order}/payment', [\App\Http\Controllers\Client\PaymentController::class, 'index'])
+            ->name('payment.index');
+
+        Route::post('orders/{order}/payment', [\App\Http\Controllers\Client\PaymentController::class, 'store'])
+            ->name('payment.store');
 
         /*
         |--------------------------------------------------------------------------

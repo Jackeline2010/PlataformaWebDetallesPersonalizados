@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
+    private const COSTO_ENTREGA_DOMICILIO = 2.00;
+
     public function index()
     {
         $orders = Order::with(['orderProducts.product', 'orderProducts.customizations'])
@@ -38,6 +40,7 @@ class OrderController extends Controller
         $subtotal = (float) ($order->subtotal ?? 0);
         $descuento = (float) ($order->descuento ?? 0);
         $impuesto = (float) ($order->impuesto ?? 0);
+        $costoEntrega = (float) ($order->costo_entrega ?? 0);
         $total = (float) ($order->total ?? 0);
 
         return view('client.orders.show', compact(
@@ -46,6 +49,7 @@ class OrderController extends Controller
             'subtotal',
             'descuento',
             'impuesto',
+            'costoEntrega',
             'total'
         ));
     }
@@ -54,6 +58,7 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'tipo_entrega' => ['required', 'string'],
+            'zona_entrega' => ['nullable', 'string'],
 
             'direccion_entrega' => [
                 'nullable',
@@ -79,13 +84,30 @@ class OrderController extends Controller
             return (float) ($item['total'] ?? 0);
         });
 
+        if ($validated['tipo_entrega'] === 'retiro_tienda') {
+
+        $costoEntrega = 0.00;
+
+        } else {
+
+        $zonaEntrega = $request->zona_entrega ?? 'centro';
+        $costoEntrega = match ($zonaEntrega) {
+
+        'centro' => 3.00,
+        'urbana' => 4.00,
+        'lejana' => 5.00,
+
+        default => 2.00,
+    };
+}
+
         $impuesto = 0;
         $descuento = 0;
-        $total = $subtotal + $impuesto - $descuento;
+        $total = $subtotal + $costoEntrega + $impuesto - $descuento;
 
         $order = null;
 
-        DB::transaction(function () use ($cart, $subtotal, $impuesto, $descuento, $total, $validated, &$order) {
+        DB::transaction(function () use ($cart, $subtotal, $costoEntrega, $impuesto, $descuento, $total, $validated, &$order) {
             $user = Auth::user();
 
             $client = $user->client;
@@ -114,6 +136,7 @@ class OrderController extends Controller
                 'fentrega' => null,
                 'estado' => 'PEN',
                 'tipo_entrega' => $validated['tipo_entrega'],
+                'costo_entrega' => $costoEntrega,
                 'subtotal' => $subtotal,
                 'impuesto' => $impuesto,
                 'descuento' => $descuento,
