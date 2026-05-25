@@ -249,4 +249,27 @@ class OrderController extends Controller
             ->route('client.orders.show', $order)
             ->with('success', 'Tu pedido fue registrado correctamente.');
     }
+    public function cancel(Order $order)
+{
+    if ((int) $order->user_id !== (int) Auth::id()) {
+        abort(403);
+    }
+
+    if (($order->estado_pago ?? 'PENDIENTE') === 'PAGADO') {
+        return back()->with('error', 'No puedes cancelar un pedido que ya tiene el pago registrado.');
+    }
+
+    if (!in_array($order->estado, ['PEN', 'ING'])) {
+        return back()->with('error', 'Este pedido ya no puede ser cancelado.');
+    }
+
+    $order->update([
+        'estado' => 'CAN',
+    ]);
+
+    return redirect()
+        ->route('client.orders')
+        ->with('success', 'Pedido cancelado correctamente.');
+}
+
 }

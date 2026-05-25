@@ -103,6 +103,9 @@ Route::post('cart/add/{product}', [CartController::class, 'add'])->name('cart.ad
         Route::post('orders/{order}/payment', [\App\Http\Controllers\Client\PaymentController::class, 'store'])
             ->name('payment.store');
 
+        Route::patch('orders/{order}/cancel', [\App\Http\Controllers\Client\OrderController::class, 'cancel'])
+         ->name('orders.cancel');
+
         /*
         |--------------------------------------------------------------------------
         | CATÁLOGO DE PRODUCTOS

@@ -5,6 +5,18 @@
 @section('content')
 @php
     $productCount = collect($orderItems ?? [])->sum(fn($item) => (int) ($item->cantidad ?? 1));
+
+    $metodoPagoLabel = [
+        'transferencia' => 'Transferencia bancaria',
+        'efectivo' => 'Pago en efectivo',
+        'tarjeta_debito' => 'Tarjeta de débito',
+    ][$order->metodo_pago] ?? 'No registrado';
+
+    $estadoPagoLabel = [
+        'PENDIENTE' => 'Pendiente',
+        'PAGADO' => 'Pagado',
+        'RECHAZADO' => 'Rechazado',
+    ][$order->estado_pago ?? 'PENDIENTE'] ?? 'Pendiente';
 @endphp
 
 <div class="max-w-6xl mx-auto px-4 md:px-6 py-8">
@@ -180,7 +192,7 @@
         </div>
 
         <div>
-            <div class="bg-white rounded-2xl border border-pink-100 shadow-sm p-6 sticky top-6">
+            <div class="bg-white rounded-2xl border border-pink-100 shadow-sm p-6 lg:sticky lg:top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Resumen</h2>
 
                 <div class="space-y-3 text-sm">
@@ -195,6 +207,11 @@
                     </div>
 
                     <div class="flex justify-between text-gray-600">
+                        <span>Costo de entrega</span>
+                        <span>${{ number_format((float) ($costoEntrega ?? $order->costo_entrega ?? 0), 2) }}</span>
+                    </div>
+
+                    <div class="flex justify-between text-gray-600">
                         <span>Descuento</span>
                         <span>${{ number_format((float) ($descuento ?? $order->descuento ?? 0), 2) }}</span>
                     </div>
@@ -204,11 +221,30 @@
                         <span>${{ number_format((float) ($impuesto ?? $order->impuesto ?? 0), 2) }}</span>
                     </div>
 
-                    <div class="flex justify-between text-gray-600">
-                    <span>Costo de entrega</span>
-                    <span>${{ number_format((float) ($costoEntrega ?? $order->costo_entrega ?? 0), 2) }}</span>
-                    </div>
+                    <div class="border-t border-pink-100 pt-3 mt-3 space-y-3">
+                        <div class="flex justify-between text-gray-600">
+                            <span>Método de pago</span>
+                            <span class="font-semibold text-gray-800 text-right">
+                                {{ $metodoPagoLabel }}
+                            </span>
+                        </div>
 
+                        <div class="flex justify-between text-gray-600">
+                            <span>Estado del pago</span>
+                            <span class="font-semibold {{ ($order->estado_pago ?? 'PENDIENTE') === 'PAGADO' ? 'text-green-600' : 'text-yellow-600' }}">
+                                {{ $estadoPagoLabel }}
+                            </span>
+                        </div>
+
+                        @if(!empty($order->referencia_pago))
+                            <div class="flex justify-between text-gray-600 gap-3">
+                                <span>Referencia</span>
+                                <span class="font-semibold text-gray-800 text-right">
+                                    {{ $order->referencia_pago }}
+                                </span>
+                            </div>
+                        @endif
+                    </div>
                 </div>
 
                 <div class="border-t border-pink-100 pt-4 mt-4 flex justify-between text-lg font-bold text-pink-600">
@@ -216,14 +252,18 @@
                     <span>${{ number_format((float) ($total ?? $order->total ?? 0), 2) }}</span>
                 </div>
 
-                @if(($order->estado_pago ?? 'PENDIENTE') !== 'PAGADO')
-                <a href="{{ route('client.payment.index', $order) }}"
-               class="mb-3 w-full inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition">
-                Proceder al pago
-                 </a>
-            @endif
+                @if(
+    ($order->estado_pago ?? 'PENDIENTE') !== 'PAGADO'
+    && ($order->estado ?? 'PEN') !== 'CAN'
+)
+                    <a href="{{ route('client.payment.index', $order) }}"
+                       class="mt-4 w-full inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition">
+                        Proceder al pago
+                    </a>
+                @endif
+
                 <a href="{{ route('client.orders') }}"
-                   class="mt-6 w-full inline-flex items-center justify-center bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition">
+                   class="mt-3 w-full inline-flex items-center justify-center bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition">
                     Ver mis pedidos
                 </a>
 
