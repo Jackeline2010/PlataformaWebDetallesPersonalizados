@@ -3,7 +3,7 @@
 @section('title', 'Método de pago')
 
 @section('content')
-<div class="max-w-4xl mx-auto px-6 py-10">
+<div class="max-w-5xl mx-auto px-6 py-10">
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-800">
             Selecciona método de pago
@@ -13,8 +13,21 @@
         </p>
     </div>
 
+    @if(session('success'))
+        <div class="mb-6 bg-green-50 border border-green-200 text-green-700 p-4 rounded-xl">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="mb-6 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl">
+            {{ session('error') }}
+        </div>
+    @endif
+
     @if($errors->any())
         <div class="mb-6 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl">
+            <p class="font-semibold mb-2">Corrige los siguientes campos:</p>
             <ul class="list-disc list-inside text-sm">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -28,11 +41,19 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 space-y-4">
-                <label class="block cursor-pointer bg-white border border-pink-100 rounded-2xl p-5 shadow-sm">
+
+                <label class="payment-option block cursor-pointer bg-white border border-pink-100 rounded-2xl p-5 shadow-sm hover:border-pink-300 transition">
                     <div class="flex gap-3">
-                        <input type="radio" name="metodo_pago" value="transferencia" class="mt-1 text-pink-600" required>
+                        <input type="radio"
+                               name="metodo_pago"
+                               value="transferencia"
+                               class="mt-1 text-pink-600"
+                               required
+                               {{ old('metodo_pago') === 'transferencia' ? 'checked' : '' }}>
                         <div>
-                            <h3 class="font-bold text-gray-800">Transferencia bancaria</h3>
+                            <h3 class="font-bold text-gray-800">
+                                Transferencia bancaria
+                            </h3>
                             <p class="text-sm text-gray-500 mt-1">
                                 El pedido quedará pendiente hasta validar el comprobante.
                             </p>
@@ -40,11 +61,34 @@
                     </div>
                 </label>
 
-                <label class="block cursor-pointer bg-white border border-pink-100 rounded-2xl p-5 shadow-sm">
+                <div id="transferencia-info" class="hidden bg-pink-50 border border-pink-100 rounded-2xl p-5 text-sm text-gray-700">
+                    <h4 class="font-bold text-gray-800 mb-2">
+                        Datos para transferencia
+                    </h4>
+
+                    <div class="space-y-1">
+                        <p><strong>Banco:</strong> Banco Pichincha</p>
+                        <p><strong>Cuenta:</strong> Ahorros 0000000000</p>
+                        <p><strong>Titular:</strong> SandyDecor</p>
+                        <p><strong>Correo:</strong> sandydecor@example.com</p>
+                    </div>
+
+                    <p class="mt-3 text-gray-500">
+                        Luego de realizar la transferencia, ingresa el número de comprobante o referencia.
+                    </p>
+                </div>
+
+                <label class="payment-option block cursor-pointer bg-white border border-pink-100 rounded-2xl p-5 shadow-sm hover:border-pink-300 transition">
                     <div class="flex gap-3">
-                        <input type="radio" name="metodo_pago" value="efectivo" class="mt-1 text-pink-600">
+                        <input type="radio"
+                               name="metodo_pago"
+                               value="efectivo"
+                               class="mt-1 text-pink-600"
+                               {{ old('metodo_pago') === 'efectivo' ? 'checked' : '' }}>
                         <div>
-                            <h3 class="font-bold text-gray-800">Pago en efectivo</h3>
+                            <h3 class="font-bold text-gray-800">
+                                Pago en efectivo
+                            </h3>
                             <p class="text-sm text-gray-500 mt-1">
                                 El pago se realizará al retirar en tienda o al recibir el pedido.
                             </p>
@@ -52,45 +96,85 @@
                     </div>
                 </label>
 
-                <label class="block cursor-pointer bg-white border border-pink-100 rounded-2xl p-5 shadow-sm">
+                <div id="efectivo-info" class="hidden bg-pink-50 border border-pink-100 rounded-2xl p-5 text-sm text-gray-700">
+                    <h4 class="font-bold text-gray-800 mb-2">
+                        Pago en efectivo
+                    </h4>
+                    <p>
+                        El pedido se mantendrá como pago pendiente hasta que el administrador confirme la entrega o retiro.
+                    </p>
+                </div>
+
+                <label class="payment-option block cursor-pointer bg-white border border-pink-100 rounded-2xl p-5 shadow-sm hover:border-pink-300 transition">
                     <div class="flex gap-3">
-                        <input type="radio" name="metodo_pago" value="tarjeta_debito" class="mt-1 text-pink-600">
+                        <input type="radio"
+                               name="metodo_pago"
+                               value="tarjeta_debito"
+                               class="mt-1 text-pink-600"
+                               {{ old('metodo_pago') === 'tarjeta_debito' ? 'checked' : '' }}>
                         <div>
-                            <h3 class="font-bold text-gray-800">Tarjeta de débito</h3>
+                            <h3 class="font-bold text-gray-800">
+                                Tarjeta de débito
+                            </h3>
                             <p class="text-sm text-gray-500 mt-1">
-                                Por ahora se simulará el pago como aprobado.
+                                Para esta versión se simulará el pago como aprobado.
                             </p>
                         </div>
                     </div>
                 </label>
 
-                <div class="bg-white border border-pink-100 rounded-2xl p-5 shadow-sm">
+                <div id="tarjeta-info" class="hidden bg-green-50 border border-green-100 rounded-2xl p-5 text-sm text-green-700">
+                    <h4 class="font-bold text-green-800 mb-2">
+                        Pago con tarjeta de débito
+                    </h4>
+                    <p>
+                        El sistema registrará este pago como aprobado para simular una pasarela de pago.
+                    </p>
+                    <p class="mt-2">
+                        En una versión real, aquí se conectaría una pasarela como PayPhone, Datafast, Kushki o Stripe.
+                    </p>
+                </div>
+
+                <div id="referencia-wrapper" class="bg-white border border-pink-100 rounded-2xl p-5 shadow-sm">
                     <label class="block text-sm font-semibold text-gray-700 mb-1">
                         Referencia o comprobante
                     </label>
                     <input type="text"
+                           id="referencia_pago"
                            name="referencia_pago"
                            value="{{ old('referencia_pago') }}"
                            class="w-full rounded-xl border border-pink-100 px-4 py-2 focus:border-pink-300 focus:ring focus:ring-pink-100"
                            placeholder="Ejemplo: número de transferencia o referencia">
+                    <p id="referencia-help" class="text-xs text-gray-500 mt-2">
+                        Para transferencia bancaria, este campo es obligatorio.
+                    </p>
                 </div>
             </div>
 
             <div>
-                <div class="bg-white border border-pink-100 rounded-2xl p-6 shadow-sm sticky top-6">
+                <div class="bg-white border border-pink-100 rounded-2xl p-6 shadow-sm lg:sticky lg:top-24">
                     <h2 class="text-lg font-bold text-gray-800 mb-4">
                         Resumen
                     </h2>
 
-                    <div class="flex justify-between text-sm text-gray-600 mb-3">
-                        <span>Total a pagar</span>
-                        <span class="font-bold text-pink-600">
-                            ${{ number_format((float) $order->total, 2) }}
-                        </span>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between text-gray-600">
+                            <span>Total a pagar</span>
+                            <span class="font-bold text-pink-600">
+                                ${{ number_format((float) $order->total, 2) }}
+                            </span>
+                        </div>
+
+                        <div class="flex justify-between text-gray-600">
+                            <span>Estado actual</span>
+                            <span class="font-semibold text-yellow-600">
+                                {{ $order->estado_pago ?? 'PENDIENTE' }}
+                            </span>
+                        </div>
                     </div>
 
                     <button type="submit"
-                            class="w-full mt-4 bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition">
+                            class="w-full mt-5 bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition">
                         Confirmar método de pago
                     </button>
 
@@ -103,4 +187,50 @@
         </div>
     </form>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const radios = document.querySelectorAll('input[name="metodo_pago"]');
+
+        const transferenciaInfo = document.getElementById('transferencia-info');
+        const efectivoInfo = document.getElementById('efectivo-info');
+        const tarjetaInfo = document.getElementById('tarjeta-info');
+
+        const referenciaWrapper = document.getElementById('referencia-wrapper');
+        const referenciaInput = document.getElementById('referencia_pago');
+        const referenciaHelp = document.getElementById('referencia-help');
+
+        function updatePaymentMethod() {
+            const selected = document.querySelector('input[name="metodo_pago"]:checked')?.value;
+
+            transferenciaInfo.classList.add('hidden');
+            efectivoInfo.classList.add('hidden');
+            tarjetaInfo.classList.add('hidden');
+
+            referenciaWrapper.classList.add('hidden');
+            referenciaInput.removeAttribute('required');
+
+            if (selected === 'transferencia') {
+                transferenciaInfo.classList.remove('hidden');
+                referenciaWrapper.classList.remove('hidden');
+                referenciaInput.setAttribute('required', 'required');
+                referenciaHelp.textContent = 'Ingresa el número de comprobante de la transferencia.';
+            }
+
+            if (selected === 'efectivo') {
+                efectivoInfo.classList.remove('hidden');
+            }
+
+            if (selected === 'tarjeta_debito') {
+                tarjetaInfo.classList.remove('hidden');
+            }
+        }
+
+        radios.forEach(function (radio) {
+            radio.addEventListener('change', updatePaymentMethod);
+        });
+
+        updatePaymentMethod();
+    });
+</script>
 @endsection
