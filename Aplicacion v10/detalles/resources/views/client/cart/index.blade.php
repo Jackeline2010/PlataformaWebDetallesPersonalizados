@@ -6,12 +6,12 @@
 
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-800">Mi carrito</h1>
-        <a
-    href="{{ url()->previous() }}"
-    class="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-xl border border-pink-200 bg-white text-pink-600 hover:bg-pink-50 text-sm font-semibold"
->
-    ← Regresar a personalización
-</a>
+
+        <a href="{{ url()->previous() }}"
+           class="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-xl border border-pink-200 bg-white text-pink-600 hover:bg-pink-50 text-sm font-semibold">
+            ← Regresar a personalización
+        </a>
+
         <p class="text-sm text-gray-500 mt-1">
             Revisa los productos agregados antes de continuar.
         </p>
@@ -41,22 +41,22 @@
                     <div class="bg-white border border-pink-100 rounded-2xl shadow-sm p-4">
                         <div class="flex gap-4">
                             <div class="w-48 h-48 rounded-2xl overflow-hidden border border-pink-100 bg-pink-50 flex items-center justify-center flex-shrink-0">
-    @if(!empty($item['preview_image']))
-        <img
-            src="{{ $item['preview_image'] }}"
-            alt="Diseño personalizado de {{ $item['name'] }}"
-            class="w-full h-full object-contain bg-pink-50"
-        >
-    @elseif(!empty($item['image']))
-        <img
-            src="{{ asset('storage/' . $item['image']) }}"
-            alt="{{ $item['name'] }}"
-            class="w-full h-full object-cover"
-        >
-    @else
-        <span class="text-xs text-gray-400">Sin imagen</span>
-    @endif
-</div>
+                                @if(!empty($item['preview_image']))
+                                    <img
+                                        src="{{ $item['preview_image'] }}"
+                                        alt="Diseño personalizado de {{ $item['name'] }}"
+                                        class="w-full h-full object-contain bg-pink-50"
+                                    >
+                                @elseif(!empty($item['image']))
+                                    <img
+                                        src="{{ asset('storage/' . $item['image']) }}"
+                                        alt="{{ $item['name'] }}"
+                                        class="w-full h-full object-cover"
+                                    >
+                                @else
+                                    <span class="text-xs text-gray-400">Sin imagen</span>
+                                @endif
+                            </div>
 
                             <div class="flex-1">
                                 <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
@@ -65,30 +65,32 @@
                                             {{ $item['name'] }}
                                         </h3>
 
-                                        <form
-                                action="{{ route('client.cart.remove', $itemId) }}"
-                                method="POST"
-                            onsubmit="return confirm('¿Deseas eliminar este producto del carrito?')"
-                            class="mt-2"
-                            >
-                            @csrf
-                         @method('DELETE')
+                                        <div class="flex items-center gap-3 mt-2 flex-wrap">
+                                            <form
+                                                action="{{ route('client.cart.remove', $itemId) }}"
+                                                method="POST"
+                                                onsubmit="return confirm('¿Deseas eliminar este producto del carrito?')"
+                                            >
+                                                @csrf
+                                                @method('DELETE')
 
-                          <button
-                         type="submit"
-                         class="inline-flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-700"
-                         >
-                        🗑 Eliminar
-                        </button>
+                                                <button
+                                                    type="submit"
+                                                    class="inline-flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-700"
+                                                >
+                                                    🗑 Eliminar
+                                                </button>
+                                            </form>
 
-                        </form>
-                        <a
-                        href="{{ route('client.products.customize', $item['product_id']) }}"
-                        class="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-pink-600 hover:text-pink-700"
-                        >
-                        ✏️ Editar personalización
-                        </a>
-                                        <p class="text-sm text-gray-500 mt-1">
+                                            <a
+                                                href="{{ route('client.products.customize', $item['product_id']) }}"
+                                                class="inline-flex items-center gap-1 text-xs font-semibold text-pink-600 hover:text-pink-700"
+                                            >
+                                                ✏️ Editar personalización
+                                            </a>
+                                        </div>
+
+                                        <p class="text-sm text-gray-500 mt-2">
                                             Cantidad: {{ $item['quantity'] }}
                                         </p>
 
@@ -244,14 +246,10 @@
                         <span>${{ number_format((float) $subtotal, 2) }}</span>
                     </div>
 
-             <a
-    href="{{ route('client.checkout') }}"
-    class="mt-6 w-full inline-flex items-center justify-center bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition"
-          >
-             Continuar compra
-          </a>
-
-                    </button>
+                    <a href="{{ route('client.checkout') }}"
+                       class="mt-4 w-full inline-flex items-center justify-center rounded-xl bg-pink-500 px-6 py-3 text-white font-semibold hover:bg-pink-600">
+                        Continuar compra
+                    </a>
                 </div>
             </div>
 

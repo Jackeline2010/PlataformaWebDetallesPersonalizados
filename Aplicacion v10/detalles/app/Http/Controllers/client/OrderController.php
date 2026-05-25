@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Models\Client;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,32 +24,49 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        abort_unless($order->user_id === Auth::id(), 403);
-
-        $order->load(['orderProducts.product', 'orderProducts.customizations.field', 'orderProducts.customizations.option']);
-
-        return view('client.orders.show', compact('order'));
-    }
-
-    public function checkout()
-    {
-        $cart = session()->get('cart', []);
-
-        if (empty($cart)) {
-            return redirect()
-                ->route('client.cart.index')
-                ->with('error', 'Tu carrito está vacío.');
+        if ((int) $order->user_id !== (int) Auth::id()) {
+            abort(403);
         }
 
-        $subtotal = collect($cart)->sum(function ($item) {
-            return (float) ($item['total'] ?? 0);
-        });
+        $order->load([
+            'orderProducts.product',
+            'orderProducts.customizations',
+        ]);
 
-        return view('client.checkout.index', compact('cart', 'subtotal'));
+        $orderItems = $order->orderProducts;
+
+        $subtotal = (float) ($order->subtotal ?? 0);
+        $descuento = (float) ($order->descuento ?? 0);
+        $impuesto = (float) ($order->impuesto ?? 0);
+        $total = (float) ($order->total ?? 0);
+
+        return view('client.orders.show', compact(
+            'order',
+            'orderItems',
+            'subtotal',
+            'descuento',
+            'impuesto',
+            'total'
+        ));
     }
 
     public function store(Request $request)
     {
+        $validated = $request->validate([
+            'tipo_entrega' => ['required', 'string'],
+
+            'direccion_entrega' => [
+                'nullable',
+                'string',
+                'max:255',
+                'required_if:tipo_entrega,domicilio',
+            ],
+
+            'telefono_contacto' => ['required', 'string', 'max:20'],
+            'contacto_entrega' => ['nullable', 'string', 'max:100'],
+            'observaciones' => ['nullable', 'string', 'max:500'],
+        ]);
+
         $cart = session()->get('cart', []);
 
         if (empty($cart)) {
@@ -62,50 +79,56 @@ class OrderController extends Controller
             return (float) ($item['total'] ?? 0);
         });
 
-        DB::transaction(function () use ($cart, $subtotal, &$order) {
+        $impuesto = 0;
+        $descuento = 0;
+        $total = $subtotal + $impuesto - $descuento;
+
+        $order = null;
+
+        DB::transaction(function () use ($cart, $subtotal, $impuesto, $descuento, $total, $validated, &$order) {
             $user = Auth::user();
 
             $client = $user->client;
 
-if (!$client) {
-    $client = Client::create([
-    'user_id' => $user->id,
-    'identificacion' => 'TEMP-' . $user->id,
-    'nombres' => $user->name ?? 'Cliente',
-    'apellidos' => '',
-    'email' => $user->email,
-    'telefono' => $user->telefono ?? null,
-    'fnacimiento' => null,
-    'genero' => null,
-    'fingreso' => now()->toDateString(),
-    'activo' => true,
-]);
-}
-
-$clientId = $client->id;
-
-            $extrasResumen = [];
+            if (!$client) {
+                $client = Client::create([
+                    'user_id' => $user->id,
+                    'identificacion' => 'TEMP-' . $user->id,
+                    'nombres' => $user->name ?? 'Cliente',
+                    'apellidos' => '',
+                    'email' => $user->email,
+                    'telefono' => $validated['telefono_contacto'] ?? ($user->telefono ?? null),
+                    'fnacimiento' => null,
+                    'genero' => null,
+                    'fingreso' => now()->toDateString(),
+                    'activo' => true,
+                ]);
+            }
 
             $order = Order::create([
-                'client_id' => $clientId,
+                'client_id' => $client->id,
                 'user_id' => $user->id,
-                'forma_pago_id' => null,
+                'forma_pago_id' => 1,
                 'numero_orden' => 'ORD-' . now()->format('YmdHis'),
                 'fpedido' => now()->toDateString(),
                 'fentrega' => null,
                 'estado' => 'PEN',
+                'tipo_entrega' => $validated['tipo_entrega'],
                 'subtotal' => $subtotal,
-                'impuesto' => 0,
-                'descuento' => 0,
-                'total' => $subtotal,
-                'direccion_entrega' => null,
-                'contacto_entrega' => null,
-                'telefono_contacto' => null,
-                'observaciones' => null,
+                'impuesto' => $impuesto,
+                'descuento' => $descuento,
+                'total' => $total,
+                'direccion_entrega' => $validated['tipo_entrega'] === 'retiro_tienda'
+                    ? 'RETIRO EN TIENDA FÍSICA'
+                    : ($validated['direccion_entrega'] ?? null),
+                'contacto_entrega' => $validated['contacto_entrega'] ?? ($user->name ?? 'Cliente'),
+                'telefono_contacto' => $validated['telefono_contacto'],
+                'observaciones' => $validated['observaciones'] ?? null,
             ]);
 
             foreach ($cart as $item) {
-                $product = Product::with(['customFields.options'])->find($item['product_id'] ?? null);
+                $product = Product::with(['customFields.options'])
+                    ->find($item['product_id'] ?? null);
 
                 $orderProduct = $order->orderProducts()->create([
                     'product_id' => $item['product_id'] ?? null,
@@ -113,6 +136,7 @@ $clientId = $client->id;
                     'precio_unitario' => (float) ($item['unit_price'] ?? 0),
                     'descuento' => 0,
                     'total' => (float) ($item['total'] ?? 0),
+                    'preview_image' => $item['preview_image'] ?? null,
                 ]);
 
                 if (!$product) {
@@ -135,6 +159,7 @@ $clientId = $client->id;
 
                 $fotoField = $customFields->first(function ($field) {
                     $label = mb_strtolower($field->label ?? '');
+
                     return str_contains($label, 'foto') || ($field->type ?? '') === 'image';
                 });
 
@@ -192,18 +217,6 @@ $clientId = $client->id;
                         'extra_price' => (float) ($matchedOption->extra_price ?? 0),
                     ]);
                 }
-
-                if (!empty($item['extras']) && is_array($item['extras'])) {
-                    $extrasResumen[] = [
-                        'producto' => $item['name'] ?? 'Producto',
-                        'extras' => $item['extras'],
-                    ];
-                }
-            }
-
-            if (!empty($extrasResumen)) {
-                $order->observaciones = "Extras del pedido:\n" . json_encode($extrasResumen, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-                $order->save();
             }
         });
 
