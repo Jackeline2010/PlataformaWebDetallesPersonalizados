@@ -91,11 +91,11 @@ Route::middleware(['auth'])
         Route::post('profile', [\App\Http\Controllers\Client\ProfileController::class, 'update'])
             ->name('profile.update');
 
-        Route::get('checkout', [\App\Http\Controllers\Client\OrderController::class, 'checkout'])
-            ->name('checkout');
+        Route::get('checkout', [CartController::class, 'checkout'])
+        ->name('checkout');
 
         Route::post('checkout/confirm', [\App\Http\Controllers\Client\OrderController::class, 'store'])
-            ->name('checkout.store');
+        ->name('checkout.store');
 
         /*
         |--------------------------------------------------------------------------
@@ -128,6 +128,12 @@ Route::middleware(['auth'])
         */
         Route::get('carrito', [CartController::class, 'index'])
             ->name('cart.index');
+
+        Route::patch('carrito/actualizar/{itemId}', [CartController::class, 'updateQuantity'])
+         ->name('cart.update');
+
+        Route::get('checkout', [CartController::class, 'checkout'])
+         ->name('checkout');
 
         Route::post('carrito/agregar/{product}', [CartController::class, 'add'])
             ->name('cart.add');
