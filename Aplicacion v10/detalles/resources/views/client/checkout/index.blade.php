@@ -209,6 +209,21 @@
                         <span>Subtotal</span>
                         <span>${{ number_format((float) $subtotal, 2) }}</span>
                     </div>
+                    @if(($discount ?? 0) > 0)
+                <div class="flex justify-between text-sm text-green-600 mb-3">
+                <span>
+                Descuento
+                @if(session('cart_promotion.codigo'))
+                ({{ session('cart_promotion.codigo') }})
+                @endif
+                </span>
+
+                <span>
+            -${{ number_format((float) $discount, 2) }}
+        </span>
+    </div>
+@endif
+
 
                     <div class="flex justify-between text-sm text-gray-600 mb-3">
                         <span id="shipping-label">Envío a domicilio</span>
@@ -246,9 +261,9 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const SHIPPING_COSTS = {
-            centro: 2.00,
-            urbana: 3.00,
-            lejana: 4.00
+            centro: 3.00,
+            urbana: 4.00,
+            lejana: 5.00
         };
 
         const radios = document.querySelectorAll('input[name="tipo_entrega"]');
@@ -264,6 +279,7 @@
         const totalValue = document.getElementById('total-value');
 
         const subtotal = {{ (float) $subtotal }};
+        const discount = {{ (float) ($discount ?? 0) }};
 
         function formatMoney(value) {
             return '$' + Number(value).toFixed(2);
@@ -291,7 +307,7 @@
 
                 shippingLabel.textContent = 'Retiro en tienda';
                 shippingValue.textContent = '$0.00';
-                totalValue.textContent = formatMoney(subtotal);
+                totalValue.textContent = formatMoney(subtotal - discount);
 
                 return;
             }
@@ -307,7 +323,7 @@
 
             shippingLabel.textContent = 'Envío a domicilio';
             shippingValue.textContent = formatMoney(shipping);
-            totalValue.textContent = formatMoney(subtotal + shipping);
+            totalValue.textContent = formatMoney(subtotal + shipping - discount);
         }
 
         radios.forEach(function (radio) {

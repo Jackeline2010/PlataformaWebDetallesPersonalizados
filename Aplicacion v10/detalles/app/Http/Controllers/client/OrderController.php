@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Promotion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -85,29 +86,38 @@ class OrderController extends Controller
         });
 
         if ($validated['tipo_entrega'] === 'retiro_tienda') {
-
-        $costoEntrega = 0.00;
-
+            $costoEntrega = 0.00;
         } else {
+            $zonaEntrega = $request->zona_entrega ?? 'centro';
 
-        $zonaEntrega = $request->zona_entrega ?? 'centro';
-        $costoEntrega = match ($zonaEntrega) {
-
-        'centro' => 3.00,
-        'urbana' => 4.00,
-        'lejana' => 5.00,
-
-        default => 2.00,
-    };
-}
+            $costoEntrega = match ($zonaEntrega) {
+                'centro' => 3.00,
+                'urbana' => 4.00,
+                'lejana' => 5.00,
+                default => self::COSTO_ENTREGA_DOMICILIO,
+            };
+        }
 
         $impuesto = 0;
-        $descuento = 0;
-        $total = $subtotal + $costoEntrega + $impuesto - $descuento;
+
+        $promotion = session('cart_promotion');
+        $descuento = (float) ($promotion['discount'] ?? 0);
+
+        $total = max($subtotal + $costoEntrega + $impuesto - $descuento, 0);
 
         $order = null;
 
-        DB::transaction(function () use ($cart, $subtotal, $costoEntrega, $impuesto, $descuento, $total, $validated, &$order) {
+        DB::transaction(function () use (
+            $cart,
+            $subtotal,
+            $costoEntrega,
+            $impuesto,
+            $descuento,
+            $total,
+            $promotion,
+            $validated,
+            &$order
+        ) {
             $user = Auth::user();
 
             $client = $user->client;
@@ -131,19 +141,28 @@ class OrderController extends Controller
                 'client_id' => $client->id,
                 'user_id' => $user->id,
                 'forma_pago_id' => 1,
+
+                'promotion_id' => $promotion['id'] ?? null,
+                'promotion_code' => $promotion['codigo'] ?? null,
+                'discount_amount' => $descuento,
+
                 'numero_orden' => 'ORD-' . now()->format('YmdHis'),
                 'fpedido' => now()->toDateString(),
                 'fentrega' => null,
                 'estado' => 'PEN',
+
                 'tipo_entrega' => $validated['tipo_entrega'],
                 'costo_entrega' => $costoEntrega,
+
                 'subtotal' => $subtotal,
                 'impuesto' => $impuesto,
                 'descuento' => $descuento,
                 'total' => $total,
+
                 'direccion_entrega' => $validated['tipo_entrega'] === 'retiro_tienda'
                     ? 'RETIRO EN TIENDA FÍSICA'
                     : ($validated['direccion_entrega'] ?? null),
+
                 'contacto_entrega' => $validated['contacto_entrega'] ?? ($user->name ?? 'Cliente'),
                 'telefono_contacto' => $validated['telefono_contacto'],
                 'observaciones' => $validated['observaciones'] ?? null,
@@ -241,35 +260,40 @@ class OrderController extends Controller
                     ]);
                 }
             }
+
+            if (!empty($promotion['id'])) {
+                Promotion::where('id', $promotion['id'])->increment('usos_actuales');
+            }
         });
 
         session()->forget('cart');
+        session()->forget('cart_promotion');
 
         return redirect()
             ->route('client.orders.show', $order)
             ->with('success', 'Tu pedido fue registrado correctamente.');
     }
+
     public function cancel(Order $order)
-{
-    if ((int) $order->user_id !== (int) Auth::id()) {
-        abort(403);
+    {
+        if ((int) $order->user_id !== (int) Auth::id()) {
+            abort(403);
+        }
+
+        if (($order->estado_pago ?? 'PENDIENTE') === 'PAGADO') {
+            return back()->with('error', 'No puedes cancelar un pedido que ya tiene el pago registrado.');
+        }
+
+        if (!in_array($order->estado, ['PEN', 'ING'])) {
+            return back()->with('error', 'Este pedido ya no puede ser cancelado.');
+        }
+
+        $order->update([
+            'estado' => 'CAN',
+        ]);
+
+        return redirect()
+            ->route('client.orders')
+            ->with('success', 'Pedido cancelado correctamente.');
     }
-
-    if (($order->estado_pago ?? 'PENDIENTE') === 'PAGADO') {
-        return back()->with('error', 'No puedes cancelar un pedido que ya tiene el pago registrado.');
-    }
-
-    if (!in_array($order->estado, ['PEN', 'ING'])) {
-        return back()->with('error', 'Este pedido ya no puede ser cancelado.');
-    }
-
-    $order->update([
-        'estado' => 'CAN',
-    ]);
-
-    return redirect()
-        ->route('client.orders')
-        ->with('success', 'Pedido cancelado correctamente.');
-}
-
 }

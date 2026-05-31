@@ -35,7 +35,6 @@
                         CATÁLOGO
                     </div>
 
-                    {{-- PRODUCTOS --}}
                     <a href="{{ route('admin.products.index') }}"
                        class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/30 transition text-pink-900">
                         <span class="text-lg">🎁</span>
@@ -43,15 +42,12 @@
                     </a>
 
                     <a href="{{ route('admin.extras.index') }}"
-                     class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-pink-100 text-gray-700">
-                     <span>🎀</span>
-                     <span>Extras</span>
-                        </a>
+                       class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/30 transition text-pink-900">
+                        <span class="text-lg">🎀</span>
+                        <span class="sidebar-text font-semibold">Extras</span>
+                    </a>
 
-
-                    {{-- CATEGORÍAS --}}
                     <div class="mt-1">
-
                         <button type="button"
                                 data-submenu="categorias"
                                 class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-white/30 transition text-pink-900">
@@ -60,9 +56,7 @@
                             <span class="sidebar-text ml-auto">▾</span>
                         </button>
 
-                        <div id="submenu-categorias"
-                             class="ml-4 mt-1 space-y-1 hidden">
-
+                        <div id="submenu-categorias" class="ml-4 mt-1 space-y-1 hidden">
                             <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
                                href="{{ route('admin.categories.index', ['type' => 'tipo_producto']) }}">
                                 Tipo de producto
@@ -72,22 +66,18 @@
                                href="{{ route('admin.categories.index', ['type' => 'ocasion']) }}">
                                 Ocasión especial
                             </a>
-
                         </div>
                     </div>
 
-                    {{-- INVENTARIO --}}
                     <a href="{{ route('admin.inventory.index') }}"
                        class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/30 transition text-pink-900 mt-1">
                         <span class="text-lg">📦</span>
                         <span class="sidebar-text font-semibold">Inventario</span>
                     </a>
-
                 </div>
 
                 {{-- PEDIDOS Y VENTAS --}}
                 <div class="mt-3">
-
                     <button type="button"
                             data-submenu="ventas"
                             class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-white/30 transition text-pink-900">
@@ -101,25 +91,26 @@
                            href="{{ route('admin.orders.index') }}">
                             Pedidos
                         </a>
-                        <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
-                           href="{{ route('admin.invoices.index') }}">
-                            Facturas
-                        </a>
+
                         <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
                            href="{{ route('admin.transactions.index') }}">
                             Pagos
                         </a>
+
                         <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
                            href="{{ route('admin.shipments.index') }}">
                             Envíos
                         </a>
-                    </div>
 
+                        <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
+                           href="{{ route('admin.promotions.index') }}">
+                            Promociones
+                        </a>
+                    </div>
                 </div>
 
                 {{-- USUARIOS --}}
                 <div class="mt-1">
-
                     <button type="button"
                             data-submenu="usuarios"
                             class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-white/30 transition text-pink-900">
@@ -133,17 +124,16 @@
                            href="{{ route('admin.customers.index') }}">
                             Clientes
                         </a>
+
                         <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
                            href="{{ route('admin.reviews.index') }}">
                             Reseñas
                         </a>
                     </div>
-
                 </div>
 
                 {{-- REPORTES --}}
                 <div class="mt-1">
-
                     <button type="button"
                             data-submenu="reportes"
                             class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-white/30 transition text-pink-900">
@@ -157,16 +147,17 @@
                            href="{{ route('admin.reports.sales') }}">
                             Ventas
                         </a>
+
                         <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
                            href="{{ route('admin.reports.products') }}">
                             Productos
                         </a>
+
                         <a class="block px-4 py-2 rounded-xl text-pink-900 hover:bg-white/30 transition"
                            href="{{ route('admin.reports.customers') }}">
                             Clientes
                         </a>
                     </div>
-
                 </div>
 
             </nav>

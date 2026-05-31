@@ -13,6 +13,8 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ExtraController;
 use App\Http\Controllers\Client\ProductCustomizationController;
 use App\Http\Controllers\Admin\ProductColorController;
+use App\Http\Controllers\Client\PaymentController;
+use App\Http\Controllers\Admin\PromotionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,22 +61,21 @@ Route::get('gallery', function () {
 
 /*
 |--------------------------------------------------------------------------
-| CARRITO (SHOP)
+| CARRITO PÚBLICO / SHOP
 |--------------------------------------------------------------------------
 */
 Route::get('cart', [CartController::class, 'index'])->name('cart');
 Route::post('cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
 
-
 /*
 |--------------------------------------------------------------------------
-| CLIENTE (AUTENTICADO)
+| CLIENTE AUTENTICADO
 |--------------------------------------------------------------------------
 */
-        Route::middleware(['auth'])
-         ->prefix('cliente')
-         ->name('client.')
-         ->group(function () {
+Route::middleware(['auth'])
+    ->prefix('cliente')
+    ->name('client.')
+    ->group(function () {
 
         Route::get('dashboard', [\App\Http\Controllers\Client\DashboardController::class, 'index'])
             ->name('dashboard');
@@ -85,26 +86,45 @@ Route::post('cart/add/{product}', [CartController::class, 'add'])->name('cart.ad
         Route::get('orders/{order}', [\App\Http\Controllers\Client\OrderController::class, 'show'])
             ->name('orders.show');
 
+        Route::patch('orders/{order}/cancel', [\App\Http\Controllers\Client\OrderController::class, 'cancel'])
+            ->name('orders.cancel');
+
         Route::get('profile', [\App\Http\Controllers\Client\ProfileController::class, 'index'])
             ->name('profile');
 
         Route::post('profile', [\App\Http\Controllers\Client\ProfileController::class, 'update'])
             ->name('profile.update');
 
+        /*
+        |--------------------------------------------------------------------------
+        | CHECKOUT
+        |--------------------------------------------------------------------------
+        */
         Route::get('checkout', [CartController::class, 'checkout'])
             ->name('checkout');
 
         Route::post('checkout/confirm', [\App\Http\Controllers\Client\OrderController::class, 'store'])
             ->name('checkout.store');
 
-        Route::get('orders/{order}/payment', [\App\Http\Controllers\Client\PaymentController::class, 'index'])
+        /*
+        |--------------------------------------------------------------------------
+        | PAGOS
+        |--------------------------------------------------------------------------
+        */
+        Route::get('orders/{order}/payment', [PaymentController::class, 'index'])
             ->name('payment.index');
 
-        Route::post('orders/{order}/payment', [\App\Http\Controllers\Client\PaymentController::class, 'store'])
+        Route::post('orders/{order}/payment', [PaymentController::class, 'store'])
             ->name('payment.store');
 
-        Route::patch('orders/{order}/cancel', [\App\Http\Controllers\Client\OrderController::class, 'cancel'])
-         ->name('orders.cancel');
+        Route::get('payment/niubiz/{order}', [PaymentController::class, 'niubiz'])
+            ->name('payment.niubiz');
+
+        Route::post('payment/niubiz/{order}/authorize', [PaymentController::class, 'authorizeNiubiz'])
+            ->name('payment.niubiz.authorize');
+
+        Route::get('payment/failed/{order}', [PaymentController::class, 'failed'])
+            ->name('payment.failed');
 
         /*
         |--------------------------------------------------------------------------
@@ -114,11 +134,6 @@ Route::post('cart/add/{product}', [CartController::class, 'add'])->name('cart.ad
         Route::get('catalogo', [\App\Http\Controllers\Client\ProductController::class, 'index'])
             ->name('products.index');
 
-        /*
-        |--------------------------------------------------------------------------
-        | DETALLE DEL PRODUCTO
-        |--------------------------------------------------------------------------
-        */
         Route::get('producto/{product}', [\App\Http\Controllers\Client\ProductController::class, 'show'])
             ->name('products.show');
 
@@ -138,16 +153,21 @@ Route::post('cart/add/{product}', [CartController::class, 'add'])->name('cart.ad
         Route::get('carrito', [CartController::class, 'index'])
             ->name('cart.index');
 
-        Route::patch('carrito/actualizar/{itemId}', [CartController::class, 'updateQuantity'])
-         ->name('cart.update');
-
-        Route::get('checkout', [CartController::class, 'checkout'])
-         ->name('checkout');
-
         Route::post('carrito/agregar/{product}', [CartController::class, 'add'])
             ->name('cart.add');
+
+        Route::patch('carrito/actualizar/{itemId}', [CartController::class, 'updateQuantity'])
+            ->name('cart.update');
+
         Route::delete('carrito/eliminar/{itemId}', [CartController::class, 'remove'])
-    ->name('cart.remove');
+            ->name('cart.remove');
+
+        Route::post('carrito/promocion', [CartController::class, 'applyPromotion'])
+            ->name('cart.applyPromotion');
+
+        Route::delete('carrito/promocion', [CartController::class, 'removePromotion'])
+            ->name('cart.removePromotion');
+
         /*
         |--------------------------------------------------------------------------
         | PERSONALIZACIÓN VISUAL DEL PRODUCTO
@@ -215,10 +235,8 @@ Route::middleware(['auth', 'admin'])
 
         /*
         |--------------------------------------------------------------------------
-        | PERSONALIZACIÓN DE PRODUCTOS (ADMIN)
+        | PERSONALIZACIÓN DE PRODUCTOS
         |--------------------------------------------------------------------------
-        | Se mantiene dentro de ProductController para no romper
-        | el flujo actual que ya tienes implementado.
         */
         Route::get('products/{product}/personalization', [ProductController::class, 'personalization'])
             ->name('products.personalization');
@@ -301,17 +319,35 @@ Route::middleware(['auth', 'admin'])
         | PEDIDOS Y VENTAS
         |--------------------------------------------------------------------------
         */
-        Route::get('orders', fn () => view('admin.orders.index'))
-            ->name('orders.index');
+        Route::get('orders', function () {
+            $orders = \App\Models\Order::with('user')
+                ->latest('fpedido')
+                ->paginate(10);
 
-        Route::get('invoices', fn () => view('admin.invoices.index'))
-            ->name('invoices.index');
+            return view('admin.orders.index', compact('orders'));
+        })->name('orders.index');
 
-        Route::get('transactions', fn () => view('admin.transactions.index'))
-            ->name('transactions.index');
+        Route::get('transactions', function () {
+            $orders = \App\Models\Order::with('user')
+                ->whereNotNull('metodo_pago')
+                ->latest('fpedido')
+                ->paginate(10);
 
-        Route::get('shipments', fn () => view('admin.shipments.index'))
-            ->name('shipments.index');
+            return view('admin.transactions.index', compact('orders'));
+        })->name('transactions.index');
+
+        Route::get('shipments', function () {
+            $orders = \App\Models\Order::with('user')
+                ->whereNotNull('tipo_entrega')
+                ->latest('fpedido')
+                ->paginate(10);
+
+            return view('admin.shipments.index', compact('orders'));
+        })->name('shipments.index');
+
+        Route::resource('promotions', PromotionController::class)
+              ->names('promotions')
+              ->except(['show']);
 
         /*
         |--------------------------------------------------------------------------

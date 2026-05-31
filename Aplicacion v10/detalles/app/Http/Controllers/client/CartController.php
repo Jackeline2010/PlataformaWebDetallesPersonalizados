@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Extra;
 use App\Models\Product;
+use App\Models\Promotion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -26,8 +27,9 @@ class CartController extends Controller
         });
 
         $shipping = 0;
-        $discount = 0;
-        $total = $subtotal + $shipping - $discount;
+        $promotion = session('cart_promotion');
+        $discount = (float) ($promotion['discount'] ?? 0);
+        $total = max($subtotal + $shipping - $discount, 0);
 
         return view('client.cart.index', compact(
             'cart',
@@ -58,8 +60,9 @@ class CartController extends Controller
         });
 
         $shipping = self::COSTO_ENTREGA_DOMICILIO;
-        $discount = 0;
-        $total = $subtotal + $shipping - $discount;
+        $promotion = session('cart_promotion');
+        $discount = (float) ($promotion['discount'] ?? 0);
+        $total = max($subtotal + $shipping - $discount, 0);
 
         return view('client.checkout.index', compact(
             'cart',
@@ -116,6 +119,7 @@ class CartController extends Controller
         }
 
         session()->put('cart', $cart);
+        $this->refreshPromotionDiscount();
 
         return redirect()
             ->route('client.cart.index')
@@ -230,6 +234,7 @@ class CartController extends Controller
         ];
 
         session()->put('cart', $cart);
+        $this->refreshPromotionDiscount();
 
         return redirect()
             ->route('client.cart.index')
@@ -243,6 +248,12 @@ class CartController extends Controller
         if (isset($cart[$itemId])) {
             unset($cart[$itemId]);
             session()->put('cart', $cart);
+        }
+
+        if (empty($cart)) {
+            session()->forget('cart_promotion');
+        } else {
+            $this->refreshPromotionDiscount();
         }
 
         return redirect()
@@ -264,8 +275,103 @@ class CartController extends Controller
         $cart[$itemId]['total'] = (float) $cart[$itemId]['unit_price'] * $quantity;
 
         session()->put('cart', $cart);
+        $this->refreshPromotionDiscount();
 
         return back()->with('success', 'Cantidad actualizada.');
+    }
+
+    public function applyPromotion(Request $request)
+    {
+        $validated = $request->validate([
+            'codigo' => ['required', 'string', 'max:50'],
+        ]);
+
+        $cart = session()->get('cart', []);
+
+        if (empty($cart)) {
+            return back()->withErrors([
+                'codigo' => 'No puedes aplicar una promoción con el carrito vacío.',
+            ]);
+        }
+
+        $subtotal = collect($cart)->sum(function ($item) {
+            return (float) ($item['total'] ?? 0);
+        });
+
+        $codigo = strtoupper(trim($validated['codigo']));
+
+        $promotion = Promotion::where('codigo', $codigo)->first();
+
+        if (!$promotion) {
+            return back()->withErrors([
+                'codigo' => 'El código de promoción no existe.',
+            ])->withInput();
+        }
+
+        $discount = $promotion->calcularDescuento($subtotal);
+
+        if ($discount <= 0) {
+            return back()->withErrors([
+                'codigo' => 'La promoción no está vigente o no cumple la compra mínima.',
+            ])->withInput();
+        }
+
+        session()->put('cart_promotion', [
+            'id' => $promotion->id,
+            'codigo' => $promotion->codigo,
+            'nombre' => $promotion->nombre,
+            'discount' => $discount,
+        ]);
+
+        return back()->with('success', 'Promoción aplicada correctamente.');
+    }
+
+    public function removePromotion()
+    {
+        session()->forget('cart_promotion');
+
+        return back()->with('success', 'Promoción eliminada correctamente.');
+    }
+
+    private function refreshPromotionDiscount(): void
+    {
+        $promotionSession = session('cart_promotion');
+
+        if (empty($promotionSession['id'])) {
+            return;
+        }
+
+        $cart = session()->get('cart', []);
+
+        if (empty($cart)) {
+            session()->forget('cart_promotion');
+            return;
+        }
+
+        $subtotal = collect($cart)->sum(function ($item) {
+            return (float) ($item['total'] ?? 0);
+        });
+
+        $promotion = Promotion::find($promotionSession['id']);
+
+        if (!$promotion) {
+            session()->forget('cart_promotion');
+            return;
+        }
+
+        $discount = $promotion->calcularDescuento($subtotal);
+
+        if ($discount <= 0) {
+            session()->forget('cart_promotion');
+            return;
+        }
+
+        session()->put('cart_promotion', [
+            'id' => $promotion->id,
+            'codigo' => $promotion->codigo,
+            'nombre' => $promotion->nombre,
+            'discount' => $discount,
+        ]);
     }
 
     private function countWords(?string $text): int
