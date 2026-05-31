@@ -45,7 +45,12 @@
       <div class="flex items-center gap-6 ml-auto">
 
         {{-- Carrito --}}
-        <a href="{{ \Illuminate\Support\Facades\Route::has('client.cart') ? route('client.cart') : route('cart') }}"
+        @php
+  $cart = session('cart', []);
+  $cartCount = collect($cart)->sum(fn ($item) => (int) ($item['quantity'] ?? 1));
+@endphp
+
+<a href="{{ route('client.cart.index') }}"
            class="relative w-10 h-10 rounded-xl hover:bg-pink-50 flex items-center justify-center">
 
           🛒

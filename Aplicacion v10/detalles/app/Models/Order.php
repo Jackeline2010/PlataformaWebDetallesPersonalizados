@@ -16,6 +16,9 @@ class Order extends Model
         'client_id',
         'user_id',
         'forma_pago_id',
+        'promotion_id',
+        'promotion_code',
+        'discount_amount',
         'numero_orden',
         'fpedido',
         'fentrega',
@@ -33,6 +36,12 @@ class Order extends Model
         'contacto_entrega',
         'telefono_contacto',
         'observaciones',
+        'payment_provider',
+        'payment_transaction_id',
+        'payment_url',
+        'payment_token',
+        'payment_session_key',
+        'payment_response',
     ];
 
     protected $casts = [
@@ -42,7 +51,10 @@ class Order extends Model
         'subtotal' => 'decimal:2',
         'impuesto' => 'decimal:2',
         'descuento' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'total' => 'decimal:2',
+        'payment_response' => 'array',
+
     ];
 
     public function user()
@@ -53,6 +65,11 @@ class Order extends Model
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function promotion()
+    {
+    return $this->belongsTo(Promotion::class);
     }
 
     public function orderProducts()

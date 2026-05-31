@@ -211,10 +211,30 @@
                         <span>${{ number_format((float) ($costoEntrega ?? $order->costo_entrega ?? 0), 2) }}</span>
                     </div>
 
-                    <div class="flex justify-between text-gray-600">
-                        <span>Descuento</span>
-                        <span>${{ number_format((float) ($descuento ?? $order->descuento ?? 0), 2) }}</span>
-                    </div>
+                    @if((float) ($descuento ?? $order->descuento ?? 0) > 0)
+                        <div class="flex justify-between text-green-600 font-semibold">
+                            <span>
+                                Descuento
+                                @if(!empty($order->promotion_code))
+                                    ({{ $order->promotion_code }})
+                                @endif
+                            </span>
+
+                            <span>
+                                - ${{ number_format((float) ($descuento ?? $order->descuento ?? 0), 2) }}
+                            </span>
+                        </div>
+                    @endif
+
+                    @if(!empty($order->promotion_code))
+                        <div class="flex justify-between text-gray-600">
+                            <span>Cupón aplicado</span>
+
+                            <span class="font-semibold text-green-600">
+                                {{ $order->promotion_code }}
+                            </span>
+                        </div>
+                    @endif
 
                     <div class="flex justify-between text-gray-600">
                         <span>Impuestos</span>
@@ -253,9 +273,9 @@
                 </div>
 
                 @if(
-    ($order->estado_pago ?? 'PENDIENTE') !== 'PAGADO'
-    && ($order->estado ?? 'PEN') !== 'CAN'
-)
+                    ($order->estado_pago ?? 'PENDIENTE') !== 'PAGADO'
+                    && ($order->estado ?? 'PEN') !== 'CAN'
+                )
                     <a href="{{ route('client.payment.index', $order) }}"
                        class="mt-4 w-full inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition">
                         Proceder al pago

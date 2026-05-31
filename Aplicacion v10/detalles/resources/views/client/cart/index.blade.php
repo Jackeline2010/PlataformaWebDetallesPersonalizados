@@ -4,6 +4,12 @@
 @section('content')
 <div class="max-w-5xl mx-auto px-6 py-10">
 
+    @php
+        $promotion = session('cart_promotion');
+        $discount = (float) ($promotion['discount'] ?? 0);
+        $totalFinal = max((float) $subtotal - $discount, 0);
+    @endphp
+
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-800">Mi carrito</h1>
 
@@ -26,6 +32,14 @@
     @if(session('error'))
         <div class="mb-6 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl">
             {{ session('error') }}
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="mb-6 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl">
+            @foreach($errors->all() as $error)
+                <p>{{ $error }}</p>
+            @endforeach
         </div>
     @endif
 
@@ -239,11 +253,76 @@
                             <span>Subtotal</span>
                             <span>${{ number_format((float) $subtotal, 2) }}</span>
                         </div>
+
+                        @if($discount > 0)
+                            <div class="flex justify-between text-sm text-green-600 font-semibold">
+                                <span>
+                                    Descuento
+                                    @if(!empty($promotion['codigo']))
+                                        ({{ $promotion['codigo'] }})
+                                    @endif
+                                </span>
+                                <span>- ${{ number_format($discount, 2) }}</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="bg-pink-50 border border-pink-100 rounded-2xl p-4 mt-5">
+                        <h3 class="font-semibold text-gray-800 mb-3">
+                            Código de promoción
+                        </h3>
+
+                        @if($promotion)
+                            <div class="bg-green-50 border border-green-200 text-green-700 rounded-xl px-4 py-3">
+                                <p class="font-semibold">
+                                    {{ $promotion['nombre'] ?? 'Promoción aplicada' }}
+                                </p>
+
+                                <p class="text-sm mt-1">
+                                    Código: {{ $promotion['codigo'] ?? '' }}
+                                </p>
+
+                                <p class="text-sm mt-1">
+                                    Descuento: - ${{ number_format($discount, 2) }}
+                                </p>
+
+                                <form action="{{ route('client.cart.removePromotion') }}" method="POST" class="mt-3">
+                                    @csrf
+                                    @method('DELETE')
+
+                                    <button
+                                        type="submit"
+                                        class="text-sm font-semibold text-red-500 hover:text-red-700"
+                                    >
+                                        Quitar promoción
+                                    </button>
+                                </form>
+                            </div>
+                        @else
+                            <form action="{{ route('client.cart.applyPromotion') }}" method="POST" class="space-y-3">
+                                @csrf
+
+                                <input
+                                    type="text"
+                                    name="codigo"
+                                    value="{{ old('codigo') }}"
+                                    placeholder="Ejemplo: MAMA10"
+                                    class="w-full rounded-xl border border-pink-100 px-4 py-2 focus:border-pink-300 focus:ring focus:ring-pink-100"
+                                >
+
+                                <button
+                                    type="submit"
+                                    class="w-full rounded-xl bg-pink-500 px-4 py-2 text-white font-semibold hover:bg-pink-600"
+                                >
+                                    Aplicar cupón
+                                </button>
+                            </form>
+                        @endif
                     </div>
 
                     <div class="border-t border-pink-100 pt-4 mt-4 flex justify-between text-lg font-bold text-pink-600">
                         <span>Total</span>
-                        <span>${{ number_format((float) $subtotal, 2) }}</span>
+                        <span>${{ number_format((float) $totalFinal, 2) }}</span>
                     </div>
 
                     <a href="{{ route('client.checkout') }}"

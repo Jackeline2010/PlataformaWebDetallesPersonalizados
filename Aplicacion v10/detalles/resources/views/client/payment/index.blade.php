@@ -127,9 +127,6 @@
                     <h4 class="font-bold text-green-800 mb-2">
                         Pago con tarjeta de débito
                     </h4>
-                    <p>
-                        El sistema registrará este pago como aprobado para simular una pasarela de pago.
-                    </p>
                     <p class="mt-2">
                         En una versión real, aquí se conectaría una pasarela como PayPhone, Datafast, Kushki o Stripe.
                     </p>
