@@ -18,17 +18,22 @@ class Extra extends Model
         'precio_adicional',
         'tipo',
         'activo',
+        'sku',
+        'stock',
+        'stock_minimo',
         'inventory_id',
         'controla_stock',
         'sincroniza_precio',
     ];
 
-    protected $casts = [
+        protected $casts = [
         'precio_adicional' => 'decimal:2',
         'activo' => 'boolean',
+        'stock' => 'integer',
+        'stock_minimo' => 'integer',
         'controla_stock' => 'boolean',
         'sincroniza_precio' => 'boolean',
-    ];
+]   ;
 
     public function products()
     {

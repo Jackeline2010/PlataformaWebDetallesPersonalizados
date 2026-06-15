@@ -9,6 +9,7 @@
     $metodoPagoLabel = [
         'transferencia' => 'Transferencia bancaria',
         'efectivo' => 'Pago en efectivo',
+        'stripe' => 'Tarjeta con Stripe',
         'tarjeta_debito' => 'Tarjeta de débito',
     ][$order->metodo_pago] ?? 'No registrado';
 
@@ -27,8 +28,8 @@
         </p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 space-y-4">
+    <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-6">
+        <div class="space-y-4 min-w-0">
             <div class="bg-white rounded-2xl border border-pink-100 shadow-sm p-5">
                 <div class="flex items-center justify-between gap-4 flex-wrap">
                     <div>
@@ -80,6 +81,49 @@
                 </div>
             </div>
 
+            @if($order->metodo_pago === 'transferencia')
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+                    <h2 class="text-lg font-bold text-blue-800 mb-3">
+                        Pago por transferencia bancaria
+                    </h2>
+
+                    <div class="space-y-2 text-sm text-blue-900">
+                        <p>
+                            <strong>Estado del pago:</strong>
+                            {{ $estadoPagoLabel }}
+                        </p>
+
+                        @if(!empty($order->referencia_pago))
+                            <p>
+                                <strong>Referencia:</strong>
+                                {{ $order->referencia_pago }}
+                            </p>
+                        @endif
+
+                        @if(!empty($order->comprobante_pago))
+                            <p>
+                                <strong>Comprobante:</strong>
+                                <a href="{{ asset('storage/' . $order->comprobante_pago) }}"
+                                   target="_blank"
+                                   class="text-blue-700 underline font-semibold">
+                                    Ver comprobante de pago
+                                </a>
+                            </p>
+                        @else
+                            <p class="text-blue-700">
+                                Aún no se ha registrado un comprobante de pago.
+                            </p>
+                        @endif
+
+                        @if(($order->estado_pago ?? 'PENDIENTE') !== 'PAGADO')
+                            <p class="text-blue-700 mt-2">
+                                Tu pago será validado por el administrador antes de preparar el pedido.
+                            </p>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
             @forelse($orderItems as $item)
                 @php
                     $product = $item->product ?? null;
@@ -87,13 +131,13 @@
                 @endphp
 
                 <div class="bg-white rounded-2xl border border-pink-100 shadow-sm p-5">
-                    <div class="flex gap-4">
-                        <div class="w-36 h-36 rounded-2xl overflow-hidden border border-pink-100 bg-pink-50 flex items-center justify-center flex-shrink-0">
+                    <div class="flex flex-col md:flex-row gap-4">
+                       <div class="w-32 h-32 rounded-2xl overflow-hidden border border-pink-100 bg-pink-50 flex items-center justify-center flex-shrink-0">
                             @if(!empty($item->preview_image))
                                 <img
                                     src="{{ $item->preview_image }}"
                                     alt="Diseño personalizado"
-                                    class="w-full h-full object-contain bg-pink-50"
+                                    class="w-full h-full object-cover bg-pink-50"
                                 >
                             @elseif($product && !empty($product->imagen_principal))
                                 <img
@@ -192,7 +236,7 @@
         </div>
 
         <div>
-            <div class="bg-white rounded-2xl border border-pink-100 shadow-sm p-6 lg:sticky lg:top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
+          <div class="bg-white rounded-2xl border border-pink-100 shadow-sm p-6 xl:sticky xl:top-24">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Resumen</h2>
 
                 <div class="space-y-3 text-sm">
@@ -264,33 +308,47 @@
                                 </span>
                             </div>
                         @endif
+
+                        @if($order->metodo_pago === 'transferencia' && !empty($order->comprobante_pago))
+                            <div class="flex justify-between text-gray-600 gap-3">
+                                <span>Comprobante</span>
+                                <a href="{{ asset('storage/' . $order->comprobante_pago) }}"
+                                   target="_blank"
+                                   class="font-semibold text-pink-600 underline text-right">
+                                    Ver archivo
+                                </a>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
                 <div class="border-t border-pink-100 pt-4 mt-4 flex justify-between text-lg font-bold text-pink-600">
                     <span>Total</span>
                     <span>${{ number_format((float) ($total ?? $order->total ?? 0), 2) }}</span>
-                </div>
+           <div class="mt-4 space-y-3">
 
-                @if(
-                    ($order->estado_pago ?? 'PENDIENTE') !== 'PAGADO'
-                    && ($order->estado ?? 'PEN') !== 'CAN'
-                )
-                    <a href="{{ route('client.payment.index', $order) }}"
-                       class="mt-4 w-full inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition">
-                        Proceder al pago
-                    </a>
-                @endif
+   @if(
+    empty($order->metodo_pago)
+    && ($order->estado_pago ?? 'PENDIENTE') !== 'PAGADO'
+    && ($order->estado ?? 'PEN') !== 'CAN'
+)
+    <a href="{{ route('client.payment.index', $order) }}"
+       class="block w-full text-center bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-semibold transition">
+        Proceder al pago
+    </a>
+@endif
 
-                <a href="{{ route('client.orders') }}"
-                   class="mt-3 w-full inline-flex items-center justify-center bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition">
-                    Ver mis pedidos
-                </a>
+    <a href="{{ route('client.orders') }}"
+       class="block w-full text-center bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-semibold transition">
+        Ver mis pedidos
+    </a>
 
-                <a href="{{ route('client.products.index') }}"
-                   class="mt-3 w-full inline-flex items-center justify-center border border-pink-200 text-pink-600 hover:bg-pink-50 py-3 rounded-xl font-semibold transition">
-                    Seguir comprando
-                </a>
+    <a href="{{ route('client.products.index') }}"
+       class="block w-full text-center border border-pink-200 text-pink-600 hover:bg-pink-50 py-3 rounded-xl font-semibold transition">
+        Seguir comprando
+    </a>
+
+</div>
             </div>
         </div>
     </div>

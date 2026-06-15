@@ -8,13 +8,12 @@
 
   $r = fn($name) => Route::has($name) ? route($name) : null;
 
-  // Fallbacks seguros (si aún no existen rutas del cliente)
-  $urlOrders      = $r('client.orders')      ?? route('home');
-  $urlOrderShow   = fn($id) => (Route::has('client.orders.show') ? route('client.orders.show', $id) : $urlOrders);
+  $urlOrders    = $r('client.orders') ?? route('home');
+  $urlOrderShow = fn($id) => (Route::has('client.orders.show') ? route('client.orders.show', $id) : $urlOrders);
 
-  $urlCatalog     = $r('client.catalog')     ?? route('products');
-  $urlCart        = $r('client.cart')        ?? route('cart');
-  $urlPromos      = $r('client.promos')      ?? route('products');
+  $urlCatalog = $r('client.products.index') ?? route('products');
+  $urlCart    = $r('client.cart.index') ?? route('cart');
+  $urlPromos  = $r('client.promos') ?? route('products');
 
   $activeOrdersCount = isset($orders)
     ? $orders->whereIn('estado', ['ING','PEN','PRO'])->count()
@@ -26,10 +25,8 @@
 
 <div class="w-full min-w-0 space-y-6">
 
-  {{-- Cards superiores --}}
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
 
-    {{-- Saludo --}}
     <div class="bg-white/80 border border-pink-100 rounded-3xl p-5 shadow-sm">
       <p class="text-2xl font-extrabold text-gray-900">
         Hola, {{ auth()->user()->name }} 👋
@@ -39,7 +36,6 @@
       </p>
     </div>
 
-    {{-- Pedidos Activos --}}
     <div class="bg-white/80 border border-pink-100 rounded-3xl p-5 shadow-sm flex items-center justify-between">
       <div>
         <p class="text-sm text-gray-500">Pedidos Activos</p>
@@ -50,7 +46,6 @@
       </div>
     </div>
 
-    {{-- Puntos --}}
     <div class="bg-white/80 border border-pink-100 rounded-3xl p-5 shadow-sm flex items-center justify-between">
       <div>
         <p class="text-sm text-gray-500">Puntos</p>
@@ -65,10 +60,8 @@
 
   </div>
 
-  {{-- Cuerpo: pedidos + right column --}}
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start w-full min-w-0">
 
-    {{-- Pedidos recientes --}}
     <div class="lg:col-span-2 bg-white/80 border border-pink-100 rounded-3xl p-5 shadow-sm min-w-0">
       <div class="flex items-center justify-between mb-4 gap-3">
         <h2 class="text-lg font-extrabold text-gray-900">Pedidos Recientes</h2>
@@ -81,7 +74,6 @@
 
       @if(isset($orders) && $orders->count())
         <div class="space-y-4">
-
           @foreach($orders as $order)
             @php
               $badge = match($order->estado) {
@@ -126,7 +118,6 @@
               </div>
             </div>
           @endforeach
-
         </div>
       @else
         <div class="bg-white border border-pink-100 rounded-2xl p-6 text-center">
@@ -140,10 +131,8 @@
       @endif
     </div>
 
-    {{-- Columna derecha --}}
     <div class="space-y-6 min-w-0">
 
-      {{-- Mi carrito --}}
       <div class="bg-white/80 border border-pink-100 rounded-3xl p-5 shadow-sm">
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-extrabold text-gray-900">Mi Carrito</h3>
@@ -158,28 +147,62 @@
         </a>
       </div>
 
-      {{-- Promociones --}}
+      {{-- Promociones reales --}}
       <div class="bg-white/80 border border-pink-100 rounded-3xl p-5 shadow-sm">
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-extrabold text-gray-900">Promociones</h3>
           <span class="text-xl">🏷️</span>
         </div>
 
-        <div class="mt-4 bg-pink-50 border border-pink-100 rounded-2xl p-4">
-          <p class="text-pink-700 font-extrabold text-xl">20% Descuento</p>
-          <p class="text-gray-600 text-sm mt-1">Bodas y Cumpleaños</p>
+        @if(isset($promotions) && $promotions->count())
+          <div class="mt-4 space-y-3">
+            @foreach($promotions as $promotion)
+              <div class="bg-pink-50 border border-pink-100 rounded-2xl p-4">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <p class="text-pink-700 font-extrabold text-lg">
+                      @if($promotion->tipo === 'porcentaje')
+                        {{ number_format((float) $promotion->valor, 0) }}% Descuento
+                      @else
+                        ${{ number_format((float) $promotion->valor, 2) }} Descuento
+                      @endif
+                    </p>
 
-          <a href="{{ $urlPromos }}"
-             class="inline-flex mt-3 rounded-xl bg-pink-600 px-4 py-2 text-sm font-extrabold text-white hover:bg-pink-700">
-            Ver más
-          </a>
-        </div>
-      </div>
+                    <p class="text-gray-700 text-sm font-semibold mt-1">
+                      {{ $promotion->nombre }}
+                    </p>
 
-      {{-- Envío --}}
-      <div class="bg-white/80 border border-pink-100 rounded-3xl p-5 shadow-sm">
-        <p class="text-2xl font-extrabold text-orange-600">Envío Gratis</p>
-        <p class="text-gray-600 mt-1">Desde $300</p>
+                    <p class="text-gray-500 text-xs mt-1">
+                      Código:
+                      <span class="font-bold text-gray-700">
+                        {{ $promotion->codigo }}
+                      </span>
+                    </p>
+
+                    <p class="text-gray-500 text-xs mt-1">
+                      Compra mínima: ${{ number_format((float) $promotion->compra_minima, 2) }}
+                    </p>
+                  </div>
+
+                  <span class="text-xs font-bold bg-white text-pink-600 border border-pink-200 px-2 py-1 rounded-full">
+                    Activa
+                  </span>
+                </div>
+
+                <a href="{{ $urlPromos }}"
+                   class="inline-flex mt-3 rounded-xl bg-pink-600 px-4 py-2 text-sm font-extrabold text-white hover:bg-pink-700">
+                  Ver más
+                </a>
+              </div>
+            @endforeach
+          </div>
+        @else
+          <div class="mt-4 bg-pink-50 border border-pink-100 rounded-2xl p-4">
+            <p class="text-gray-600 text-sm">
+              No hay promociones activas por el momento.
+            </p>
+          </div>
+        @endif
       </div>
 
     </div>

@@ -12,6 +12,7 @@ class ExtraController extends Controller
     public function index()
     {
         $extras = Extra::orderByDesc('created_at')->paginate(10);
+
         return view('admin.extras.index', compact('extras'));
     }
 
@@ -23,21 +24,33 @@ class ExtraController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'descripcion' => 'nullable|string',
-            'tipo' => 'nullable|string|max:100',
-            'precio_adicional' => 'required|numeric|min:0',
-            'activo' => 'required|boolean',
-            'imagen' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'nombre' => ['required', 'string', 'max:255'],
+            'descripcion' => ['nullable', 'string'],
+            'tipo' => ['nullable', 'string', 'max:100'],
+            'precio_adicional' => ['required', 'numeric', 'min:0'],
+
+            'stock' => ['nullable', 'integer', 'min:0'],
+            'stock_minimo' => ['nullable', 'integer', 'min:0'],
+            'controla_stock' => ['nullable', 'boolean'],
+
+            'activo' => ['nullable', 'boolean'],
+            'imagen' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
         if ($request->hasFile('imagen')) {
             $data['imagen'] = $request->file('imagen')->store('extras', 'public');
         }
 
-        $data['activo'] = $request->boolean('activo');
+        $data['stock'] = $data['stock'] ?? 0;
+        $data['stock_minimo'] = $data['stock_minimo'] ?? 0;
+        $data['controla_stock'] = $request->has('controla_stock');
+        $data['activo'] = $request->has('activo');
 
-        Extra::create($data);
+        $extra = Extra::create($data);
+
+        $extra->update([
+            'sku' => $this->generateSku($extra),
+        ]);
 
         return redirect()
             ->route('admin.extras.index')
@@ -52,12 +65,17 @@ class ExtraController extends Controller
     public function update(Request $request, Extra $extra)
     {
         $data = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'descripcion' => 'nullable|string',
-            'tipo' => 'nullable|string|max:100',
-            'precio_adicional' => 'required|numeric|min:0',
-            'activo' => 'required|boolean',
-            'imagen' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'nombre' => ['required', 'string', 'max:255'],
+            'descripcion' => ['nullable', 'string'],
+            'tipo' => ['nullable', 'string', 'max:100'],
+            'precio_adicional' => ['required', 'numeric', 'min:0'],
+
+            'stock' => ['nullable', 'integer', 'min:0'],
+            'stock_minimo' => ['nullable', 'integer', 'min:0'],
+            'controla_stock' => ['nullable', 'boolean'],
+
+            'activo' => ['nullable', 'boolean'],
+            'imagen' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
         if ($request->hasFile('imagen')) {
@@ -68,9 +86,18 @@ class ExtraController extends Controller
             $data['imagen'] = $request->file('imagen')->store('extras', 'public');
         }
 
-        $data['activo'] = $request->boolean('activo');
+        $data['stock'] = $data['stock'] ?? 0;
+        $data['stock_minimo'] = $data['stock_minimo'] ?? 0;
+        $data['controla_stock'] = $request->has('controla_stock');
+        $data['activo'] = $request->has('activo');
 
         $extra->update($data);
+
+        if (empty($extra->sku)) {
+            $extra->update([
+                'sku' => $this->generateSku($extra),
+            ]);
+        }
 
         return redirect()
             ->route('admin.extras.index')
@@ -92,5 +119,21 @@ class ExtraController extends Controller
         return redirect()
             ->route('admin.extras.index')
             ->with('success', 'Extra eliminado correctamente.');
+    }
+
+    private function generateSku(Extra $extra): string
+    {
+        $tipo = mb_strtolower($extra->tipo ?? '');
+
+        $prefix = match (true) {
+            str_contains($tipo, 'globo') => 'EXT-GLO',
+            str_contains($tipo, 'peluche') => 'EXT-PEL',
+            str_contains($tipo, 'chocolate') => 'EXT-CHO',
+            str_contains($tipo, 'vino') => 'EXT-VIN',
+            str_contains($tipo, 'dulce') => 'EXT-DUL',
+            default => 'EXT-GEN',
+        };
+
+        return $prefix . '-' . str_pad((string) $extra->id, 4, '0', STR_PAD_LEFT);
     }
 }

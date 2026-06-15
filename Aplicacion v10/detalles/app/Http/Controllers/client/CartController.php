@@ -312,7 +312,7 @@ class CartController extends Controller
 
         if ($discount <= 0) {
             return back()->withErrors([
-                'codigo' => 'La promoción no está vigente o no cumple la compra mínima.',
+                'codigo' => 'Este cupón ya alcanzó su límite de usos.',
             ])->withInput();
         }
 
