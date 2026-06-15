@@ -67,11 +67,14 @@ Route::get('gallery', function () {
 Route::get('cart', [CartController::class, 'index'])->name('cart');
 Route::post('cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
 
-/*
-|--------------------------------------------------------------------------
-| CLIENTE AUTENTICADO
-|--------------------------------------------------------------------------
+
+
+       /*
+     CLIENTE AUTENTICADO
+        /*
+-------------------------------------------------------------------------
 */
+
 Route::middleware(['auth'])
     ->prefix('cliente')
     ->name('client.')
@@ -94,6 +97,14 @@ Route::middleware(['auth'])
 
         Route::post('profile', [\App\Http\Controllers\Client\ProfileController::class, 'update'])
             ->name('profile.update');
+
+        /*
+        |--------------------------------------------------------------------------
+        | MÉTODOS DE PAGO DEL CLIENTE
+        |--------------------------------------------------------------------------
+        */
+        Route::view('metodos-pago', 'client.payment.methods')
+            ->name('payments');
 
         /*
         |--------------------------------------------------------------------------
@@ -182,7 +193,11 @@ Route::middleware(['auth'])
         |--------------------------------------------------------------------------
         */
         Route::get('promociones', function () {
-            return redirect()->route('products');
+        $promotions = \App\Models\Promotion::where('activo', true)
+        ->orderByDesc('created_at')
+        ->get();
+
+        return view('client.promotions.index', compact('promotions'));
         })->name('promos');
 
         Route::get('carrito-rapido', function () {
@@ -202,6 +217,12 @@ Route::middleware(['auth', 'admin'])
 
         Route::get('dashboard', [AdminDashboardController::class, 'index'])
             ->name('dashboard');
+
+        Route::patch('orders/{order}/confirm-payment', [\App\Http\Controllers\Admin\OrderController::class, 'confirmPayment'])
+        ->name('orders.confirmPayment');
+
+        Route::patch('orders/{order}/complete', [\App\Http\Controllers\Admin\OrderController::class, 'complete'])
+    ->name('orders.complete');
 
         /*
         |--------------------------------------------------------------------------
@@ -314,6 +335,17 @@ Route::middleware(['auth', 'admin'])
         Route::get('inventory', [InventoryController::class, 'index'])
             ->name('inventory.index');
 
+        Route::get('inventory/products', [InventoryController::class, 'products'])
+            ->name('inventory.products');
+
+        Route::get('inventory/extras', [InventoryController::class, 'extras'])
+            ->name('inventory.extras');
+
+        Route::patch('inventory/products/{product}/stock', [InventoryController::class, 'updateProductStock'])
+            ->name('inventory.products.updateStock');
+
+        Route::patch('inventory/extras/{extra}/stock', [InventoryController::class, 'updateExtraStock'])
+            ->name('inventory.extras.updateStock');
         /*
         |--------------------------------------------------------------------------
         | PEDIDOS Y VENTAS

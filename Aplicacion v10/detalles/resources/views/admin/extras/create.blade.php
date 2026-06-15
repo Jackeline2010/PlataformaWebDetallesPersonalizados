@@ -6,43 +6,148 @@
     <div class="bg-white rounded-2xl border border-pink-100 shadow-sm p-6">
         <h1 class="text-2xl font-bold text-gray-800 mb-6">Nuevo Extra</h1>
 
+        @if($errors->any())
+            <div class="mb-5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
+                <ul class="list-disc list-inside text-sm">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form action="{{ route('admin.extras.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
             @csrf
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                <input type="text" name="nombre" value="{{ old('nombre') }}"
-                       class="w-full rounded-xl border border-pink-200 px-4 py-3 focus:ring-2 focus:ring-pink-200">
-                @error('nombre') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
+                <input
+                    type="text"
+                    name="nombre"
+                    value="{{ old('nombre') }}"
+                    class="w-full rounded-xl border border-pink-200 px-4 py-3 focus:ring-2 focus:ring-pink-200"
+                    required
+                >
+                @error('nombre')
+                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                <input type="text" name="tipo" value="{{ old('tipo') }}"
-                       class="w-full rounded-xl border border-pink-200 px-4 py-3 focus:ring-2 focus:ring-pink-200">
+                <input
+                    type="text"
+                    name="tipo"
+                    value="{{ old('tipo') }}"
+                    placeholder="Ejemplo: globo, peluche, chocolate, vino"
+                    class="w-full rounded-xl border border-pink-200 px-4 py-3 focus:ring-2 focus:ring-pink-200"
+                >
+                <p class="text-xs text-gray-500 mt-1">
+                    El tipo ayuda al sistema a generar automáticamente el SKU del extra.
+                </p>
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                <textarea name="descripcion" rows="4"
-                          class="w-full rounded-xl border border-pink-200 px-4 py-3 focus:ring-2 focus:ring-pink-200">{{ old('descripcion') }}</textarea>
+                <textarea
+                    name="descripcion"
+                    rows="4"
+                    class="w-full rounded-xl border border-pink-200 px-4 py-3 focus:ring-2 focus:ring-pink-200"
+                >{{ old('descripcion') }}</textarea>
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Precio adicional</label>
-                <input type="number" step="0.01" min="0" name="precio_adicional" value="{{ old('precio_adicional') }}"
-                       class="w-full rounded-xl border border-pink-200 px-4 py-3 focus:ring-2 focus:ring-pink-200">
-                @error('precio_adicional') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
+                <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="precio_adicional"
+                    value="{{ old('precio_adicional', 0) }}"
+                    class="w-full rounded-xl border border-pink-200 px-4 py-3 focus:ring-2 focus:ring-pink-200"
+                    required
+                >
+                @error('precio_adicional')
+                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="bg-pink-50 border border-pink-100 rounded-2xl p-5 space-y-4">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-800">Inventario del extra</h2>
+                    <p class="text-sm text-gray-500 mt-1">
+                        Estos datos permiten controlar el stock de globos, chocolates, peluches y demás complementos.
+                    </p>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                    <p class="text-sm text-blue-700">
+                        El código SKU será generado automáticamente por el sistema al guardar el extra.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Stock inicial</label>
+                        <input
+                            type="number"
+                            min="0"
+                            name="stock"
+                            value="{{ old('stock', 0) }}"
+                            class="w-full rounded-xl border border-pink-200 px-4 py-3 focus:ring-2 focus:ring-pink-200"
+                        >
+                        @error('stock')
+                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Stock mínimo</label>
+                        <input
+                            type="number"
+                            min="0"
+                            name="stock_minimo"
+                            value="{{ old('stock_minimo', 0) }}"
+                            class="w-full rounded-xl border border-pink-200 px-4 py-3 focus:ring-2 focus:ring-pink-200"
+                        >
+                        @error('stock_minimo')
+                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        name="controla_stock"
+                        id="controla_stock"
+                        value="1"
+                        {{ old('controla_stock') ? 'checked' : '' }}
+                    >
+                    <label for="controla_stock" class="text-sm text-gray-700">
+                        Controlar stock de este extra
+                    </label>
+                </div>
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Imagen</label>
-                <input type="file" name="imagen" accept="image/*"
-                       class="w-full rounded-xl border border-pink-200 px-4 py-3 bg-white">
+                <input
+                    type="file"
+                    name="imagen"
+                    accept="image/*"
+                    class="w-full rounded-xl border border-pink-200 px-4 py-3 bg-white"
+                >
             </div>
 
             <div class="flex items-center gap-2">
-                <input type="checkbox" name="activo" id="activo" value="1" checked>
+                <input
+                    type="checkbox"
+                    name="activo"
+                    id="activo"
+                    value="1"
+                    checked
+                >
                 <label for="activo" class="text-sm text-gray-700">Activo</label>
             </div>
 
@@ -52,8 +157,9 @@
                     Cancelar
                 </a>
 
-                <button type="submit"
-                        class="px-5 py-2 rounded-xl bg-pink-600 text-white hover:bg-pink-700">
+                <button
+                    type="submit"
+                    class="px-5 py-2 rounded-xl bg-pink-600 text-white hover:bg-pink-700">
                     Guardar
                 </button>
             </div>

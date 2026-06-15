@@ -26,7 +26,9 @@ class Order extends Model
         'tipo_entrega',
         'metodo_pago',
         'estado_pago',
+        'fecha_pago_confirmado',
         'referencia_pago',
+        'comprobante_pago',
         'costo_entrega',
         'subtotal',
         'impuesto',
@@ -120,6 +122,7 @@ class Order extends Model
         $metodos = [
             'transferencia' => 'Transferencia bancaria',
             'efectivo' => 'Pago en efectivo',
+            'stripe' => 'Tarjeta con Stripe',
             'tarjeta_debito' => 'Tarjeta de débito',
         ];
 
